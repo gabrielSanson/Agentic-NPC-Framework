@@ -1,0 +1,5 @@
+# place: addons/npcf/core/zz_fixture_namespace.gd
+# check: check_boundaries
+extends RefCounted
+
+const ID: StringName = &"toy.rest"

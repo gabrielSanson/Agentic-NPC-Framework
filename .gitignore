@@ -1,0 +1,5 @@
+.godot/
+reports/
+*.tmp
+/examples/*/addons/npcf/
+/examples/*/.godot/

@@ -1,0 +1,4 @@
+# place: addons/npcf/core/zz_fixture_deny.gd
+# check: check_boundaries
+extends RefCounted
+## Bakes a cake.

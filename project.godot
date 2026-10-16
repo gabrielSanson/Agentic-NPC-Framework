@@ -1,0 +1,30 @@
+; Engine configuration file.
+; Framework development project for the npcf addon. Godot 4.5 or later.
+
+config_version=5
+
+[application]
+
+config/name="npcf"
+config/description="Agentic NPC framework addon (development project)"
+config/features=PackedStringArray("4.5")
+
+[debug]
+
+; Strict typing (R3.1). exclude_addons stays true so the vendored gdUnit4 can run;
+; tools/ci/check_types.gd re-parses every non-gdUnit4 script, addons/npcf included,
+; with exclude_addons switched off.
+gdscript/warnings/untyped_declaration=2
+gdscript/warnings/inferred_declaration=2
+gdscript/warnings/unsafe_property_access=2
+gdscript/warnings/unsafe_method_access=2
+gdscript/warnings/unsafe_cast=2
+gdscript/warnings/unsafe_call_argument=2
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/npcf/plugin.cfg")
+
+[npcf]
+
+editor/check_manifest=""

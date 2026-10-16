@@ -1,0 +1,7 @@
+# place: packs/zz_fixture/hooks/rand_hook.gd
+# check: lint_hooks
+extends RefCounted
+
+
+func f() -> float:
+	return randf()
