@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="NpcfCharacterDef" format=3]
+
+[ext_resource type="Resource" path="res://packs/cw/archetypes/supervisor.tres" id="1_6xr2a"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_goal_def.gd" id="2_urpj6"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_personality_def.gd" id="3_7tnph"]
+[ext_resource type="Resource" path="res://packs/cw/personalities/weary.tres" id="4_8nrs8"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_character_def.gd" id="5_7cwkj"]
+
+[resource]
+script = ExtResource("5_7cwkj")
+id = &"cw.tamsin"
+display_name = "Tamsin"
+archetype = ExtResource("1_6xr2a")
+personalities = Array[ExtResource("3_7tnph")]([ExtResource("4_8nrs8")])
+goal_multipliers = Dictionary[StringName, float]({
+&"cw.vent": 0.3
+})

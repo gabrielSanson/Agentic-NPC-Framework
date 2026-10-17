@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="NpcfGoalDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_action_def.gd" id="1_u0v6j"]
+[ext_resource type="Resource" path="res://packs/cw/actions/work_shift.tres" id="2_5nty1"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_consideration_def.gd" id="3_64e38"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_goal_def.gd" id="4_bonmh"]
+
+[sub_resource type="Resource" id="Resource_3s2a8"]
+script = ExtResource("3_64e38")
+input = 5
+curve = 3
+
+[resource]
+script = ExtResource("4_bonmh")
+id = &"cw.work"
+considerations = Array[ExtResource("3_64e38")]([SubResource("Resource_3s2a8")])
+candidate_actions = Array[ExtResource("1_u0v6j")]([ExtResource("2_5nty1")])

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="NpcfLocationDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_location_def.gd" id="1_rjnwm"]
+
+[resource]
+script = ExtResource("1_rjnwm")
+id = &"cw.lounge"
+tags = Array[StringName]([&"cw.social", &"cw.food"])
+anchor_name = &"cw.lounge"
+display_name = "Crew lounge"

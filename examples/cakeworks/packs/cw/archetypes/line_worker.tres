@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="NpcfArchetypeDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_goal_def.gd" id="1_sio4m"]
+[ext_resource type="Resource" path="res://packs/cw/goals/work.tres" id="2_mmvcs"]
+[ext_resource type="Resource" path="res://packs/cw/goals/eat.tres" id="3_d6ich"]
+[ext_resource type="Resource" path="res://packs/cw/goals/rest.tres" id="4_mky81"]
+[ext_resource type="Resource" path="res://packs/cw/goals/socialize.tres" id="5_s8q3p"]
+[ext_resource type="Resource" path="res://packs/cw/goals/vent.tres" id="6_x8skt"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_need_def.gd" id="7_3q75o"]
+[ext_resource type="Resource" path="res://packs/cw/needs/hunger.tres" id="8_ogd7c"]
+[ext_resource type="Resource" path="res://packs/cw/needs/fatigue.tres" id="9_l7xyp"]
+[ext_resource type="Resource" path="res://packs/cw/needs/stress.tres" id="10_hkaax"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_planner_ref.gd" id="11_nmpas"]
+[ext_resource type="Resource" path="res://packs/cw/schedules/day_crew.tres" id="12_8o3hl"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_archetype_def.gd" id="13_2h7sj"]
+
+[sub_resource type="Resource" id="Resource_ln66l"]
+script = ExtResource("11_nmpas")
+
+[resource]
+script = ExtResource("13_2h7sj")
+id = &"cw.line_worker"
+tags = Array[StringName]([&"cw.crew"])
+needs = Array[ExtResource("7_3q75o")]([ExtResource("8_ogd7c"), ExtResource("9_l7xyp"), ExtResource("10_hkaax")])
+goals = Array[ExtResource("1_sio4m")]([ExtResource("2_mmvcs"), ExtResource("3_d6ich"), ExtResource("4_mky81"), ExtResource("5_s8q3p"), ExtResource("6_x8skt")])
+planner = SubResource("Resource_ln66l")
+schedule = ExtResource("12_8o3hl")
+decision_period_ticks = 5
+rel_defaults = Dictionary[StringName, int]({
+&"cw.liking": 40,
+&"cw.trust": 50
+})

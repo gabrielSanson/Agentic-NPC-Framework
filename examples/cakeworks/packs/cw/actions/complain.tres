@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="NpcfActionDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_field_def.gd" id="1_7avxq"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_effect_def.gd" id="2_wofec"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_consideration_def.gd" id="3_sltvg"]
+[ext_resource type="Resource" path="res://packs/cw/events/complaint.tres" id="4_3vdf8"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_condition_def.gd" id="5_g0mai"]
+[ext_resource type="Resource" path="res://packs/cw/needs/stress.tres" id="6_avcdf"]
+[ext_resource type="Resource" path="res://packs/cw/locations/production.tres" id="7_mhw85"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_action_def.gd" id="8_6lfps"]
+
+[sub_resource type="Resource" id="Resource_u3cnd"]
+script = ExtResource("2_wofec")
+kind = 7
+value = null
+event_kind = ExtResource("4_3vdf8")
+
+[sub_resource type="Resource" id="Resource_tnu5a"]
+script = ExtResource("5_g0mai")
+op_kind = 1
+need = ExtResource("6_avcdf")
+compare = 5
+value = 650
+
+[resource]
+script = ExtResource("8_6lfps")
+id = &"cw.complain"
+duration_ticks = 5
+required_location = ExtResource("7_mhw85")
+preconditions = Array[ExtResource("5_g0mai")]([SubResource("Resource_tnu5a")])
+end_effects = Array[ExtResource("2_wofec")]([SubResource("Resource_u3cnd")])
+per_tick_need_deltas = Dictionary[StringName, int]({
+&"cw.stress": -20
+})

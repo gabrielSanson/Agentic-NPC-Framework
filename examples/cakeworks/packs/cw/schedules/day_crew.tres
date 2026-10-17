@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="NpcfScheduleDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_schedule_entry.gd" id="1_oargi"]
+[ext_resource type="Resource" path="res://packs/cw/goals/work.tres" id="2_h1sio"]
+[ext_resource type="Resource" path="res://packs/cw/locations/production.tres" id="3_lm38x"]
+[ext_resource type="Resource" path="res://packs/cw/goals/eat.tres" id="4_q0vbx"]
+[ext_resource type="Resource" path="res://packs/cw/locations/lounge.tres" id="5_dyka6"]
+[ext_resource type="Resource" path="res://packs/cw/goals/socialize.tres" id="6_5yc6n"]
+[ext_resource type="Resource" path="res://packs/cw/goals/rest.tres" id="7_gnhdn"]
+[ext_resource type="Resource" path="res://packs/cw/locations/dormitory.tres" id="8_ywbem"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_schedule_def.gd" id="9_r01sx"]
+
+[sub_resource type="Resource" id="Resource_n0fij"]
+script = ExtResource("1_oargi")
+days = PackedInt32Array()
+start_minute = 480
+end_minute = 720
+goal = ExtResource("2_h1sio")
+location = ExtResource("3_lm38x")
+
+[sub_resource type="Resource" id="Resource_7wcf8"]
+script = ExtResource("1_oargi")
+days = PackedInt32Array()
+start_minute = 720
+end_minute = 750
+goal = ExtResource("4_q0vbx")
+location = ExtResource("5_dyka6")
+
+[sub_resource type="Resource" id="Resource_byrxt"]
+script = ExtResource("1_oargi")
+days = PackedInt32Array()
+start_minute = 750
+end_minute = 960
+goal = ExtResource("2_h1sio")
+location = ExtResource("3_lm38x")
+
+[sub_resource type="Resource" id="Resource_y8c0c"]
+script = ExtResource("1_oargi")
+days = PackedInt32Array()
+start_minute = 960
+end_minute = 1080
+goal = ExtResource("6_5yc6n")
+location = ExtResource("5_dyka6")
+
+[sub_resource type="Resource" id="Resource_rxwwk"]
+script = ExtResource("1_oargi")
+days = PackedInt32Array()
+start_minute = 1380
+end_minute = 1440
+goal = ExtResource("7_gnhdn")
+location = ExtResource("8_ywbem")
+
+[sub_resource type="Resource" id="Resource_o5vhv"]
+script = ExtResource("1_oargi")
+days = PackedInt32Array()
+start_minute = 0
+end_minute = 420
+goal = ExtResource("7_gnhdn")
+location = ExtResource("8_ywbem")
+
+[resource]
+script = ExtResource("9_r01sx")
+id = &"cw.day_crew"
+entries = Array[ExtResource("1_oargi")]([SubResource("Resource_n0fij"), SubResource("Resource_7wcf8"), SubResource("Resource_byrxt"), SubResource("Resource_y8c0c"), SubResource("Resource_rxwwk"), SubResource("Resource_o5vhv")])

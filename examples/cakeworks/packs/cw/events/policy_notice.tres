@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="NpcfEventKindDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_fact_template.gd" id="1_61r5b"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_field_def.gd" id="2_8vkky"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_event_kind_def.gd" id="3_ofjkb"]
+
+[resource]
+script = ExtResource("3_ofjkb")
+id = &"cw.policy_notice"
+salience = 60
+visibility = 1

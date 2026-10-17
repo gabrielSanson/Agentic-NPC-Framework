@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="NpcfCharacterDef" format=3]
+
+[ext_resource type="Resource" path="res://packs/cw/archetypes/line_worker.tres" id="1_t1djp"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_goal_def.gd" id="2_vuxtq"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_personality_def.gd" id="3_erda1"]
+[ext_resource type="Resource" path="res://packs/cw/personalities/cheerful.tres" id="4_8b3ya"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_character_def.gd" id="5_m3nw8"]
+
+[resource]
+script = ExtResource("5_m3nw8")
+id = &"cw.mira"
+display_name = "Mira"
+archetype = ExtResource("1_t1djp")
+personalities = Array[ExtResource("3_erda1")]([ExtResource("4_8b3ya")])

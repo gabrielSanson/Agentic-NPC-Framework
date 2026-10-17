@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="NpcfCharacterDef" format=3]
+
+[ext_resource type="Resource" path="res://packs/cw/archetypes/line_worker.tres" id="1_wkdd4"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_goal_def.gd" id="2_drvcg"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_personality_def.gd" id="3_vclhs"]
+[ext_resource type="Resource" path="res://packs/cw/personalities/anxious.tres" id="4_j8480"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_character_def.gd" id="5_ysrgc"]
+
+[resource]
+script = ExtResource("5_ysrgc")
+id = &"cw.rafi"
+display_name = "Rafi"
+archetype = ExtResource("1_wkdd4")
+personalities = Array[ExtResource("3_vclhs")]([ExtResource("4_j8480")])

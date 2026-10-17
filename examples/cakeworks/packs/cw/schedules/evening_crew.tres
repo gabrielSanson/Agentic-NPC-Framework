@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="NpcfScheduleDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_schedule_entry.gd" id="1_ym6ku"]
+[ext_resource type="Resource" path="res://packs/cw/goals/socialize.tres" id="2_8v0ct"]
+[ext_resource type="Resource" path="res://packs/cw/locations/lounge.tres" id="3_5rh3s"]
+[ext_resource type="Resource" path="res://packs/cw/goals/work.tres" id="4_i0w02"]
+[ext_resource type="Resource" path="res://packs/cw/locations/production.tres" id="5_52uus"]
+[ext_resource type="Resource" path="res://packs/cw/goals/eat.tres" id="6_07d1q"]
+[ext_resource type="Resource" path="res://packs/cw/goals/rest.tres" id="7_fj7iw"]
+[ext_resource type="Resource" path="res://packs/cw/locations/dormitory.tres" id="8_tf7pj"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_schedule_def.gd" id="9_ese2n"]
+
+[sub_resource type="Resource" id="Resource_1yflo"]
+script = ExtResource("1_ym6ku")
+days = PackedInt32Array()
+start_minute = 900
+end_minute = 960
+goal = ExtResource("2_8v0ct")
+location = ExtResource("3_5rh3s")
+
+[sub_resource type="Resource" id="Resource_khyem"]
+script = ExtResource("1_ym6ku")
+days = PackedInt32Array()
+start_minute = 960
+end_minute = 1200
+goal = ExtResource("4_i0w02")
+location = ExtResource("5_52uus")
+
+[sub_resource type="Resource" id="Resource_nwxoo"]
+script = ExtResource("1_ym6ku")
+days = PackedInt32Array()
+start_minute = 1200
+end_minute = 1230
+goal = ExtResource("6_07d1q")
+location = ExtResource("3_5rh3s")
+
+[sub_resource type="Resource" id="Resource_gblpj"]
+script = ExtResource("1_ym6ku")
+days = PackedInt32Array()
+start_minute = 1230
+end_minute = 1440
+goal = ExtResource("4_i0w02")
+location = ExtResource("5_52uus")
+
+[sub_resource type="Resource" id="Resource_bqfdl"]
+script = ExtResource("1_ym6ku")
+days = PackedInt32Array()
+start_minute = 120
+end_minute = 600
+goal = ExtResource("7_fj7iw")
+location = ExtResource("8_tf7pj")
+
+[resource]
+script = ExtResource("9_ese2n")
+id = &"cw.evening_crew"
+entries = Array[ExtResource("1_ym6ku")]([SubResource("Resource_1yflo"), SubResource("Resource_khyem"), SubResource("Resource_nwxoo"), SubResource("Resource_gblpj"), SubResource("Resource_bqfdl")])

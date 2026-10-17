@@ -1,0 +1,44 @@
+; Engine configuration file.
+; CakeWorks example project (cw pack, starter scenario, playable demo). Godot 4.7 or later.
+; The addons/npcf and addons/gdUnit4 folders are copies made by tools/ci/sync_example.sh.
+
+config_version=5
+
+[application]
+
+config/name="cakeworks"
+config/description="CakeWorks example for the npcf addon"
+config/features=PackedStringArray("4.7")
+
+[autoload]
+
+Npcf="*res://addons/npcf/runtime/npcf_runtime.gd"
+
+[audio]
+
+driver/enable_input=true
+
+[debug]
+
+; Strict typing (R3.1). directory_rules turns warnings off for the vendored
+; gdUnit4 (0 = exclude) and back on for addons/npcf (1 = include), so the six warnings below
+; are errors for the packs, tests, tools and demo code too.
+gdscript/warnings/directory_rules={
+"res://addons": 0,
+"res://addons/npcf": 1
+}
+gdscript/warnings/untyped_declaration=2
+gdscript/warnings/inferred_declaration=2
+gdscript/warnings/unsafe_property_access=2
+gdscript/warnings/unsafe_method_access=2
+gdscript/warnings/unsafe_cast=2
+gdscript/warnings/unsafe_call_argument=2
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/npcf/plugin.cfg", "res://addons/gdUnit4/plugin.cfg")
+
+[npcf]
+
+providers/allow_non_commercial=false
+providers/set=""

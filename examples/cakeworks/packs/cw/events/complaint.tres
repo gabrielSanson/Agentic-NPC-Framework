@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="NpcfEventKindDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_fact_template.gd" id="1_t5l0b"]
+[ext_resource type="Resource" path="res://packs/cw/facts/complained.tres" id="2_3pbwn"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_field_def.gd" id="3_787wu"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_event_kind_def.gd" id="4_pk1jl"]
+
+[sub_resource type="Resource" id="Resource_jle08"]
+script = ExtResource("1_t5l0b")
+fact = ExtResource("2_3pbwn")
+value_literal = true
+
+[resource]
+script = ExtResource("4_pk1jl")
+id = &"cw.complaint"
+salience = 70
+beliefs = Array[ExtResource("1_t5l0b")]([SubResource("Resource_jle08")])

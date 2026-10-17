@@ -3,3 +3,5 @@ reports/
 *.tmp
 /examples/*/addons/npcf/
 /examples/*/.godot/
+/examples/*/addons/gdUnit4/
+/examples/*/reports/

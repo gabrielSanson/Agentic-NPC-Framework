@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="NpcfDirectorDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_macro_var_def.gd" id="1_8nogg"]
+[ext_resource type="Resource" path="res://packs/cw/director/reported_disorder.tres" id="2_k0ywx"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_director_rule_def.gd" id="3_kgo2g"]
+[ext_resource type="Resource" path="res://packs/cw/director/era_optimization.tres" id="4_ootyw"]
+[ext_resource type="Resource" path="res://packs/cw/director/era_asset_protection.tres" id="5_ikueh"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_director_def.gd" id="6_iv8lt"]
+
+[resource]
+script = ExtResource("6_iv8lt")
+macros = Array[ExtResource("1_8nogg")]([ExtResource("2_k0ywx")])
+rules = Array[ExtResource("3_kgo2g")]([ExtResource("4_ootyw"), ExtResource("5_ikueh")])

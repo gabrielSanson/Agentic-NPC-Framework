@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="NpcfGoalDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_action_def.gd" id="1_sixt6"]
+[ext_resource type="Resource" path="res://packs/cw/actions/complain.tres" id="2_qvhjr"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_consideration_def.gd" id="3_wgi1q"]
+[ext_resource type="Resource" path="res://packs/cw/needs/stress.tres" id="4_2mqf3"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_goal_def.gd" id="5_mnhb7"]
+
+[sub_resource type="Resource" id="Resource_0mmn7"]
+script = ExtResource("3_wgi1q")
+need = ExtResource("4_2mqf3")
+
+[resource]
+script = ExtResource("5_mnhb7")
+id = &"cw.vent"
+considerations = Array[ExtResource("3_wgi1q")]([SubResource("Resource_0mmn7")])
+candidate_actions = Array[ExtResource("1_sixt6")]([ExtResource("2_qvhjr")])

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="NpcfMacroVarDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_macro_delta.gd" id="1_bdc3e"]
+[ext_resource type="Resource" path="res://packs/cw/events/complaint.tres" id="2_lry2v"]
+[ext_resource type="Resource" path="res://packs/cw/events/shift_completed.tres" id="3_tj3xf"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_macro_var_def.gd" id="4_dsrwa"]
+
+[sub_resource type="Resource" id="Resource_xpgc5"]
+script = ExtResource("1_bdc3e")
+event_kind = ExtResource("2_lry2v")
+amount = 6.0
+
+[sub_resource type="Resource" id="Resource_o6cg3"]
+script = ExtResource("1_bdc3e")
+event_kind = ExtResource("3_tj3xf")
+amount = -1.0
+
+[resource]
+script = ExtResource("4_dsrwa")
+id = &"cw.reported_disorder"
+deltas = Array[ExtResource("1_bdc3e")]([SubResource("Resource_xpgc5"), SubResource("Resource_o6cg3")])

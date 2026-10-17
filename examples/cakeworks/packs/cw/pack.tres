@@ -1,0 +1,76 @@
+[gd_resource type="Resource" script_class="NpcfPackManifest" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_action_def.gd" id="1_iqlcw"]
+[ext_resource type="Resource" path="res://packs/cw/actions/work_shift.tres" id="2_yxhpk"]
+[ext_resource type="Resource" path="res://packs/cw/actions/eat_meal.tres" id="3_mfb6q"]
+[ext_resource type="Resource" path="res://packs/cw/actions/rest.tres" id="4_nnyl3"]
+[ext_resource type="Resource" path="res://packs/cw/actions/sleep.tres" id="5_dlbtk"]
+[ext_resource type="Resource" path="res://packs/cw/actions/chat.tres" id="6_gthxx"]
+[ext_resource type="Resource" path="res://packs/cw/actions/complain.tres" id="7_15u5d"]
+[ext_resource type="Resource" path="res://packs/cw/actions/wave.tres" id="8_gwohe"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_archetype_def.gd" id="9_8bo76"]
+[ext_resource type="Resource" path="res://packs/cw/archetypes/line_worker.tres" id="10_1l5mg"]
+[ext_resource type="Resource" path="res://packs/cw/archetypes/night_baker.tres" id="11_s3v40"]
+[ext_resource type="Resource" path="res://packs/cw/archetypes/supervisor.tres" id="12_3j3cx"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_character_def.gd" id="13_u7vrn"]
+[ext_resource type="Resource" path="res://packs/cw/characters/mira.tres" id="14_2rw2f"]
+[ext_resource type="Resource" path="res://packs/cw/characters/oskar.tres" id="15_hvlxu"]
+[ext_resource type="Resource" path="res://packs/cw/characters/juno.tres" id="16_v4e3k"]
+[ext_resource type="Resource" path="res://packs/cw/characters/tamsin.tres" id="17_uy7ab"]
+[ext_resource type="Resource" path="res://packs/cw/characters/rafi.tres" id="18_x4gmj"]
+[ext_resource type="Resource" path="res://packs/cw/characters/bea.tres" id="19_qeqw4"]
+[ext_resource type="Resource" path="res://packs/cw/characters/lev.tres" id="20_rx64p"]
+[ext_resource type="Resource" path="res://packs/cw/characters/ines.tres" id="21_dy1ri"]
+[ext_resource type="Resource" path="res://packs/cw/dialogue/dialogue.tres" id="22_hdfpf"]
+[ext_resource type="Resource" path="res://packs/cw/director/director.tres" id="23_ypjn3"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_event_kind_def.gd" id="24_nmby1"]
+[ext_resource type="Resource" path="res://packs/cw/events/complaint.tres" id="25_2fw3j"]
+[ext_resource type="Resource" path="res://packs/cw/events/shift_completed.tres" id="26_3qkfc"]
+[ext_resource type="Resource" path="res://packs/cw/events/chatted.tres" id="27_0xc50"]
+[ext_resource type="Resource" path="res://packs/cw/events/policy_notice.tres" id="28_kwhrm"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_fact_def.gd" id="29_b3rp4"]
+[ext_resource type="Resource" path="res://packs/cw/facts/complained.tres" id="30_na7qs"]
+[ext_resource type="Resource" path="res://packs/cw/facts/shift_done.tres" id="31_3ldv2"]
+[ext_resource type="Resource" path="res://packs/cw/facts/era.tres" id="32_fhuh4"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_goal_def.gd" id="33_c06xt"]
+[ext_resource type="Resource" path="res://packs/cw/goals/work.tres" id="34_yh484"]
+[ext_resource type="Resource" path="res://packs/cw/goals/eat.tres" id="35_g6lol"]
+[ext_resource type="Resource" path="res://packs/cw/goals/rest.tres" id="36_clvx6"]
+[ext_resource type="Resource" path="res://packs/cw/goals/socialize.tres" id="37_isr7l"]
+[ext_resource type="Resource" path="res://packs/cw/goals/vent.tres" id="38_rsgj1"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_invariant_def.gd" id="39_dpqe6"]
+[ext_resource type="Resource" path="res://packs/cw/graph.tres" id="40_ivgmm"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_need_def.gd" id="41_uxsrn"]
+[ext_resource type="Resource" path="res://packs/cw/needs/hunger.tres" id="42_1f4tb"]
+[ext_resource type="Resource" path="res://packs/cw/needs/fatigue.tres" id="43_rmqec"]
+[ext_resource type="Resource" path="res://packs/cw/needs/stress.tres" id="44_3ducu"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_personality_def.gd" id="45_sjdmj"]
+[ext_resource type="Resource" path="res://packs/cw/personalities/cheerful.tres" id="46_ctlu2"]
+[ext_resource type="Resource" path="res://packs/cw/personalities/weary.tres" id="47_w88oe"]
+[ext_resource type="Resource" path="res://packs/cw/personalities/anxious.tres" id="48_jjoe6"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_reaction_rule_def.gd" id="49_0g43x"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_schedule_def.gd" id="50_8eogb"]
+[ext_resource type="Resource" path="res://packs/cw/schedules/day_crew.tres" id="51_wikww"]
+[ext_resource type="Resource" path="res://packs/cw/schedules/evening_crew.tres" id="52_rbdu5"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_pack_manifest.gd" id="53_q1jkg"]
+[ext_resource type="Resource" path="res://packs/cw/sim.tres" id="54_cvveh"]
+[ext_resource type="Resource" path="res://packs/cw/social/social.tres" id="55_5ok0d"]
+
+[resource]
+script = ExtResource("53_q1jkg")
+pack_namespace = &"cw"
+pack_version = "1.0.0"
+facts = Array[ExtResource("29_b3rp4")]([ExtResource("30_na7qs"), ExtResource("31_3ldv2"), ExtResource("32_fhuh4")])
+needs = Array[ExtResource("41_uxsrn")]([ExtResource("42_1f4tb"), ExtResource("43_rmqec"), ExtResource("44_3ducu")])
+event_kinds = Array[ExtResource("24_nmby1")]([ExtResource("25_2fw3j"), ExtResource("26_3qkfc"), ExtResource("27_0xc50"), ExtResource("28_kwhrm")])
+goals = Array[ExtResource("33_c06xt")]([ExtResource("34_yh484"), ExtResource("35_g6lol"), ExtResource("36_clvx6"), ExtResource("37_isr7l"), ExtResource("38_rsgj1")])
+actions = Array[ExtResource("1_iqlcw")]([ExtResource("2_yxhpk"), ExtResource("3_mfb6q"), ExtResource("4_nnyl3"), ExtResource("5_dlbtk"), ExtResource("6_gthxx"), ExtResource("7_15u5d"), ExtResource("8_gwohe")])
+archetypes = Array[ExtResource("9_8bo76")]([ExtResource("10_1l5mg"), ExtResource("11_s3v40"), ExtResource("12_3j3cx")])
+personalities = Array[ExtResource("45_sjdmj")]([ExtResource("46_ctlu2"), ExtResource("47_w88oe"), ExtResource("48_jjoe6")])
+characters = Array[ExtResource("13_u7vrn")]([ExtResource("14_2rw2f"), ExtResource("15_hvlxu"), ExtResource("16_v4e3k"), ExtResource("17_uy7ab"), ExtResource("18_x4gmj"), ExtResource("19_qeqw4"), ExtResource("20_rx64p"), ExtResource("21_dy1ri")])
+location_graph = ExtResource("40_ivgmm")
+schedules = Array[ExtResource("50_8eogb")]([ExtResource("51_wikww"), ExtResource("52_rbdu5")])
+social = ExtResource("55_5ok0d")
+director = ExtResource("23_ypjn3")
+dialogue = ExtResource("22_hdfpf")
+sim = ExtResource("54_cvveh")
