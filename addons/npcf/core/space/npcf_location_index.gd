@@ -10,6 +10,12 @@ var _edge_ticks: Dictionary[String, int] = {}
 var _adjacent: Dictionary[StringName, Array] = {}
 ## "from|to" -> shortest path.
 var _paths: Dictionary[String, NpcfPath] = {}
+## from -> to -> travel ticks of the shortest path (the same values as _paths, keyed without a string).
+var _travel: Dictionary[StringName, Dictionary] = {}
+## from -> tag -> nearest_with_tag result, filled on first use. The index is static once built.
+var _nearest: Dictionary[StringName, Dictionary] = {}
+## Shared empty tag list for unknown locations. Never mutate it.
+static var _NO_TAGS: Array[StringName] = []
 
 
 func _init(graph: NpcfLocationGraph = null) -> void:
@@ -48,7 +54,7 @@ func tags_of(id: StringName) -> Array[StringName]:
 
 
 func has_tag(id: StringName, tag: StringName) -> bool:
-	var t: Array = _tags.get(id, [])
+	var t: Array = _tags.get(id, _NO_TAGS)
 	return t.has(tag)
 
 
@@ -56,8 +62,11 @@ func has_tag(id: StringName, tag: StringName) -> bool:
 func travel_ticks(from: StringName, to: StringName) -> int:
 	if from == to:
 		return 0 if has_location(from) else -1
-	var p: NpcfPath = _paths.get("%s|%s" % [from, to])
-	return p.ticks if p != null else -1
+	if not _travel.has(from):
+		return -1
+	var row: Dictionary = _travel[from]
+	var t: int = row.get(to, -1)
+	return t
 
 
 ## The shortest path, or null when unreachable. The same location gives an empty path.
@@ -74,6 +83,11 @@ func edge_ticks(from: StringName, to: StringName) -> int:
 
 ## The reachable location with `tag` nearest to `from` (ties by ID), or &"".
 func nearest_with_tag(from: StringName, tag: StringName) -> StringName:
+	if _nearest.has(from):
+		var known: Dictionary = _nearest[from]
+		if known.has(tag):
+			var cached: StringName = known[tag]
+			return cached
 	var best: StringName = &""
 	var best_ticks: int = -1
 	for id: StringName in location_ids:
@@ -85,6 +99,10 @@ func nearest_with_tag(from: StringName, tag: StringName) -> StringName:
 		if best_ticks < 0 or t < best_ticks:
 			best = id
 			best_ticks = t
+	if not _nearest.has(from):
+		_nearest[from] = {}
+	var store: Dictionary = _nearest[from]
+	store[tag] = best
 	return best
 
 
@@ -112,6 +130,8 @@ func _add_edge(from: StringName, to: StringName, ticks: int) -> void:
 
 
 func _dijkstra(src: StringName) -> void:
+	var row: Dictionary = {}
+	_travel[src] = row
 	var dist: Dictionary[StringName, int] = {src: 0}
 	var prev: Dictionary[StringName, StringName] = {}
 	var done: Dictionary[StringName, bool] = {}
@@ -147,3 +167,4 @@ func _dijkstra(src: StringName) -> void:
 			p.nodes.push_front(cur)
 			cur = prev[cur]
 		_paths["%s|%s" % [src, dst]] = p
+		row[dst] = p.ticks
