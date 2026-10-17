@@ -1,0 +1,46 @@
+# Benchmarks
+
+Machine: CI container, headless, debug build (Godot 4.7.2 stable, `/usr/local/bin/godot`).
+The reference-machine figure from the spec is still to be measured on a release export.
+
+## Headless bench (CLI)
+
+Command, run from the repo root:
+
+```bash
+godot --headless --path . -s res://addons/npcf/tools/npcf_cli.gd -- bench \
+	--manifest res://packs/toy/pack.tres --scenario res://packs/toy/scenarios/basic.tres \
+	--npcs 50 --ticks 1440 --seed 7
+```
+
+Output of one run (50 NPCs, 1,440 ticks, toy pack, `basic` scenario):
+
+```
+bench: 50 npcs, 1440 ticks, seed 7
+median_ms=1.5650
+p99_ms=43.0670
+max_ms=75.3060
+capped_frames_at_speed_16=0 of 3600 frames at 60 fps
+```
+
+Each sample is one `world.step()` measured with `Time.get_ticks_usec()`. The first ticks include the
+decision and delivery work of a fresh population; p99 and max are dominated by the busiest decision ticks.
+`capped_frames_at_speed_16` simulates 3,600 frames at 60 fps and 16x speed against `max_ticks_per_frame`.
+
+## Bench scene (runtime, 2D)
+
+`samples/toy_room/bench.tscn` runs the same population through the `Npcf` runtime, one 60 fps frame at a time,
+with a readout. Run with `--quit-after-bench` to exit when the run finishes:
+
+```bash
+godot --headless --path . res://samples/toy_room/bench.tscn -- --quit-after-bench
+```
+
+Output of one run:
+
+```
+bench done: 50 NPCs, 1440 ticks, median 1.318 ms, p99 18.199 ms, max 119.166 ms, capped 0
+```
+
+The scene's samples are the time of each frame that ran a tick, divided by the ticks it ran. It includes the
+runtime's signal emission and the 2D adapters, so it is slower than the bare step.

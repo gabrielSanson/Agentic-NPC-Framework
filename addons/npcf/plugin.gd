@@ -6,6 +6,8 @@ extends EditorPlugin
 const MENU_TEXT: String = "NPCF: Check pack"
 const SETTING: String = "npcf/editor/check_manifest"
 const CLI: String = "res://addons/npcf/tools/npcf_cli.gd"
+const AUTOLOAD_NAME: String = "Npcf"
+const AUTOLOAD_PATH: String = "res://addons/npcf/runtime/npcf_runtime.gd"
 
 
 func _enter_tree() -> void:
@@ -14,6 +16,15 @@ func _enter_tree() -> void:
 
 func _exit_tree() -> void:
 	remove_tool_menu_item(MENU_TEXT)
+
+
+## The runtime is the game's entry point: registered as the autoload Npcf when the plugin is enabled.
+func _enable_plugin() -> void:
+	add_autoload_singleton(AUTOLOAD_NAME, AUTOLOAD_PATH)
+
+
+func _disable_plugin() -> void:
+	remove_autoload_singleton(AUTOLOAD_NAME)
 
 
 func _check_pack() -> void:

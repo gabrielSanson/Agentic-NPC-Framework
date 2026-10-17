@@ -8,6 +8,11 @@ config_version=5
 config/name="npcf"
 config/description="Agentic NPC framework addon (development project)"
 config/features=PackedStringArray("4.7")
+run/main_scene="res://samples/toy_room/main.tscn"
+
+[autoload]
+
+Npcf="*res://addons/npcf/runtime/npcf_runtime.gd"
 
 [debug]
 

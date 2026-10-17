@@ -1,0 +1,38 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/adapters/npcf_agent_2d.gd" id="1_a05cv"]
+[ext_resource type="Script" path="res://addons/npcf/adapters/npcf_nav_mover_2d.gd" id="2_dm7vw"]
+[ext_resource type="Script" path="res://addons/npcf/adapters/npcf_area_perception_2d.gd" id="3_4scnx"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_l1e3u"]
+radius = 8.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hncsf"]
+radius = 96.0
+
+[node name="ToyNpc" type="CharacterBody2D" unique_id=2129226060]
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1897842077]
+shape = SubResource("CircleShape2D_l1e3u")
+
+[node name="Diamond" type="Polygon2D" parent="." unique_id=1146727489]
+color = Color(0.95, 0.8, 0.3, 1)
+polygon = PackedVector2Array(0, -8, 8, 0, 0, 8, -8, 0)
+
+[node name="NpcfAgent2D" type="Node" parent="." unique_id=1846277628]
+script = ExtResource("1_a05cv")
+
+[node name="NpcfNavMover2D" type="Node" parent="NpcfAgent2D" unique_id=971176375]
+script = ExtResource("2_dm7vw")
+
+[node name="NavigationAgent2D" type="NavigationAgent2D" parent="." unique_id=428821419]
+
+[node name="NpcfAreaPerception2D" type="Area2D" parent="." unique_id=1787258102]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("3_4scnx")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="NpcfAreaPerception2D" unique_id=1856884629]
+shape = SubResource("CircleShape2D_hncsf")

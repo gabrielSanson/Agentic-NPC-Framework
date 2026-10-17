@@ -99,7 +99,8 @@ func advance(world: NpcfWorld, report: NpcfTickReport = null) -> void:
 				if status == NpcfResolverHook.FAILURE:
 					finish(world, id, false, &"move_failed", report)
 					continue
-		elif not ra.embodied:
+		elif not ra.embodied or not world.adapters.presentation.holds_completion(id, NpcfActionCallView.new(ra.call, ra.def)):
+			# Headless, or embodied without a game-held completion: resolver or duration decides.
 			if ra.def.resolver != null:
 				var view: NpcfActionCallView = NpcfActionCallView.new(ra.call, ra.def)
 				status = world.hooks.resolver(ra.def.resolver, view, world.world_view(), ra.elapsed)

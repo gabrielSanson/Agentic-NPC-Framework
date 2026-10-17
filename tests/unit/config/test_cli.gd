@@ -42,3 +42,23 @@ func test_check_passes_on_valid_manifest() -> void:
 	var result: Array = _check("res://tests/fixtures/broken/empty_pack.tres")
 	assert_int(result[0]).is_equal(0)
 	assert_str(result[1]).contains("ok: 0 definitions")
+
+
+func _bench(args: PackedStringArray) -> Array:
+	var output: Array = []
+	var full: PackedStringArray = PackedStringArray([
+		"--headless", "--path", ProjectSettings.globalize_path("res://"), "-s", CLI, "--", "bench",
+	])
+	full.append_array(args)
+	var code: int = OS.execute(OS.get_executable_path(), full, output, true)
+	return [code, "\n".join(PackedStringArray(output))]
+
+
+func test_bench_exits_zero_and_prints_median() -> void:
+	var result: Array = _bench(PackedStringArray([
+		"--manifest", "res://packs/toy/pack.tres", "--scenario", "res://packs/toy/scenarios/basic.tres",
+		"--npcs", "5", "--ticks", "60",
+	]))
+	assert_int(result[0]).is_equal(0)
+	assert_str(result[1]).contains("median_ms=")
+	assert_str(result[1]).contains("capped_frames_at_speed_16=")
