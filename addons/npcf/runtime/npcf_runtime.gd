@@ -32,11 +32,13 @@ var _presentation: NpcfPresentationAdapter = null
 
 
 ## Loads and validates the pack, checks the scenario and builds a running world. Returns OK, or the reason.
-func start(manifest: NpcfPackManifest, scenario: NpcfScenarioDef, world_seed: int) -> Error:
+## `pack_dir` is the folder hook scripts must live in when the manifest has no file (a generated pack);
+## empty means the manifest's own folder.
+func start(manifest: NpcfPackManifest, scenario: NpcfScenarioDef, world_seed: int, pack_dir: String = "") -> Error:
 	if _world != null:
 		return ERR_ALREADY_IN_USE
 	var loader: NpcfPackLoader = NpcfPackLoader.new()
-	var loaded: NpcfLoadResult = loader.load_pack(manifest)
+	var loaded: NpcfLoadResult = loader.load_pack(manifest, NpcfVersion.FRAMEWORK, pack_dir)
 	if not loaded.ok:
 		sim_error.emit(loaded.format_errors())
 		return ERR_INVALID_DATA
@@ -55,6 +57,7 @@ func start(manifest: NpcfPackManifest, scenario: NpcfScenarioDef, world_seed: in
 		return ERR_INVALID_DATA
 
 	agents.player_entity = loaded.pack.sim.player_entity
+	agents.scene_source = self
 	var defaults: NpcfAdapterSet = NpcfAdapters2D.make_set(agents)
 	var adapters: NpcfAdapterSet = NpcfAdapterSet.make(
 		_movement if _movement != null else defaults.movement,

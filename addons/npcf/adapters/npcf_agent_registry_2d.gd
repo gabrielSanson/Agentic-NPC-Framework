@@ -5,6 +5,8 @@ extends RefCounted
 
 ## The player's entity ID, set by the runtime at start (empty when the pack has no player).
 var player_entity: StringName = &""
+## A node in the scene tree the registry can search when no agent is registered yet (the runtime sets it).
+var scene_source: Node = null
 var _agents: Dictionary[StringName, WeakRef] = {}
 
 
@@ -53,25 +55,34 @@ func body_of(entity: StringName) -> Node2D:
 
 ## The position of the first anchor with this location ID, searched from any registered agent's tree.
 func anchor_position(location: StringName) -> Vector2:
-	for npc: StringName in ids():
-		var a: NpcfAgent2D = agent(npc)
-		if a == null or not a.is_inside_tree():
-			continue
-		for node: Node in a.get_tree().get_nodes_in_group(&"npcf_anchors"):
-			if node is NpcfLocationAnchor2D:
-				var anchor: NpcfLocationAnchor2D = node
-				if anchor.location_id == location:
-					return anchor.global_position
+	var tree: SceneTree = _tree()
+	if tree == null:
+		return Vector2.ZERO
+	for node: Node in tree.get_nodes_in_group(&"npcf_anchors"):
+		if node is NpcfLocationAnchor2D:
+			var anchor: NpcfLocationAnchor2D = node
+			if anchor.location_id == location:
+				return anchor.global_position
 	return Vector2.ZERO
 
 
-func _player_body() -> Node2D:
+## The tree of the first registered agent in the tree, else of the scene source; null when neither is.
+func _tree() -> SceneTree:
 	for npc: StringName in ids():
 		var a: NpcfAgent2D = agent(npc)
-		if a == null or not a.is_inside_tree():
-			continue
-		for node: Node in a.get_tree().get_nodes_in_group(&"npcf_player"):
-			if node is Node2D:
-				var body: Node2D = node
-				return body
+		if a != null and a.is_inside_tree():
+			return a.get_tree()
+	if scene_source != null and scene_source.is_inside_tree():
+		return scene_source.get_tree()
+	return null
+
+
+func _player_body() -> Node2D:
+	var tree: SceneTree = _tree()
+	if tree == null:
+		return null
+	for node: Node in tree.get_nodes_in_group(&"npcf_player"):
+		if node is Node2D:
+			var body: Node2D = node
+			return body
 	return null

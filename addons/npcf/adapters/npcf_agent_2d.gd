@@ -31,9 +31,16 @@ func mover() -> NpcfNavMover2D:
 	return null
 
 
-## The first NpcfAreaPerception2D child, or null.
+## The NpcfAreaPerception2D under the agent or under its body (the sample puts it under the body), or null.
 func perception() -> NpcfAreaPerception2D:
-	for child: Node in get_children():
+	var found: NpcfAreaPerception2D = _first_perception(self)
+	if found == null and body() != null:
+		found = _first_perception(body())
+	return found
+
+
+func _first_perception(parent: Node) -> NpcfAreaPerception2D:
+	for child: Node in parent.get_children():
 		if child is NpcfAreaPerception2D:
 			var p: NpcfAreaPerception2D = child
 			return p

@@ -16,12 +16,14 @@ var _nav: NavigationAgent2D = null
 
 
 func _ready() -> void:
-	for child: Node in get_children():
-		if child is NavigationAgent2D:
-			var nav: NavigationAgent2D = child
-			_nav = nav
-			nav.path_changed.connect(_on_path_changed)
-			break
+	# A NavigationAgent2D needs a Node2D parent, so the sample puts it under the body; a child of this node also works.
+	var body: CharacterBody2D = _body()
+	var found: NavigationAgent2D = _first_nav(body) if body != null else null
+	if found == null:
+		found = _first_nav(self)
+	if found != null:
+		_nav = found
+		found.path_changed.connect(_on_path_changed)
 
 
 ## Starts walking toward the last location of `path`, for the call `call_id`.
@@ -78,6 +80,14 @@ func _on_path_changed() -> void:
 	if rt != null:
 		rt.report_move_failed(agent.npc_id, _call_id, &"unreachable")
 	halt()
+
+
+func _first_nav(parent: Node) -> NavigationAgent2D:
+	for child: Node in parent.get_children():
+		if child is NavigationAgent2D:
+			var nav: NavigationAgent2D = child
+			return nav
+	return null
 
 
 func _agent() -> NpcfAgent2D:
