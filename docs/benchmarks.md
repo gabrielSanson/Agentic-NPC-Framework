@@ -73,12 +73,16 @@ Interleaved A/B, three runs each, same session (median of the three runs' values
 
 | Build | Median (ms) | p99 (ms) | Max (ms) |
 | --- | --- | --- | --- |
-| `origin/main` | 5.98 (5.72 to 6.16) | 24.57 | 40.45 |
-| `perf-ticks-2` (a, c, d, e) | 3.18 (2.65 to 3.51) | 20.21 | 32.32 |
+| `origin/main` (1e9ccdb) | 5.85 (5.81 to 5.95) | 23.43 | 32.51 |
+| `perf-ticks-2` (a, c, d, e, f1 to f3; db5266d) | 3.24 (3.14 to 3.78) | 19.55 | 32.34 |
+
+Fix f (decisions) is in the branch head: a static empty args dictionary, one planning session per decision and
+one reused belief view on start. Its gain is inside the run-to-run noise, so it has no row of its own. The
+comparator in `npcf_goal_selector.gd` is unchanged: `StringName` `<` does not order by name, so it cannot replace
+the `String` compare on score ties.
 
 Not kept: fix b (per-recipient allocations). Memory records cannot be shared between recipients because
-`NpcfMemoryLog.append` assigns each record its own `id`, and a recipient-only iteration measured no gain. Fix f
-is in a separate branch.
+`NpcfMemoryLog.append` assigns each record its own `id`, and a recipient-only iteration measured no gain.
 
 The p99 target (4 ms) is still not met in a debug build. See `slow-ticks-findings.md`.
 
