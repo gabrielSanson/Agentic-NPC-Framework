@@ -66,6 +66,30 @@ func begin_turn(world: NpcfWorld, text: String, npc: StringName = &"") -> int:
 
 
 ## Ignores every callback that arrives later (a provider replying after the world is gone).
+## The next line ID, for saves.
+func export_next_line_id() -> int:
+	return _next_line_id
+
+
+## The last addressee, for saves.
+func export_last_addressee() -> StringName:
+	return _last_addressee
+
+
+## The tick of the last talk, for saves.
+func export_last_talk_tick() -> int:
+	return _last_talk_tick
+
+
+## Restores the conversation counters. Turn records and turns in flight are not saved and start empty.
+func restore_state(next_line_id: int, last_addressee: StringName, last_talk_tick: int) -> void:
+	_next_line_id = next_line_id
+	_last_addressee = last_addressee
+	_last_talk_tick = last_talk_tick
+	records.clear()
+	_pending.clear()
+
+
 func dispose() -> void:
 	_disposed = true
 	_pending.clear()

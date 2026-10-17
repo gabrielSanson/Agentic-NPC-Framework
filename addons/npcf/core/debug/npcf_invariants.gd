@@ -44,3 +44,20 @@ func _framework(world: NpcfWorld, out: Array[NpcfInvariantFailure]) -> void:
 		if npc.running != null and npc.running.finished:
 			out.append(NpcfInvariantFailure.make(&"npcf.inv.running_action", world.clock.tick, [id],
 					"action \"%s\" is finished but still stored as running" % npc.running.call.action))
+	for entry: Array in world.relationships.out_of_bounds(world):
+		var pair_key: String = entry[0]
+		var dim: StringName = entry[1]
+		var value: int = entry[2]
+		out.append(NpcfInvariantFailure.make(&"npcf.inv.rel_bounds", world.clock.tick, [],
+				"relationship %s, dimension \"%s\", is %d, outside its bounds" % [pair_key, dim, value]))
+	for id: StringName in world.npc_ids:
+		var npc: NpcfNpcState = world.npc(id)
+		if npc == null:
+			continue
+		for b: NpcfBelief in npc.beliefs.export_live():
+			if b.confidence < 0 or b.confidence > 100:
+				out.append(NpcfInvariantFailure.make(&"npcf.inv.belief_confidence", world.clock.tick, [id],
+						"belief \"%s/%s\" has confidence %d, outside 0..100" % [b.subject, b.fact_id, b.confidence]))
+		if npc.memory.size() > npc.memory.cap:
+			out.append(NpcfInvariantFailure.make(&"npcf.inv.memory_cap", world.clock.tick, [id],
+					"memory holds %d records, above its cap of %d" % [npc.memory.size(), npc.memory.cap]))

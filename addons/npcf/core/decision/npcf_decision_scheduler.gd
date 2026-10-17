@@ -20,6 +20,29 @@ func init_npc(world: NpcfWorld, npc: StringName) -> void:
 	n.next_periodic_tick = 1 + phase
 
 
+## Due entries in live order, as rows [npc, due_tick, reason, bypass, rule], for saves.
+func export_due() -> Array:
+	var out: Array = []
+	for npc: StringName in _due:
+		var e: NpcfDueEntry = _due[npc]
+		out.append([npc, e.due_tick, e.reason, e.bypass, e.rule])
+	return out
+
+
+## Replaces the due entries with saved rows (live order kept) and clears the last take.
+func restore_due(rows: Array) -> void:
+	_due.clear()
+	_taken.clear()
+	for row: Array in rows:
+		var npc: StringName = row[0]
+		var e: NpcfDueEntry = NpcfDueEntry.new()
+		e.due_tick = row[1]
+		e.reason = row[2]
+		e.bypass = row[3]
+		e.rule = row[4]
+		_due[npc] = e
+
+
 ## Marks the NPC due now. A bypass request also lets the decision skip hysteresis.
 func mark_due(world: NpcfWorld, npc: StringName, reason: StringName, bypass: bool, rule: StringName = &"") -> void:
 	_add(npc, world.clock.tick, reason, bypass, rule)

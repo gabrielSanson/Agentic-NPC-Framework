@@ -48,6 +48,44 @@ func reset(world: NpcfWorld) -> void:
 			list.append(Step.new(m.id, d.amount))
 
 
+## Macro values in live order, [[macro, value], ...], for saves.
+func export_values() -> Array:
+	var out: Array = []
+	for macro: StringName in _values:
+		out.append([macro, _values[macro]])
+	return out
+
+
+## Rule expiry ticks in live order, [[rule, tick], ...], for saves.
+func export_active() -> Array:
+	var out: Array = []
+	for rule: StringName in _active_until:
+		out.append([rule, _active_until[rule]])
+	return out
+
+
+## Events waiting for the next phase 3, for saves.
+func export_pending() -> Array[NpcfEvent]:
+	return _pending.duplicate()
+
+
+## Rebuilds the director from saved state: the pack's starting values are reset first, then the saved
+## values, expiry ticks and pending events replace them in saved order.
+func restore_state(world: NpcfWorld, values: Array, active: Array, pending: Array[NpcfEvent]) -> void:
+	reset(world)
+	_values.clear()
+	for row: Array in values:
+		var macro: StringName = row[0]
+		var v: float = row[1]
+		_values[macro] = v
+	_active_until.clear()
+	for row: Array in active:
+		var rule: StringName = row[0]
+		var expiry: int = row[1]
+		_active_until[rule] = expiry
+	_pending = pending
+
+
 ## Called by delivery at the end of deliver_pending with that tick's batch.
 func observe(batch: Array[NpcfEvent]) -> void:
 	_pending.append_array(batch)
