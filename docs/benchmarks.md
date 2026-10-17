@@ -55,6 +55,33 @@ The p99 target (4 ms) is not met. On spike ticks the remaining cost is spread ac
 writes for every witness), the decision phase (about 33 NPC decisions per spike tick) and the actions phase.
 The median target (2 ms) is met.
 
+## Round 2: behaviour-preserving speedups (perf-ticks-2)
+
+Cloud sandbox, headless, debug build (Godot 4.7.2). Same command as above. Each row is the median of three runs of
+the bench's `median_ms`, `p99_ms` and `max_ms`. The sandbox drifts by about 1 ms between sessions, so the last
+table is the reliable comparison: `origin/main` and the branch, interleaved in one session, three runs each.
+
+| Step (cumulative) | Median (ms) | p99 (ms) | Max (ms) |
+| --- | --- | --- | --- |
+| Before (`origin/main`, 1e9ccdb) | 6.04 | 24.9 | 44.2 |
+| a. invariant checks read beliefs in place | 3.29 | 23.0 | 40.9 |
+| c. belief key built once per event | 2.98 | 20.1 | 32.3 |
+| d. location-index lookup caches | 3.81 (same-session `HEAD` before d: 3.8 to 4.1) | 20.9 | 32.6 |
+| e. `take_due` sorts by integer key | 2.88 | 20.1 | 32.2 |
+
+Interleaved A/B, three runs each, same session (median of the three runs' values, range of the medians):
+
+| Build | Median (ms) | p99 (ms) | Max (ms) |
+| --- | --- | --- | --- |
+| `origin/main` | 5.98 (5.72 to 6.16) | 24.57 | 40.45 |
+| `perf-ticks-2` (a, c, d, e) | 3.18 (2.65 to 3.51) | 20.21 | 32.32 |
+
+Not kept: fix b (per-recipient allocations). Memory records cannot be shared between recipients because
+`NpcfMemoryLog.append` assigns each record its own `id`, and a recipient-only iteration measured no gain. Fix f
+is in a separate branch.
+
+The p99 target (4 ms) is still not met in a debug build. See `slow-ticks-findings.md`.
+
 ## Bench scene (runtime, 2D)
 
 `samples/toy_room/bench.tscn` runs the same population through the `Npcf` runtime, one 60 fps frame at a time,
