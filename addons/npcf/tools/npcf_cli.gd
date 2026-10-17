@@ -7,15 +7,27 @@ extends SceneTree
 ##                                                run a headless world and check invariants
 ##   bench   --manifest P --scenario S [--npcs N] [--ticks T] [--seed N]
 ##                                                time world steps for a cloned population
+##   providers check --set R [--allow-non-commercial]
+##                                                ask each model provider in a set whether it is up
+##   trace   --manifest P --scenario S --seed N --tick T --npc ID
+##                                                step a headless world T ticks and print one NPC's trace as JSON
+##   smoke   --set R --manifest P --scenario S --npc ID [--text T] [--wav PATH] [--seed N]
+##           [--allow-non-commercial] [--timeout-ms 20000]
+##                                                run every provider check against one NPC and print one line per step
 ## Exit codes: 0 success, 1 errors found, 2 usage.
 
 const BENCH_FRAMES: int = 3600
 const BENCH_SPEED: float = 16.0
+const SMOKE_TEXT: String = "Hello there. Is anyone around?"
 const USAGE: String = """usage: npcf_cli.gd -- <command> [options]
   check   --manifest P [--scenario S]
   resolve --manifest P --scenario S --npc ID
   run     --manifest P --scenario S --seed N --ticks T [--log PATH]
-  bench   --manifest P --scenario S [--npcs 50] [--ticks 1440] [--seed 7]"""
+  bench   --manifest P --scenario S [--npcs 50] [--ticks 1440] [--seed 7]
+  providers check --set R [--allow-non-commercial]
+  trace   --manifest P --scenario S --seed N --tick T --npc ID
+  smoke   --set R --manifest P --scenario S --npc ID [--text T] [--wav PATH] [--seed N]
+          [--allow-non-commercial] [--timeout-ms 20000]"""
 
 
 func _init() -> void:
@@ -33,6 +45,12 @@ func _init() -> void:
 				code = _run(args)
 			"bench":
 				code = _bench(args)
+			"providers":
+				code = _providers(args)
+			"trace":
+				code = _trace(args)
+			"smoke":
+				code = _smoke(args)
 			_:
 				print(USAGE)
 	quit(code)
@@ -113,6 +131,41 @@ func _run(args: PackedStringArray) -> int:
 	return 0
 
 
+## Steps a headless world and prints one NPC's trace as JSON (C5c). Exit 1 for an unknown NPC.
+func _trace(args: PackedStringArray) -> int:
+	var manifest_path: String = _option(args, "--manifest")
+	var scenario_path: String = _option(args, "--scenario")
+	var npc_id: String = _option(args, "--npc")
+	if manifest_path == "" or scenario_path == "" or npc_id == "" \
+			or not _option(args, "--seed").is_valid_int() or not _option(args, "--tick").is_valid_int():
+		print(USAGE)
+		return 2
+	var seed_value: int = _option(args, "--seed").to_int()
+	var ticks: int = _option(args, "--tick").to_int()
+	var loaded: Array = _load_pack(manifest_path, scenario_path)
+	var pack: NpcfLoadedPack = loaded[0]
+	var errors: Array[NpcfConfigError] = loaded[1]
+	if not errors.is_empty():
+		return _print_errors(errors)
+	var scenario: NpcfScenarioDef = ResourceLoader.load(scenario_path, "", ResourceLoader.CACHE_MODE_IGNORE) as NpcfScenarioDef
+	var world: NpcfWorld = NpcfWorldBuilder.build(pack, scenario, seed_value)
+	for _i: int in ticks:
+		var report: NpcfTickReport = world.step()
+		if not report.invariant_failures.is_empty():
+			for f: NpcfInvariantFailure in report.invariant_failures:
+				printerr(f.format())
+			world.dispose()
+			return 1
+	var trace: Dictionary = NpcfTraceService.trace(world, StringName(npc_id))
+	if trace.is_empty():
+		printerr("unknown npc %s" % npc_id)
+		world.dispose()
+		return 1
+	print(JSON.stringify(trace, "\t", true))
+	world.dispose()
+	return 0
+
+
 ## Steps a cloned population and prints step-time statistics (tools only: wall-clock time is allowed here).
 func _bench(args: PackedStringArray) -> int:
 	var manifest_path: String = _option(args, "--manifest")
@@ -163,6 +216,106 @@ func _bench(args: PackedStringArray) -> int:
 
 
 ## A value option read as an int, or the default when absent. A non-integer gives -1 (rejected by the caller).
+## providers check: loads a provider set, checks every provider once, prints one line each. Exit 0 when all are ready.
+func _providers(args: PackedStringArray) -> int:
+	if args.size() < 2 or args[1] != "check":
+		print(USAGE)
+		return 2
+	var set_path: String = _option(args, "--set")
+	if set_path == "":
+		print(USAGE)
+		return 2
+	var loaded: Resource = ResourceLoader.load(set_path, "", ResourceLoader.CACHE_MODE_IGNORE)
+	var providers_set: NpcfProviderSet = loaded as NpcfProviderSet
+	if providers_set == null:
+		print("could not load provider set %s" % set_path)
+		return 1
+	var gw: NpcfProviderGateway = NpcfProviderGateway.new()
+	gw.allow_non_commercial = args.has("--allow-non-commercial")
+	for cfg: NpcfProviderConfig in providers_set.providers:
+		gw.add_provider(cfg)
+	gw.check_all_blocking(15000)
+	var all_ready: bool = true
+	for id: StringName in gw.ids():
+		var cfg: NpcfProviderConfig = gw.config(id)
+		var state: StringName = gw.state(id)
+		var kind_name: String = NpcfProviderConfig.Kind.keys()[cfg.kind]
+		var line: String = "%s  %s  %s  %s  %s" % [id, kind_name, cfg.adapter, cfg.base_url, state]
+		var why: String = gw.reason(id)
+		if why != "":
+			line += "  (" + why + ")"
+		print(line)
+		if state != &"ready":
+			all_ready = false
+	gw.close()
+	gw.free()
+	return 0 if all_ready else 1
+
+
+## Provider smoke check (C6c): loads a pack, a scenario and a provider set, starts the runtime and runs every step of
+## NpcfSmoke against one NPC. Prints one line per step. Exit 0 when all are OK, 1 when one fails, 2 on bad usage.
+func _smoke(args: PackedStringArray) -> int:
+	var set_path: String = _option(args, "--set")
+	var manifest_path: String = _option(args, "--manifest")
+	var scenario_path: String = _option(args, "--scenario")
+	var npc_id: String = _option(args, "--npc")
+	var seed_value: int = _int_option(args, "--seed", 7)
+	var timeout_ms: int = _int_option(args, "--timeout-ms", 20000)
+	if set_path == "" or manifest_path == "" or scenario_path == "" or npc_id == "" or seed_value < 0 or timeout_ms < 1:
+		print(USAGE)
+		return 2
+	var text: String = _option(args, "--text")
+	if text == "":
+		text = SMOKE_TEXT
+	var wav_pcm: PackedByteArray = PackedByteArray()
+	var wav_path: String = _option(args, "--wav")
+	if wav_path != "":
+		if not FileAccess.file_exists(wav_path):
+			printerr("npcf: cannot read %s" % wav_path)
+			return 2
+		wav_pcm = NpcfWav.read_pcm16_mono(FileAccess.get_file_as_bytes(wav_path), 16000)
+		if wav_pcm.is_empty():
+			printerr("npcf: wav must be 16 kHz mono 16-bit PCM")
+			return 2
+	var loaded: Array = _load_pack(manifest_path, scenario_path)
+	var errors: Array[NpcfConfigError] = loaded[1]
+	if not errors.is_empty():
+		return _print_errors(errors)
+	var manifest: NpcfPackManifest = ResourceLoader.load(manifest_path, "", ResourceLoader.CACHE_MODE_IGNORE) as NpcfPackManifest
+	var scenario: NpcfScenarioDef = ResourceLoader.load(scenario_path, "", ResourceLoader.CACHE_MODE_IGNORE) as NpcfScenarioDef
+	var in_cast: bool = false
+	for entry: NpcfCastEntry in scenario.cast:
+		if entry != null and entry.character != null and String(entry.character.id) == npc_id:
+			in_cast = true
+	if not in_cast:
+		printerr("npcf: no cast entry for \"%s\" in %s" % [npc_id, scenario_path])
+		return 1
+	var providers_set: NpcfProviderSet = ResourceLoader.load(set_path, "", ResourceLoader.CACHE_MODE_IGNORE) as NpcfProviderSet
+	if providers_set == null:
+		printerr("npcf: could not load provider set %s" % set_path)
+		return 1
+	if args.has("--allow-non-commercial"):
+		ProjectSettings.set_setting("npcf/providers/allow_non_commercial", true)
+	var rt: NpcfRuntime = NpcfRuntime.new()
+	rt.auto_process = false
+	root.add_child(rt)
+	var code: int = 1
+	var started: Error = rt.start(manifest, scenario, seed_value)
+	if started != OK:
+		printerr("npcf: runtime did not start (%s)" % error_string(started))
+	elif rt.use_providers(providers_set) != OK:
+		printerr("npcf: could not use provider set %s" % set_path)
+	else:
+		var report: NpcfSmoke.Report = NpcfSmoke.run(rt, StringName(npc_id), text, wav_pcm, timeout_ms)
+		for line: String in report.lines():
+			print(line)
+		code = 0 if report.ok() else 1
+	rt.stop()
+	root.remove_child(rt)
+	rt.free()
+	return code
+
+
 func _int_option(args: PackedStringArray, name: String, default: int) -> int:
 	var text: String = _option(args, name)
 	if text == "":

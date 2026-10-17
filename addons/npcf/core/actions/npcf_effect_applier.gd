@@ -47,6 +47,17 @@ func validate(world: NpcfWorld, change: NpcfStateChange) -> String:
 	return "unknown change kind %d" % change.kind
 
 
+## Applies one NPC's need deltas in dictionary order, as NEED_DELTA changes with no events suppressed.
+## The NPC and its needs are known to exist (the builder creates them), so nothing is validated.
+func apply_need_deltas(world: NpcfWorld, npc: StringName, deltas: Dictionary[StringName, int]) -> void:
+	var n: NpcfNpcState = world.npc(npc)
+	if n == null:
+		return
+	for need: StringName in deltas:
+		var old: int = n.needs.get(need, 0)
+		world.need_system.set_need(world, npc, need, old + deltas[need], false)
+
+
 ## Expands an action's effect definitions into changes for `npc`. Returns an Array[NpcfStateChange],
 ## or null when a HOOK effect failed (the caller then fails the action with hook_error).
 static func expand(world: NpcfWorld, effects: Array[NpcfEffectDef], npc: StringName, args: Dictionary[StringName, Variant]) -> Variant:
@@ -180,7 +191,12 @@ func _set_fact(world: NpcfWorld, subject: StringName, fact_id: StringName, value
 	var def: NpcfFactDef = world.state.fact_def(fact_id)
 	var old: Variant = world.state.get_fact(subject, fact_id)
 	var changed: bool = old != value
-	world.state.write(subject, fact_id, value)
+	if fact_id == NpcfFramework.AT and world.npcs.has(subject):
+		var from: StringName = world.location_of(subject)
+		world.state.write(subject, fact_id, value)
+		world.occupancy.move(subject, from, world.location_of(subject))
+	else:
+		world.state.write(subject, fact_id, value)
 	if not changed or quiet or fact_id == NpcfFramework.AT:
 		return
 	var e: NpcfEvent = NpcfEvent.new()

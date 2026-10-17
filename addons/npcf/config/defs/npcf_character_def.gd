@@ -21,3 +21,8 @@ extends Resource
 @export var extra_goals: Array[NpcfGoalDef] = []
 ## Appended to the personalities' voice text.
 @export_multiline var voice: String = ""
+## Appended to the personalities' speech_instruction.
+@export_multiline var speech_instruction: String = ""
+## A fixed voice of the speech server (Breeze voice_id). Empty = the dialogue default, else the server designs
+## a voice from the instruction.
+@export var speech_voice_id: String = ""

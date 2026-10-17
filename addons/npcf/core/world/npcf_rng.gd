@@ -32,3 +32,25 @@ func keys() -> Array[String]:
 	var out: Array[String] = []
 	out.assign(_streams.keys())
 	return out
+
+
+## Drops every stream (before a restore).
+func clear() -> void:
+	_streams.clear()
+
+
+## Stream rows in live order, [key, seed, state], for saves.
+func export_streams() -> Array:
+	var out: Array = []
+	for key: String in _streams:
+		var s: RandomNumberGenerator = _streams[key]
+		out.append([key, s.seed, s.state])
+	return out
+
+
+## Adds a stream with its saved seed and state. Call in saved order.
+func restore_stream(key: String, p_seed: int, p_state: int) -> void:
+	var s: RandomNumberGenerator = RandomNumberGenerator.new()
+	s.seed = p_seed
+	s.state = p_state
+	_streams[key] = s

@@ -7,6 +7,9 @@ extends RefCounted
 ## with a property path starting from its root; an embedded sub-resource is reported at the
 ## owning file with the full property chain (`considerations[0].curve`).
 
+## The placeholders an authored line may use (checked at load).
+const LINE_PLACEHOLDERS: PackedStringArray = ["npc_name", "location_name", "time_of_day", "result"]
+
 const HOOK_BASES: Dictionary[StringName, String] = {
 	&"consideration": "NpcfConsiderationHook", &"condition": "NpcfConditionHook",
 	&"effect": "NpcfEffectHook", &"mapper": "NpcfEventMapperHook", &"resolver": "NpcfResolverHook",
@@ -67,6 +70,21 @@ func load_pack(manifest: NpcfPackManifest, framework_version: String = NpcfVersi
 	var no_map: Dictionary[StringName, Resource] = {}
 	_register_list(manifest.reactions, &"reaction", mf, "reactions", no_map)
 	_register_list(manifest.invariants, &"invariant", mf, "invariants", no_map)
+	if manifest.social != null:
+		var sf: String = _file(mf, manifest.social)
+		var sp: String = _path(mf, "", "social", manifest.social)
+		_register_list(manifest.social.dims, &"relationship dimension", sf, _join(sp, "dims"), _pack.rel_dims)
+		_register_list(manifest.social.tag_transitions, &"tag transition", sf, _join(sp, "tag_transitions"), no_map)
+	if manifest.director != null:
+		var df: String = _file(mf, manifest.director)
+		var dp: String = _path(mf, "", "director", manifest.director)
+		_register_list(manifest.director.macros, &"macro", df, _join(dp, "macros"), _pack.macros)
+		_register_list(manifest.director.rules, &"director rule", df, _join(dp, "rules"), no_map)
+	if manifest.dialogue != null:
+		var ddf: String = _file(mf, manifest.dialogue)
+		var ddp: String = _path(mf, "", "dialogue", manifest.dialogue)
+		_register_list(manifest.dialogue.intents, &"intent", ddf, _join(ddp, "intents"), _pack.intents)
+		_register_list(manifest.dialogue.presentation, &"presentation question", ddf, _join(ddp, "presentation"), no_map)
 	if manifest.location_graph != null:
 		var gf: String = _file(mf, manifest.location_graph)
 		var gp: String = _path(mf, "", "location_graph", manifest.location_graph)
@@ -98,6 +116,12 @@ func load_pack(manifest: NpcfPackManifest, framework_version: String = NpcfVersi
 		_character(manifest.characters[i], _file(mf, manifest.characters[i]), _path(mf, "", "characters[%d]" % i, manifest.characters[i]))
 	for i: int in manifest.schedules.size():
 		_schedule(manifest.schedules[i], _file(mf, manifest.schedules[i]), _path(mf, "", "schedules[%d]" % i, manifest.schedules[i]))
+	if manifest.social != null:
+		_social(manifest.social, _file(mf, manifest.social), _path(mf, "", "social", manifest.social))
+	if manifest.director != null:
+		_director(manifest.director, _file(mf, manifest.director), _path(mf, "", "director", manifest.director))
+	if manifest.dialogue != null:
+		_dialogue(manifest.dialogue, _file(mf, manifest.dialogue), _path(mf, "", "dialogue", manifest.dialogue))
 	for i: int in manifest.reactions.size():
 		_reaction(manifest.reactions[i], _file(mf, manifest.reactions[i]), _path(mf, "", "reactions[%d]" % i, manifest.reactions[i]))
 	for i: int in manifest.invariants.size():
@@ -105,6 +129,10 @@ func load_pack(manifest: NpcfPackManifest, framework_version: String = NpcfVersi
 	if manifest.location_graph != null:
 		_location_graph(manifest.location_graph, _file(mf, manifest.location_graph), _path(mf, "", "location_graph", manifest.location_graph))
 	_sim(_pack.sim, _file(mf, manifest.sim) if manifest.sim != null else mf, _path(mf, "", "sim", manifest.sim) if manifest.sim != null else "sim")
+	_pack.social = manifest.social if manifest.social != null else NpcfSocialDef.new()
+	_pack.rumor_rules = _pack.social.rumors if _pack.social.rumors != null else NpcfRumorRules.new()
+	_pack.director = manifest.director if manifest.director != null else NpcfDirectorDef.new()
+	_pack.dialogue = manifest.dialogue
 
 	for r: NpcfReactionRuleDef in manifest.reactions:
 		if r != null:
@@ -178,6 +206,24 @@ func check_scenario(pack: NpcfLoadedPack, scenario: NpcfScenarioDef) -> Array[Np
 			continue
 		if not seen.has(rs.from_character.id) or not seen.has(rs.to_character.id):
 			_err(rf, rp, "relationship seed names a character outside the cast", "")
+		for dim: StringName in rs.values:
+			var vp: String = _join(rp, "values[\"%s\"]" % dim)
+			if not pack.rel_dims.has(dim):
+				_require(&"relationship dimension", dim, rf, vp)
+				continue
+			var d: NpcfRelDimDef = pack.rel_dims[dim]
+			var v: int = rs.values[dim]
+			if v < d.min_value or v > d.max_value:
+				_err(rf, vp, "%d is outside %d..%d" % [v, d.min_value, d.max_value], "")
+	for key: StringName in scenario.macro_start:
+		var mp: String = "macro_start[\"%s\"]" % key
+		if not pack.macros.has(key):
+			_require(&"macro", key, f, mp)
+			continue
+		var m: NpcfMacroVarDef = pack.macros[key]
+		var mv: float = scenario.macro_start[key]
+		if mv < m.min_value or mv > m.max_value:
+			_err(f, mp, "%s is outside %s..%s" % [mv, m.min_value, m.max_value], "")
 	if pack.location_index != null and not starts.is_empty():
 		var reachable: Array[StringName] = pack.location_index.reachable_from(starts)
 		for id: StringName in pack.location_index.location_ids:
@@ -388,6 +434,8 @@ func _consideration(c: NpcfConsiderationDef, file: String, path: String) -> void
 		NpcfConsiderationDef.InputKind.RELATIONSHIP:
 			if String(c.dim) == "":
 				_err(file, _join(path, "dim"), "a RELATIONSHIP input needs a dimension", "")
+			else:
+				_require(&"relationship dimension", c.dim, file, _join(path, "dim"))
 	if c.curve == NpcfConsiderationDef.CurveKind.POWER and c.exponent <= 0.0:
 		_err(file, _join(path, "exponent"), "must be positive", "")
 
@@ -493,8 +541,13 @@ func _effect(e: NpcfEffectDef, file: String, path: String, action: NpcfActionDef
 				_err(file, _join(path, "hook"), "needs a hook script", "")
 			else:
 				_hook(e.hook, &"effect", file, _join(path, "hook"))
-		NpcfEffectDef.Kind.REL_DELTA, NpcfEffectDef.Kind.SHARE_BELIEFS:
-			pass  # validated with the social definitions in task 17
+		NpcfEffectDef.Kind.REL_DELTA:
+			if String(e.dim) == "":
+				_err(file, _join(path, "dim"), "a REL_DELTA effect needs a relationship dimension", "")
+			else:
+				_require(&"relationship dimension", e.dim, file, _join(path, "dim"))
+		NpcfEffectDef.Kind.SHARE_BELIEFS:
+			pass  # the listeners come from the speaker's location; nothing to check
 
 
 func _action(a: NpcfActionDef, file: String, path: String) -> void:
@@ -568,6 +621,15 @@ func _archetype(a: NpcfArchetypeDef, file: String, path: String) -> void:
 		_require_def(&"schedule", a.schedule, file, _join(path, "schedule"))
 	if a.decision_period_ticks < 1:
 		_err(file, _join(path, "decision_period_ticks"), "must be at least 1", "")
+	for k: StringName in a.rel_defaults:
+		var kp: String = _join(path, "rel_defaults[\"%s\"]" % k)
+		if not _pack.rel_dims.has(k):
+			_require(&"relationship dimension", k, file, kp)
+			continue
+		var d: NpcfRelDimDef = _pack.rel_dims[k]
+		var v: int = a.rel_defaults[k]
+		if v < d.min_value or v > d.max_value:
+			_err(file, kp, "%d is outside %d..%d" % [v, d.min_value, d.max_value], "")
 
 
 func _personality(p: NpcfPersonalityDef, file: String, path: String) -> void:
@@ -693,6 +755,381 @@ func _location_graph(g: NpcfLocationGraph, file: String, path: String) -> void:
 				_err(ef, _join(ep, end), "unknown location \"%s\"" % loc.id, "add it to the graph's locations")
 		if e.travel_ticks < 1:
 			_err(ef, _join(ep, "travel_ticks"), "%d must be at least 1" % e.travel_ticks, "")
+
+
+func _social(s: NpcfSocialDef, file: String, path: String) -> void:
+	for i: int in s.dims.size():
+		var d: NpcfRelDimDef = s.dims[i]
+		if d == null:
+			_err(file, _join(path, "dims[%d]" % i), "is empty", "")
+			continue
+		_rel_dim(d, _file(file, d), _path(file, path, "dims[%d]" % i, d))
+	for i: int in s.delta_rules.size():
+		var r: NpcfRelDeltaRule = s.delta_rules[i]
+		if r == null:
+			_err(file, _join(path, "delta_rules[%d]" % i), "is empty", "")
+			continue
+		_rel_delta(r, _file(file, r), _path(file, path, "delta_rules[%d]" % i, r))
+	for i: int in s.tag_transitions.size():
+		var t: NpcfTagTransitionDef = s.tag_transitions[i]
+		if t == null:
+			_err(file, _join(path, "tag_transitions[%d]" % i), "is empty", "")
+			continue
+		_tag_transition(t, _file(file, t), _path(file, path, "tag_transitions[%d]" % i, t))
+	if s.rumors != null:
+		_rumors(s.rumors, _file(file, s.rumors), _path(file, path, "rumors", s.rumors))
+
+
+func _rel_dim(d: NpcfRelDimDef, file: String, path: String) -> void:
+	if not _first_visit(d):
+		return
+	if d.min_value >= d.max_value:
+		_err(file, _join(path, "min_value"), "min_value must be less than max_value", "")
+		return
+	if d.default_value < d.min_value or d.default_value > d.max_value:
+		_err(file, _join(path, "default_value"), "%d is outside %d..%d" % [d.default_value, d.min_value, d.max_value], "")
+	var names: Array[StringName] = []
+	names.assign(d.bands.keys())
+	for name: StringName in names:
+		var r: Vector2i = d.bands[name]
+		var bp: String = _join(path, "bands[\"%s\"]" % name)
+		if String(name) == "":
+			_err(file, _join(path, "bands"), "a band has an empty name", "")
+		if r.x > r.y:
+			_err(file, bp, "band %d..%d is empty" % [r.x, r.y], "x must not be greater than y")
+		elif r.x < d.min_value or r.y > d.max_value:
+			_err(file, bp, "band %d..%d is outside %d..%d" % [r.x, r.y, d.min_value, d.max_value], "")
+	for i: int in names.size():
+		for j: int in range(i + 1, names.size()):
+			var a: Vector2i = d.bands[names[i]]
+			var b: Vector2i = d.bands[names[j]]
+			if a.x <= b.y and b.x <= a.y:
+				_err(file, _join(path, "bands"), "bands \"%s\" and \"%s\" overlap" % [names[i], names[j]], "bands must not share a value")
+
+
+func _rel_delta(r: NpcfRelDeltaRule, file: String, path: String) -> void:
+	if r.event_kind == null:
+		_err(file, _join(path, "event_kind"), "no event kind set", "")
+	else:
+		_require_def(&"event kind", r.event_kind, file, _join(path, "event_kind"))
+	if r.dim == null:
+		_err(file, _join(path, "dim"), "no relationship dimension set", "")
+	else:
+		_require_def(&"relationship dimension", r.dim, file, _join(path, "dim"))
+	if r.to_role == NpcfRelDeltaRule.Role.WITNESS:
+		_err(file, _join(path, "to_role"), "to_role must be ACTOR_0 or TARGET_0", "a relationship is held toward a participant")
+	elif r.from_role == r.to_role:
+		_err(file, _join(path, "from_role"), "from_role and to_role must differ", "a participant has no relationship to itself")
+
+
+func _tag_transition(t: NpcfTagTransitionDef, file: String, path: String) -> void:
+	if not _first_visit(t):
+		return
+	_tags(t.requires_tags, file, _join(path, "requires_tags"))
+	_tags(t.add, file, _join(path, "add"))
+	_tags(t.remove, file, _join(path, "remove"))
+	if t.add.is_empty() and t.remove.is_empty():
+		_err(file, path, "changes no tags", "add or remove at least one tag")
+	if t.condition != null:
+		_condition(t.condition, _file(file, t.condition), _path(file, path, "condition", t.condition), [] as Array[NpcfFieldDef])
+
+
+func _rumors(r: NpcfRumorRules, file: String, path: String) -> void:
+	if r.max_per_period < 1:
+		_err(file, _join(path, "max_per_period"), "must be at least 1", "")
+	if r.period_ticks < 1:
+		_err(file, _join(path, "period_ticks"), "must be at least 1", "")
+	if r.beliefs_per_share < 1:
+		_err(file, _join(path, "beliefs_per_share"), "must be at least 1", "")
+
+
+func _director(d: NpcfDirectorDef, file: String, path: String) -> void:
+	for i: int in d.macros.size():
+		var m: NpcfMacroVarDef = d.macros[i]
+		if m == null:
+			_err(file, _join(path, "macros[%d]" % i), "is empty", "")
+			continue
+		_macro(m, _file(file, m), _path(file, path, "macros[%d]" % i, m))
+	for i: int in d.rules.size():
+		var r: NpcfDirectorRuleDef = d.rules[i]
+		if r == null:
+			_err(file, _join(path, "rules[%d]" % i), "is empty", "")
+			continue
+		_director_rule(r, _file(file, r), _path(file, path, "rules[%d]" % i, r))
+	if d.hook != null:
+		_hook(d.hook, &"director", file, _join(path, "hook"))
+	if d.hook_cadence_ticks < 1:
+		_err(file, _join(path, "hook_cadence_ticks"), "must be at least 1", "")
+
+
+func _dialogue(d: NpcfDialogueDef, file: String, path: String) -> void:
+	if d.confidence_threshold < 0.0 or d.confidence_threshold > 1.0:
+		_err(file, _join(path, "confidence_threshold"), "%s is outside 0..1" % d.confidence_threshold, "")
+	if d.last_talk_window_ticks < 0:
+		_err(file, _join(path, "last_talk_window_ticks"), "must be at least 0", "")
+	if d.fallback_intent == null:
+		_err(file, _join(path, "fallback_intent"), "no fallback intent set", "name one of the intents")
+	elif not d.intents.has(d.fallback_intent):
+		_err(file, _join(path, "fallback_intent"), "the fallback intent is not listed in intents", "add it to intents")
+	else:
+		_require_def(&"intent", d.fallback_intent, file, _join(path, "fallback_intent"))
+	for i: int in d.intents.size():
+		var it: NpcfIntentDef = d.intents[i]
+		var ip: String = _join(path, "intents[%d]" % i)
+		if it == null:
+			_err(file, ip, "is empty", "")
+			continue
+		_intent(it, _file(file, it), _path(file, path, "intents[%d]" % i, it))
+	if d.band_dim != null:
+		_require_def(&"relationship dimension", d.band_dim, file, _join(path, "band_dim"))
+	for i: int in d.lines.size():
+		var ls: NpcfDialogueLineSet = d.lines[i]
+		var lp: String = _join(path, "lines[%d]" % i)
+		if ls == null:
+			_err(file, lp, "is empty", "")
+			continue
+		if ls.intent == null:
+			_err(file, _join(lp, "intent"), "no intent set", "")
+		else:
+			_require_def(&"intent", ls.intent, file, _join(lp, "intent"))
+		if ls.result == &"":
+			_err(file, _join(lp, "result"), "result is empty", "")
+		if ls.band != &"":
+			if d.band_dim == null:
+				_err(file, _join(lp, "band"), "a band needs band_dim to be set", "set band_dim")
+			elif not d.band_dim.bands.has(ls.band):
+				_err(file, _join(lp, "band"), "\"%s\" is not a band of %s" % [ls.band, d.band_dim.id], "")
+		if ls.lines.is_empty():
+			_err(file, _join(lp, "lines"), "no lines", "add at least one line")
+		for line: String in ls.lines:
+			_placeholders(line, LINE_PLACEHOLDERS, file, _join(lp, "lines"))
+	if d.default_lines.is_empty():
+		_err(file, _join(path, "default_lines"), "must not be empty", "add at least one line")
+	for line: String in d.default_lines:
+		_placeholders(line, LINE_PLACEHOLDERS, file, _join(path, "default_lines"))
+	for i: int in d.presentation.size():
+		var q: NpcfPresentationQuestionDef = d.presentation[i]
+		if q == null:
+			_err(file, _join(path, "presentation[%d]" % i), "is empty", "")
+			continue
+		_presentation(q, _file(file, q), _path(file, path, "presentation[%d]" % i, q))
+	if d.delivery_question != &"":
+		var dq: NpcfPresentationQuestionDef = null
+		for q: NpcfPresentationQuestionDef in d.presentation:
+			if q != null and q.id == d.delivery_question:
+				dq = q
+		if dq == null:
+			_err(file, _join(path, "delivery_question"), "\"%s\" is not a presentation question" % d.delivery_question, "use the ID of one of the presentation questions")
+		else:
+			for key: StringName in d.delivery_instructions:
+				if not dq.options.has(key):
+					_err(file, _join(path, "delivery_instructions"), "\"%s\" is not an option of %s" % [key, dq.id], "")
+	elif not d.delivery_instructions.is_empty():
+		_err(file, _join(path, "delivery_instructions"), "set but delivery_question is empty", "set delivery_question or clear delivery_instructions")
+	if d.max_prompt_facts < 1 or d.max_prompt_facts > 32:
+		_err(file, _join(path, "max_prompt_facts"), "%d is outside 1..32" % d.max_prompt_facts, "")
+	if d.lore != null and (d.lore.max_line_chars < 20 or d.lore.max_line_chars > 2000):
+		_err(file, _join(_join(path, "lore"), "max_line_chars"), "%d is outside 20..2000" % d.lore.max_line_chars, "")
+	if d.llm != null:
+		if d.llm.max_tokens < 16:
+			_err(file, _join(_join(path, "llm"), "max_tokens"), "must be at least 16", "")
+		if d.llm.temperature < 0.0 or d.llm.temperature > 2.0:
+			_err(file, _join(_join(path, "llm"), "temperature"), "%s is outside 0..2" % d.llm.temperature, "")
+	for key: StringName in d.templates:
+		var tp: String = _join(path, "templates[%s]" % key)
+		if not _pack.archetypes.has(key):
+			_err(file, tp, "\"%s\" is not an archetype" % key, "key templates by an archetype ID")
+		var t: NpcfPromptTemplate = d.templates[key]
+		if t == null:
+			_err(file, tp, "is empty", "assign a template")
+		else:
+			_template(t, _file(file, t), _path(file, tp, "", t))
+	if d.default_template != null:
+		_template(d.default_template, _file(file, d.default_template), _path(file, path, "default_template", d.default_template))
+
+
+## A prompt template: every {{name}} is a declared macro (or the built-in situation), macros are well formed and
+## the variants have unique IDs (R13.5).
+func _template(t: NpcfPromptTemplate, file: String, path: String) -> void:
+	if not _first_visit(t):
+		return
+	var declared: Dictionary[StringName, bool] = {}
+	for i: int in t.macros.size():
+		var m: NpcfPromptMacro = t.macros[i]
+		var mp: String = _join(path, "macros[%d]" % i)
+		if m == null:
+			_err(file, mp, "is empty", "")
+			continue
+		var mname: String = str(m.name)
+		if not _macro_name_ok(mname):
+			_err(file, _join(mp, "name"), "\"%s\" is not a valid macro name" % mname, "use lowercase letters, digits and underscores; not situation")
+		elif declared.has(m.name):
+			_err(file, _join(mp, "name"), "macro \"%s\" is declared twice" % mname, "")
+		declared[m.name] = true
+		match m.source:
+			NpcfPromptMacro.Source.FACT:
+				if m.fact == null:
+					_err(file, _join(mp, "fact"), "a FACT macro needs a fact", "")
+				else:
+					_require_def(&"fact", m.fact, file, _join(mp, "fact"))
+			NpcfPromptMacro.Source.NEED_BAND:
+				if m.need == null:
+					_err(file, _join(mp, "need"), "a NEED_BAND macro needs a need", "")
+				else:
+					_require_def(&"need", m.need, file, _join(mp, "need"))
+			NpcfPromptMacro.Source.RELATIONSHIP_BAND:
+				if m.dim == null:
+					_err(file, _join(mp, "dim"), "a RELATIONSHIP_BAND macro needs a dimension", "")
+				else:
+					_require_def(&"relationship dimension", m.dim, file, _join(mp, "dim"))
+	var texts: Array[String] = [t.system_text, t.scenario_text]
+	for i: int in t.variants.size():
+		var v: NpcfPromptVariant = t.variants[i]
+		var vp: String = _join(path, "variants[%d]" % i)
+		if v == null:
+			_err(file, vp, "is empty", "")
+			continue
+		if v.id == &"":
+			_err(file, _join(vp, "id"), "variant has no id", "")
+		for j: int in i:
+			if t.variants[j] != null and t.variants[j].id == v.id:
+				_err(file, _join(vp, "id"), "variant \"%s\" is declared twice" % v.id, "")
+				break
+		if v.condition != null:
+			_condition(v.condition, _file(file, v.condition), _path(file, vp, "condition", v.condition), [] as Array[NpcfFieldDef])
+		texts.append(v.text)
+	var seen: Dictionary[String, bool] = {}
+	var re: RegEx = RegEx.create_from_string("\\{\\{([a-z_][a-z0-9_]*)\\}\\}")
+	for text: String in texts:
+		for m: RegExMatch in re.search_all(text):
+			var name: String = m.get_string(1)
+			if name == "situation" or seen.has(name):
+				continue
+			seen[name] = true
+			if not declared.has(StringName(name)):
+				_err(file, path, "\"{{%s}}\" is not a declared macro" % name, "add an NpcfPromptMacro named %s" % name)
+
+
+static func _macro_name_ok(name: String) -> bool:
+	if name == "situation":
+		return false
+	var re: RegEx = RegEx.create_from_string("^[a-z_][a-z0-9_]*$")
+	return re.search(name) != null
+
+
+func _intent(it: NpcfIntentDef, file: String, path: String) -> void:
+	if not _first_visit(it):
+		return
+	_id(it.id, file, _join(path, "id"))
+	for i: int in it.patterns.size():
+		var re: RegEx = RegEx.new()
+		if re.compile(it.patterns[i]) != OK:
+			_err(file, _join(path, "patterns[%d]" % i), "pattern %d does not compile" % i, "fix the RegEx")
+	if it.outcome == null and it.hook == null:
+		_err(file, path, "needs an outcome or a hook", "set one of them")
+	if it.outcome != null:
+		var op: String = _join(path, "outcome")
+		if it.outcome.result == &"":
+			_err(file, _join(op, "result"), "result is empty", "")
+		for dim: StringName in it.outcome.rel_deltas:
+			if not _pack.rel_dims.has(dim):
+				_err(file, _join(_join(op, "rel_deltas"), str(dim)), "\"%s\" is not a relationship dimension" % dim, "")
+		for i: int in it.outcome.reveal.size():
+			var f: NpcfFactDef = it.outcome.reveal[i]
+			var fp: String = _join(op, "reveal[%d]" % i)
+			if f == null:
+				_err(file, fp, "is empty", "")
+			else:
+				_require_def(&"fact", f, file, fp)
+	if it.hook != null:
+		_hook(it.hook, &"intent", file, _join(path, "hook"))
+
+
+func _presentation(q: NpcfPresentationQuestionDef, file: String, path: String) -> void:
+	if not _first_visit(q):
+		return
+	_id(q.id, file, _join(path, "id"))
+	if q.options.is_empty():
+		_err(file, _join(path, "options"), "must not be empty", "add at least one option")
+	for i: int in q.options.size():
+		if q.options[i] == &"":
+			_err(file, _join(path, "options[%d]" % i), "option is empty", "")
+	for key: StringName in q.option_descriptions:
+		if not q.options.has(key):
+			_err(file, _join(path, "option_descriptions"), "\"%s\" is not an option" % key, "")
+	for i: int in q.rules.size():
+		var r: NpcfPresentationRule = q.rules[i]
+		var rp: String = _join(path, "rules[%d]" % i)
+		if r == null:
+			_err(file, rp, "is empty", "")
+			continue
+		if r.intent != null:
+			_require_def(&"intent", r.intent, file, _join(rp, "intent"))
+		if not q.options.has(r.answer):
+			_err(file, _join(rp, "answer"), "\"%s\" is not an option of %s" % [r.answer, q.id], "pick one of the options")
+		if r.condition != null:
+			_condition(r.condition, _file(file, r.condition), _path(file, rp, "condition", r.condition), [] as Array[NpcfFieldDef])
+
+
+## Every {name} placeholder in an authored line must be one of `allowed`.
+func _placeholders(text: String, allowed: PackedStringArray, file: String, path: String) -> void:
+	var re: RegEx = RegEx.create_from_string("\\{([a-z_]+)\\}")
+	for m: RegExMatch in re.search_all(text):
+		var name: String = m.get_string(1)
+		if not allowed.has(name):
+			_err(file, path, "placeholder {%s} is not allowed here" % name, "use one of: " + ", ".join(allowed))
+
+
+func _macro(m: NpcfMacroVarDef, file: String, path: String) -> void:
+	if not _first_visit(m):
+		return
+	if m.min_value >= m.max_value:
+		_err(file, _join(path, "max_value"), "max_value must be greater than min_value", "")
+	elif m.start < m.min_value or m.start > m.max_value:
+		_err(file, _join(path, "start"), "%s is outside %s..%s" % [m.start, m.min_value, m.max_value], "")
+	for i: int in m.deltas.size():
+		var d: NpcfMacroDelta = m.deltas[i]
+		var dp: String = _join(path, "deltas[%d]" % i)
+		if d == null:
+			_err(file, dp, "is empty", "")
+		elif d.event_kind == null:
+			_err(file, _join(dp, "event_kind"), "no event kind set", "")
+		else:
+			_require_def(&"event kind", d.event_kind, file, _join(dp, "event_kind"))
+
+
+func _director_rule(r: NpcfDirectorRuleDef, file: String, path: String) -> void:
+	if not _first_visit(r):
+		return
+	if r.cadence_ticks < 1:
+		_err(file, _join(path, "cadence_ticks"), "must be at least 1", "")
+	if r.duration_ticks < 1:
+		_err(file, _join(path, "duration_ticks"), "must be at least 1", "")
+	if r.priority < 0.0 or r.priority > 1.0:
+		_err(file, _join(path, "priority"), "%s is outside 0.0..1.0" % r.priority, "")
+	if r.goal == null:
+		_err(file, _join(path, "goal"), "no goal set", "")
+	else:
+		_require_def(&"goal", r.goal, file, _join(path, "goal"))
+	if r.target == null:
+		_err(file, _join(path, "target"), "needs a target tag query", "")
+	else:
+		var tp: String = _join(path, "target")
+		_tags(r.target.tags_all, file, _join(tp, "tags_all"))
+		_tags(r.target.tags_any, file, _join(tp, "tags_any"))
+		_tags(r.target.tags_none, file, _join(tp, "tags_none"))
+	for i: int in r.conditions.size():
+		var c: NpcfMacroCondition = r.conditions[i]
+		var cp: String = _join(path, "conditions[%d]" % i)
+		if c == null:
+			_err(file, cp, "is empty", "")
+			continue
+		if c.macro == null:
+			_err(file, _join(cp, "macro"), "no macro set", "")
+		else:
+			_require_def(&"macro", c.macro, file, _join(cp, "macro"))
+		if c.compare == NpcfConditionDef.Compare.EXISTS:
+			_err(file, _join(cp, "compare"), "EXISTS does not apply to a macro", "use EQ, NE, LT, LE, GT or GE")
 
 
 func _sim(s: NpcfSimConfig, file: String, path: String) -> void:

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="NpcfActionDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_action_def.gd" id="1_wave"]
+
+[resource]
+script = ExtResource("1_wave")
+id = &"toy.wave"
+tier = 1
+duration_ticks = 1
+presentation_cue = &"toy.wave"

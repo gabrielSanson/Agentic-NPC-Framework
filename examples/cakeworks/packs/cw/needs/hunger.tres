@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="NpcfNeedDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_need_def.gd" id="1_gchw5"]
+
+[resource]
+script = ExtResource("1_gchw5")
+id = &"cw.hunger"
+start = 300
+change_per_tick = 2
+thresholds = Dictionary[StringName, int]({
+&"cw.peckish": 600,
+&"cw.starving": 850
+})

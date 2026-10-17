@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="NpcfActionDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_field_def.gd" id="1_e5wk6"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_effect_def.gd" id="2_mgcp8"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_consideration_def.gd" id="3_m06bt"]
+[ext_resource type="Resource" path="res://packs/cw/events/chatted.tres" id="4_nm313"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_condition_def.gd" id="5_gw3tq"]
+[ext_resource type="Script" path="res://packs/cw/hooks/cw_someone_here.gd" id="6_xwnp8"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_action_def.gd" id="7_vwweg"]
+
+[sub_resource type="Resource" id="Resource_ukr2r"]
+script = ExtResource("2_mgcp8")
+kind = 7
+value = null
+event_kind = ExtResource("4_nm313")
+
+[sub_resource type="Resource" id="Resource_i2b31"]
+script = ExtResource("2_mgcp8")
+kind = 6
+value = null
+
+[sub_resource type="Resource" id="Resource_f1rvu"]
+script = ExtResource("5_gw3tq")
+op_kind = 7
+value = null
+hook = ExtResource("6_xwnp8")
+
+[resource]
+script = ExtResource("7_vwweg")
+id = &"cw.chat"
+duration_ticks = 10
+required_location_tag = &"cw.social"
+preconditions = Array[ExtResource("5_gw3tq")]([SubResource("Resource_f1rvu")])
+end_effects = Array[ExtResource("2_mgcp8")]([SubResource("Resource_ukr2r"), SubResource("Resource_i2b31")])
+per_tick_need_deltas = Dictionary[StringName, int]({
+&"cw.stress": -2
+})

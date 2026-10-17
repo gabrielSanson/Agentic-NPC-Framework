@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="NpcfActionDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_field_def.gd" id="1_0ua3n"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_effect_def.gd" id="2_m0u4y"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_consideration_def.gd" id="3_4q5lj"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_condition_def.gd" id="4_17jx7"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_action_def.gd" id="5_v4wee"]
+
+[resource]
+script = ExtResource("5_v4wee")
+id = &"cw.rest"
+duration_ticks = 60
+required_location_tag = &"cw.rest"
+per_tick_need_deltas = Dictionary[StringName, int]({
+&"cw.fatigue": -8
+})

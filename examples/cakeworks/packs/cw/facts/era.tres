@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="NpcfFactDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_fact_def.gd" id="1_3o3g8"]
+
+[resource]
+script = ExtResource("1_3o3g8")
+id = &"cw.era"
+scope = 0
+value_type = 1
+default_value = 1

@@ -23,6 +23,22 @@ func max_priority(npc: StringName, tags: Array[StringName], goal: StringName) ->
 	return best
 
 
+## Stored directives in order, for saves.
+func export_items() -> Array[NpcfDirective]:
+	return _items.duplicate()
+
+
+## The next directive ID, for saves.
+func export_next_id() -> int:
+	return _next_id
+
+
+## Replaces the board with saved state (IDs and order kept).
+func restore(next_id: int, items: Array[NpcfDirective]) -> void:
+	_next_id = next_id
+	_items = items
+
+
 ## Drops directives whose expiry tick has passed.
 func expire(tick: int) -> void:
 	var kept: Array[NpcfDirective] = []

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="NpcfProviderSet" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/providers/npcf_provider_config.gd" id="1_jissj"]
+[ext_resource type="Script" path="res://addons/npcf/providers/npcf_provider_set.gd" id="2_58rtb"]
+
+[sub_resource type="Resource" id="Resource_miurm"]
+script = ExtResource("1_jissj")
+id = &"gemma"
+adapter = &"openai_chat"
+base_url = "http://127.0.0.1:8090"
+model = "gemma-4-12b"
+timeout_ms = 12000
+use_for = Array[StringName]([&"lines"])
+
+[sub_resource type="Resource" id="Resource_2popi"]
+script = ExtResource("1_jissj")
+id = &"kev"
+kind = 1
+adapter = &"kev_systemone"
+base_url = "http://127.0.0.1:8009"
+key_env = "KEV_API_KEY"
+timeout_ms = 3000
+use_for = Array[StringName]([&"intents", &"presentation"])
+
+[resource]
+script = ExtResource("2_58rtb")
+providers = Array[ExtResource("1_jissj")]([SubResource("Resource_miurm"), SubResource("Resource_2popi")])

@@ -108,6 +108,33 @@ func mapper(hook: Script, event: NpcfEventView, receiver: StringName) -> Array[N
 	return out
 
 
+## Directives a Director hook returns for this tick. Safe default: no directives.
+func director(hook: Script, macros: NpcfMacroView, tick: int) -> Array[NpcfDirectiveSpec]:
+	var r: Variant = _call(hook, &"evaluate", [macros, tick], &"")
+	var out: Array[NpcfDirectiveSpec] = []
+	if _errored:
+		return out
+	if not _typed_array(r, out, hook, &""):
+		return []
+	return out
+
+
+## The rule outcome of an intent hook. Null on failure: a runtime error, a return value that is not an
+## NpcfRuleOutcome, or an outcome with no result. The caller then uses the intent's declarative outcome.
+func intent(hook: Script, view: NpcfNpcView, intent_id: StringName, speaker: StringName) -> NpcfRuleOutcome:
+	var r: Variant = _call(hook, &"outcome", [view, intent_id, speaker], view.npc_id())
+	if _errored:
+		return null
+	if not (r is NpcfRuleOutcome):
+		_fail(hook, view.npc_id(), "returned %s, expected an NpcfRuleOutcome" % type_string(typeof(r)))
+		return null
+	var o: NpcfRuleOutcome = r
+	if o.result == &"":
+		_fail(hook, view.npc_id(), "returned an outcome with an empty result")
+		return null
+	return o
+
+
 ## RUNNING, SUCCESS or FAILURE (NpcfResolverHook constants); FAILURE on any failure.
 func resolver(hook: Script, call_view: NpcfActionCallView, world: NpcfWorldView, elapsed: int) -> int:
 	var r: Variant = _call(hook, &"resolve", [call_view, world, elapsed], call_view.npc())

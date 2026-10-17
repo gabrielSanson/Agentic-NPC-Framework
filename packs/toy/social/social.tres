@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="NpcfSocialDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_social_def.gd" id="1_social"]
+[ext_resource type="Resource" path="res://packs/toy/social/trust.tres" id="2_trust"]
+[ext_resource type="Resource" path="res://packs/toy/social/liking.tres" id="3_liking"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_rel_delta_rule.gd" id="4_rule"]
+[ext_resource type="Resource" path="res://packs/toy/events/chatted.tres" id="5_chatted"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_tag_transition_def.gd" id="6_tag"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_condition_def.gd" id="7_cond"]
+[ext_resource type="Resource" path="res://packs/toy/needs/energy.tres" id="8_energy"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_rel_dim_def.gd" id="9_dim"]
+
+[sub_resource type="Resource" id="Resource_rule_chatted"]
+script = ExtResource("4_rule")
+event_kind = ExtResource("5_chatted")
+from_role = 2
+to_role = 0
+dim = ExtResource("3_liking")
+delta = 2
+
+[sub_resource type="Resource" id="Resource_cond_tire"]
+script = ExtResource("7_cond")
+op_kind = 1
+need = ExtResource("8_energy")
+compare = 2
+value = 200
+
+[sub_resource type="Resource" id="Resource_tire_out"]
+script = ExtResource("6_tag")
+id = &"toy.tire_out"
+condition = SubResource("Resource_cond_tire")
+add = Array[StringName]([&"toy.weary"])
+
+[sub_resource type="Resource" id="Resource_cond_recover"]
+script = ExtResource("7_cond")
+op_kind = 1
+need = ExtResource("8_energy")
+compare = 5
+value = 500
+
+[sub_resource type="Resource" id="Resource_recover"]
+script = ExtResource("6_tag")
+id = &"toy.recover"
+requires_tags = Array[StringName]([&"toy.weary"])
+condition = SubResource("Resource_cond_recover")
+remove = Array[StringName]([&"toy.weary"])
+
+[resource]
+script = ExtResource("1_social")
+dims = Array[ExtResource("9_dim")]([ExtResource("2_trust"), ExtResource("3_liking")])
+delta_rules = Array[ExtResource("4_rule")]([SubResource("Resource_rule_chatted")])
+tag_transitions = Array[ExtResource("6_tag")]([SubResource("Resource_tire_out"), SubResource("Resource_recover")])

@@ -14,6 +14,11 @@ kind = 7
 value = null
 event_kind = ExtResource("4_6rrov")
 
+[sub_resource type="Resource" id="Resource_share"]
+script = ExtResource("2_sxs3w")
+kind = 6
+value = null
+
 [sub_resource type="Resource" id="Resource_dcyqp"]
 script = ExtResource("5_q8x2f")
 op_kind = 7
@@ -26,4 +31,4 @@ id = &"toy.chat"
 duration_ticks = 10
 required_location_tag = &"toy.outdoors"
 preconditions = Array[ExtResource("5_q8x2f")]([SubResource("Resource_dcyqp")])
-end_effects = Array[ExtResource("2_sxs3w")]([SubResource("Resource_n8caa")])
+end_effects = Array[ExtResource("2_sxs3w")]([SubResource("Resource_n8caa"), SubResource("Resource_share")])

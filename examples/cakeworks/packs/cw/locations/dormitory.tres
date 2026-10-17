@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="NpcfLocationDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_location_def.gd" id="1_dei5x"]
+
+[resource]
+script = ExtResource("1_dei5x")
+id = &"cw.dormitory"
+tags = Array[StringName]([&"cw.rest"])
+anchor_name = &"cw.dormitory"
+display_name = "Dormitory"

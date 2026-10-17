@@ -29,6 +29,20 @@ static func map(world: NpcfWorld, e: NpcfEvent, receiver: StringName) -> Array[N
 	return out
 
 
+## True when the facts one receiver believes from this event depend on the receiver: only a pack
+## mapper hook can make them do so. Must agree with map(), which returns before the hook for the
+## framework kinds.
+static func depends_on_receiver(world: NpcfWorld, e: NpcfEvent) -> bool:
+	if e.kind == NpcfFramework.FACT_CHANGED or e.kind == NpcfFramework.EXPECTATION_FAILED:
+		return false
+	if e.kind == NpcfFramework.ARRIVED or e.kind == NpcfFramework.DEPARTED:
+		return false
+	if e.kind == NpcfFramework.TAGS_CHANGED or e.kind == NpcfFramework.NEED_THRESHOLD or e.kind == NpcfFramework.CONVERSATION:
+		return false
+	var def: NpcfEventKindDef = world.pack.event_kind(e.kind)
+	return def != null and def.mapper != null
+
+
 ## The fact carried by a fact_changed or expectation_failed payload (subject, fact, value).
 static func _payload_fact(e: NpcfEvent) -> Array[NpcfFact]:
 	var out: Array[NpcfFact] = []

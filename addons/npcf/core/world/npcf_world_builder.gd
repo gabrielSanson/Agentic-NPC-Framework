@@ -15,6 +15,7 @@ static func build(pack: NpcfLoadedPack, scenario: NpcfScenarioDef, world_seed: i
 	w.rng = NpcfRng.new(world_seed)
 	w.events = NpcfEventQueue.new(pack.event_kinds)
 	w.state = NpcfWorldState.new(pack.facts)
+	w.occupancy = NpcfOccupancy.new()
 	w.hooks = NpcfHookRunner.new(pack.pack_namespace)
 	w.adapters = adapters if adapters != null else NpcfHeadlessAdapter.adapter_set()
 	w.applier = NpcfEffectApplier.new()
@@ -29,6 +30,13 @@ static func build(pack: NpcfLoadedPack, scenario: NpcfScenarioDef, world_seed: i
 	w.reactions = NpcfReactionRules.new()
 	w.scheduler = NpcfDecisionScheduler.new()
 	w.invariants = NpcfInvariants.new()
+	w.relationships = NpcfRelationships.new()
+	w.tags = NpcfTags.new()
+	w.rumors = NpcfRumors.new()
+	w.director = NpcfDirector.new()
+	w.dialogue = NpcfDialogueService.new()
+	w.applier.rel_handler = w.relationships.on_change
+	w.applier.share_handler = w.rumors.on_change
 
 	var setup: Array[NpcfStateChange] = []
 	for entry: NpcfCastEntry in scenario.cast:
@@ -44,8 +52,10 @@ static func build(pack: NpcfLoadedPack, scenario: NpcfScenarioDef, world_seed: i
 			var start: int = resolved.need_start.get(def.id, def.start)
 			npc.needs[def.id] = clampi(start, def.min_value, def.max_value)
 		npc.tags = resolved.tags.duplicate()
+		npc.memory.cap = pack.sim.memory_cap
 		w.npcs[npc.id] = npc
 		w.npc_ids.append(npc.id)
+		w.occupancy.enter(npc.id, &"")
 		if resolved.start_location != &"":
 			setup.append(NpcfStateChange.set_fact(npc.id, NpcfFramework.AT, resolved.start_location))
 	w.npc_ids.sort_custom(NpcfWorldState.name_less)
@@ -64,6 +74,13 @@ static func build(pack: NpcfLoadedPack, scenario: NpcfScenarioDef, world_seed: i
 	if err != "":
 		push_error("npcf: scenario setup failed: " + err)
 
+	for seed: NpcfRelSeed in scenario.relationships:
+		if seed == null or seed.from_character == null or seed.to_character == null:
+			continue
+		for dim: StringName in seed.values:
+			w.relationships.seed_value(w, seed.from_character.id, seed.to_character.id, dim, seed.values[dim])
+
 	for id: StringName in w.npc_ids:
 		w.scheduler.init_npc(w, id)
+	w.director.reset(w)
 	return w

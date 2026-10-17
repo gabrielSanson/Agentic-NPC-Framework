@@ -36,6 +36,7 @@ static func event_kinds() -> Array[NpcfEventKindDef]:
 		_kind(DEPARTED, [], NpcfEvent.Visibility.LOCAL, 5),
 		_kind(TAGS_CHANGED, [NpcfFieldDef.make(&"tag", sn), NpcfFieldDef.make(&"added", NpcfFieldDef.FieldType.BOOL)], NpcfEvent.Visibility.LOCAL, 20),
 		_kind(NEED_THRESHOLD, [NpcfFieldDef.make(&"need", sn), NpcfFieldDef.make(&"threshold", sn), NpcfFieldDef.make(&"direction", sn)], NpcfEvent.Visibility.PARTICIPANTS_ONLY, 0),
+		_kind(CONVERSATION, [NpcfFieldDef.make(&"intent", sn), NpcfFieldDef.make(&"result", sn), NpcfFieldDef.make(&"facts", any, false)], NpcfEvent.Visibility.LOCAL, 40),
 	]
 
 

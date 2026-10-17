@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="NpcfNeedDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_need_def.gd" id="1_uxxl5"]
+
+[resource]
+script = ExtResource("1_uxxl5")
+id = &"cw.stress"
+start = 250
+thresholds = Dictionary[StringName, int]({
+&"cw.strained": 650
+})

@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="NpcfArchetypeDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_goal_def.gd" id="1_w4a4w"]
+[ext_resource type="Resource" path="res://packs/cw/goals/work.tres" id="2_5pyn2"]
+[ext_resource type="Resource" path="res://packs/cw/goals/eat.tres" id="3_lghgn"]
+[ext_resource type="Resource" path="res://packs/cw/goals/rest.tres" id="4_qnqxl"]
+[ext_resource type="Resource" path="res://packs/cw/goals/socialize.tres" id="5_awixq"]
+[ext_resource type="Resource" path="res://packs/cw/goals/vent.tres" id="6_gtad0"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_need_def.gd" id="7_4nmg6"]
+[ext_resource type="Resource" path="res://packs/cw/needs/hunger.tres" id="8_5al08"]
+[ext_resource type="Resource" path="res://packs/cw/needs/fatigue.tres" id="9_0csl3"]
+[ext_resource type="Resource" path="res://packs/cw/needs/stress.tres" id="10_kh3wd"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_planner_ref.gd" id="11_p24gq"]
+[ext_resource type="Resource" path="res://packs/cw/schedules/evening_crew.tres" id="12_d6pvy"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_archetype_def.gd" id="13_u4g1q"]
+
+[sub_resource type="Resource" id="Resource_was8o"]
+script = ExtResource("11_p24gq")
+
+[resource]
+script = ExtResource("13_u4g1q")
+id = &"cw.night_baker"
+tags = Array[StringName]([&"cw.crew"])
+needs = Array[ExtResource("7_4nmg6")]([ExtResource("8_5al08"), ExtResource("9_0csl3"), ExtResource("10_kh3wd")])
+goals = Array[ExtResource("1_w4a4w")]([ExtResource("2_5pyn2"), ExtResource("3_lghgn"), ExtResource("4_qnqxl"), ExtResource("5_awixq"), ExtResource("6_gtad0")])
+planner = SubResource("Resource_was8o")
+schedule = ExtResource("12_d6pvy")
+decision_period_ticks = 5
+rel_defaults = Dictionary[StringName, int]({
+&"cw.liking": 40,
+&"cw.trust": 50
+})

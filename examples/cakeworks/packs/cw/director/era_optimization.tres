@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="NpcfDirectorRuleDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_macro_condition.gd" id="1_gvy1h"]
+[ext_resource type="Resource" path="res://packs/cw/director/reported_disorder.tres" id="2_8p4mg"]
+[ext_resource type="Resource" path="res://packs/cw/goals/work.tres" id="3_tq2r8"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_director_rule_def.gd" id="4_45pan"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_tag_query.gd" id="5_iupak"]
+
+[sub_resource type="Resource" id="Resource_6ii8b"]
+script = ExtResource("1_gvy1h")
+macro = ExtResource("2_8p4mg")
+value = 30.0
+
+[sub_resource type="Resource" id="Resource_orsar"]
+script = ExtResource("5_iupak")
+tags_any = Array[StringName]([&"cw.crew"])
+
+[resource]
+script = ExtResource("4_45pan")
+id = &"cw.era_optimization"
+conditions = Array[ExtResource("1_gvy1h")]([SubResource("Resource_6ii8b")])
+target = SubResource("Resource_orsar")
+goal = ExtResource("3_tq2r8")
+priority = 0.4
+duration_ticks = 480

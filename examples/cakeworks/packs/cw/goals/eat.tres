@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="NpcfGoalDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_action_def.gd" id="1_l6can"]
+[ext_resource type="Resource" path="res://packs/cw/actions/eat_meal.tres" id="2_vw0sm"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_consideration_def.gd" id="3_tlcfv"]
+[ext_resource type="Resource" path="res://packs/cw/needs/hunger.tres" id="4_tpdje"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_goal_def.gd" id="5_fyxhv"]
+
+[sub_resource type="Resource" id="Resource_vg60d"]
+script = ExtResource("3_tlcfv")
+need = ExtResource("4_tpdje")
+
+[resource]
+script = ExtResource("5_fyxhv")
+id = &"cw.eat"
+considerations = Array[ExtResource("3_tlcfv")]([SubResource("Resource_vg60d")])
+candidate_actions = Array[ExtResource("1_l6can")]([ExtResource("2_vw0sm")])

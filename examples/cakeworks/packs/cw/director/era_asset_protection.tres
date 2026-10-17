@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="NpcfDirectorRuleDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_macro_condition.gd" id="1_tq0rd"]
+[ext_resource type="Resource" path="res://packs/cw/director/reported_disorder.tres" id="2_gltbv"]
+[ext_resource type="Resource" path="res://packs/cw/goals/work.tres" id="3_ey5x6"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_director_rule_def.gd" id="4_ywkbe"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_tag_query.gd" id="5_xgvu6"]
+
+[sub_resource type="Resource" id="Resource_kfj7h"]
+script = ExtResource("1_tq0rd")
+macro = ExtResource("2_gltbv")
+value = 60.0
+
+[sub_resource type="Resource" id="Resource_ltuq6"]
+script = ExtResource("5_xgvu6")
+tags_any = Array[StringName]([&"cw.crew"])
+
+[resource]
+script = ExtResource("4_ywkbe")
+id = &"cw.era_asset_protection"
+conditions = Array[ExtResource("1_tq0rd")]([SubResource("Resource_kfj7h")])
+target = SubResource("Resource_ltuq6")
+goal = ExtResource("3_ey5x6")
+priority = 0.8
+duration_ticks = 480

@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="NpcfProviderSet" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/providers/npcf_provider_config.gd" id="1_l6dvx"]
+[ext_resource type="Script" path="res://addons/npcf/providers/npcf_provider_set.gd" id="2_yb6vq"]
+
+[sub_resource type="Resource" id="Resource_nd0th"]
+script = ExtResource("1_l6dvx")
+id = &"gemma"
+adapter = &"openai_chat"
+base_url = "http://127.0.0.1:8090"
+model = "gemma-4-12b"
+timeout_ms = 8000
+use_for = Array[StringName]([&"lines"])
+
+[sub_resource type="Resource" id="Resource_c3tww"]
+script = ExtResource("1_l6dvx")
+id = &"kev"
+kind = 1
+adapter = &"kev_systemone"
+base_url = "http://127.0.0.1:8009"
+key_env = "KEV_API_KEY"
+timeout_ms = 2000
+use_for = Array[StringName]([&"intents", &"presentation"])
+
+[sub_resource type="Resource" id="Resource_ub0wb"]
+script = ExtResource("1_l6dvx")
+id = &"parakeet"
+kind = 2
+adapter = &"openai_transcribe"
+base_url = "http://127.0.0.1:8010"
+timeout_ms = 10000
+use_for = Array[StringName]([&"voice_in"])
+
+[sub_resource type="Resource" id="Resource_6gxw7"]
+script = ExtResource("1_l6dvx")
+id = &"breeze"
+kind = 3
+adapter = &"breeze_speech"
+timeout_ms = 10000
+license_use = 1
+use_for = Array[StringName]([&"voice_out"])
+
+[resource]
+script = ExtResource("2_yb6vq")
+providers = Array[ExtResource("1_l6dvx")]([SubResource("Resource_nd0th"), SubResource("Resource_c3tww"), SubResource("Resource_ub0wb"), SubResource("Resource_6gxw7")])

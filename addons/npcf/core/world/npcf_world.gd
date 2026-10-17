@@ -15,6 +15,7 @@ var hooks: NpcfHookRunner
 var adapters: NpcfAdapterSet
 var npcs: Dictionary[StringName, NpcfNpcState] = {}
 var npc_ids: Array[StringName] = []          # sorted
+var occupancy: NpcfOccupancy                  # NPCs by location, mirrors npcf.at
 var headless: bool = true                     # invariants every tick when true
 var next_call_id: int = 1
 var inputs: Array[NpcfInput] = []
@@ -31,6 +32,13 @@ var selector: NpcfGoalSelector
 var reactions: NpcfReactionRules
 var scheduler: NpcfDecisionScheduler
 var invariants: NpcfInvariants
+var relationships: NpcfRelationships
+var tags: NpcfTags
+var rumors: NpcfRumors
+var director: NpcfDirector
+var dialogue: NpcfDialogueService
+## Debug-only knowledge-boundary recorder (C5c). Null in normal runs; it never changes results.
+var audit: NpcfKnowledgeAudit = null
 ## Optional per-phase callbacks for tests: phase name -> Callable(world). Empty by default.
 var phase_probes: Dictionary[StringName, Callable] = {}
 
@@ -57,14 +65,15 @@ func step() -> NpcfTickReport:
 		_apply_input(i)
 	_finish_phase(&"inputs", report)
 
-	# 3. director
-	directives.expire(clock.tick)
+	# 3. director: expires directives, then applies last tick's events and emits directives
+	director.step(self)
 	_finish_phase(&"director", report)
 
 	# 4. needs (beliefs decay once per day change)
 	need_system.tick(self)
 	if _day_changed:
 		delivery.decay_beliefs(self)
+	tags.evaluate_transitions(self)
 	_finish_phase(&"needs", report)
 
 	# 5. actions
@@ -130,8 +139,12 @@ func is_entity(id: StringName) -> bool:
 
 ## Releases hooks and services. Call before dropping the world.
 func dispose() -> void:
+	if dialogue != null:
+		dialogue.dispose()
+	dialogue = null
 	hooks.dispose()
 	npcs.clear()
+	occupancy = null
 	applier = null
 	need_system = null
 	delivery = null
@@ -144,6 +157,11 @@ func dispose() -> void:
 	reactions = null
 	scheduler = null
 	invariants = null
+	relationships = null
+	tags = null
+	rumors = null
+	director = null
+	audit = null
 
 
 func _apply_input(i: NpcfInput) -> void:
@@ -159,6 +177,18 @@ func _apply_input(i: NpcfInput) -> void:
 			executor.on_move_failed(self, i)
 		NpcfInput.Kind.EMBODIED, NpcfInput.Kind.DISEMBODIED:
 			travel.on_embodiment(self, i.npc, i.kind == NpcfInput.Kind.EMBODIED)
+		NpcfInput.Kind.CONVERSATION:
+			if i.event != null:
+				var id: int = emit(i.event)
+				if id >= 0 and not i.changes.is_empty():
+					var reason: String = applier.apply(self, i.changes, id)
+					if reason != "":
+						push_warning("npcf: conversation changes refused: " + reason)
+		NpcfInput.Kind.START_ACTION:
+			if i.call != null:
+				i.call.decision_tick = clock.tick
+				# Dialogue actions are best-effort presentation; a refusal is not an error.
+				executor.start(self, i.npc, i.call)
 
 
 func _finish_phase(phase: StringName, report: NpcfTickReport) -> void:

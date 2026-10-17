@@ -1,0 +1,6 @@
+# Pins are left to the machine owner: install into the venv that get_models.sh creates.
+fastapi
+uvicorn[standard]
+python-multipart
+nemo_toolkit[asr]
+soundfile

@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="NpcfLocationGraph" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_edge_def.gd" id="1_7brvx"]
+[ext_resource type="Resource" path="res://packs/cw/locations/production.tres" id="2_qtpp6"]
+[ext_resource type="Resource" path="res://packs/cw/locations/lounge.tres" id="3_e5arx"]
+[ext_resource type="Resource" path="res://packs/cw/locations/dormitory.tres" id="4_ykjhq"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_location_def.gd" id="5_eulju"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_location_graph.gd" id="6_qx62y"]
+
+[sub_resource type="Resource" id="Resource_lg1pb"]
+script = ExtResource("1_7brvx")
+from_location = ExtResource("2_qtpp6")
+to_location = ExtResource("3_e5arx")
+travel_ticks = 5
+
+[sub_resource type="Resource" id="Resource_5cnrb"]
+script = ExtResource("1_7brvx")
+from_location = ExtResource("3_e5arx")
+to_location = ExtResource("4_ykjhq")
+travel_ticks = 5
+
+[resource]
+script = ExtResource("6_qx62y")
+locations = Array[ExtResource("5_eulju")]([ExtResource("2_qtpp6"), ExtResource("3_e5arx"), ExtResource("4_ykjhq")])
+edges = Array[ExtResource("1_7brvx")]([SubResource("Resource_lg1pb"), SubResource("Resource_5cnrb")])

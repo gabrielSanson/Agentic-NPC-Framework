@@ -1,0 +1,62 @@
+[gd_resource type="Resource" script_class="NpcfSocialDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_rel_delta_rule.gd" id="1_e4j70"]
+[ext_resource type="Resource" path="res://packs/cw/social/liking.tres" id="2_l83iy"]
+[ext_resource type="Resource" path="res://packs/cw/events/chatted.tres" id="3_er7g5"]
+[ext_resource type="Resource" path="res://packs/cw/social/trust.tres" id="4_xdaug"]
+[ext_resource type="Resource" path="res://packs/cw/events/complaint.tres" id="5_ikk5w"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_rel_dim_def.gd" id="6_s1fwr"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_rumor_rules.gd" id="7_lcxwx"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_social_def.gd" id="8_eto82"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_tag_transition_def.gd" id="9_yvrjc"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_condition_def.gd" id="10_hbsfs"]
+[ext_resource type="Resource" path="res://packs/cw/needs/stress.tres" id="11_ceqyk"]
+
+[sub_resource type="Resource" id="Resource_xp1pl"]
+script = ExtResource("1_e4j70")
+event_kind = ExtResource("3_er7g5")
+dim = ExtResource("2_l83iy")
+delta = 2
+
+[sub_resource type="Resource" id="Resource_rrklk"]
+script = ExtResource("1_e4j70")
+event_kind = ExtResource("5_ikk5w")
+dim = ExtResource("4_xdaug")
+delta = -5
+
+[sub_resource type="Resource" id="Resource_swf3k"]
+script = ExtResource("7_lcxwx")
+
+[sub_resource type="Resource" id="Resource_mrbqf"]
+script = ExtResource("10_hbsfs")
+op_kind = 1
+need = ExtResource("11_ceqyk")
+compare = 5
+value = 650
+
+[sub_resource type="Resource" id="Resource_n3cyn"]
+script = ExtResource("9_yvrjc")
+id = &"cw.strain_on"
+condition = SubResource("Resource_mrbqf")
+add = Array[StringName]([&"cw.strained"])
+
+[sub_resource type="Resource" id="Resource_26v5l"]
+script = ExtResource("10_hbsfs")
+op_kind = 1
+need = ExtResource("11_ceqyk")
+compare = 2
+value = 400
+
+[sub_resource type="Resource" id="Resource_dsqk5"]
+script = ExtResource("9_yvrjc")
+id = &"cw.strain_off"
+requires_tags = Array[StringName]([&"cw.strained"])
+condition = SubResource("Resource_26v5l")
+remove = Array[StringName]([&"cw.strained"])
+
+[resource]
+script = ExtResource("8_eto82")
+dims = Array[ExtResource("6_s1fwr")]([ExtResource("4_xdaug"), ExtResource("2_l83iy")])
+delta_rules = Array[ExtResource("1_e4j70")]([SubResource("Resource_xp1pl"), SubResource("Resource_rrklk")])
+tag_transitions = Array[ExtResource("9_yvrjc")]([SubResource("Resource_n3cyn"), SubResource("Resource_dsqk5")])
+rumors = SubResource("Resource_swf3k")

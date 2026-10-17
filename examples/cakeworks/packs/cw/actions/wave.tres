@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="NpcfActionDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_field_def.gd" id="1_03c7n"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_effect_def.gd" id="2_2dru8"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_consideration_def.gd" id="3_nw08u"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_condition_def.gd" id="4_8o8ct"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_action_def.gd" id="5_yue4g"]
+
+[resource]
+script = ExtResource("5_yue4g")
+id = &"cw.wave"
+tier = 1
+presentation_cue = &"cw.wave"

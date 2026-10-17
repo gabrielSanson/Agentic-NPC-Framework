@@ -5,8 +5,12 @@ extends SceneTree
 ## - a file under addons/npcf/ contains `res://packs/`, an ID-shaped string literal with a
 ##   namespace other than `npcf.`, or a word from tools/ci/denylist.txt;
 ## - a script under addons/npcf/core/ or addons/npcf/config/ references the scene tree;
+## - a script under addons/npcf/core/ or addons/npcf/config/ does HTTP (HTTPClient, HTTPRequest, StreamPeerTCP,
+##   TCPServer) or names a provider class (NpcfProvider*, NpcfHttp*): model servers live in addons/npcf/providers/;
 ## - `NpcfMemoryLog` is referenced from addons/npcf/ code outside the folders allowed to hold
 ##   memory (decision code must never read it);
+## - decision, planning, needs, knowledge, social, director and memory code names a dialogue class (player text
+##   must never reach decisions or state, R13);
 ## - any committed .tres or .tscn has a property named like api_key, token or secret with a
 ##   non-empty value.
 ##
@@ -19,6 +23,12 @@ const MEMORY_ALLOWED_DIRS: PackedStringArray = [
 	"addons/npcf/core/memory/", "addons/npcf/core/dialogue/", "addons/npcf/core/debug/",
 	"addons/npcf/core/persistence/", "addons/npcf/core/world/", "addons/npcf/core/knowledge/",
 ]
+## Code here must never name dialogue classes (intent, presentation, line generation, prompts, LLM transport).
+const DIALOGUE_FORBIDDEN_DIRS: PackedStringArray = [
+	"addons/npcf/core/decision/", "addons/npcf/core/planning/", "addons/npcf/core/needs/",
+	"addons/npcf/core/knowledge/", "addons/npcf/core/social/", "addons/npcf/core/director/",
+	"addons/npcf/core/memory/",
+]
 const FILE_EXTENSIONS: PackedStringArray = [
 	"gd", "tres", "tscn", "json", "cfg", "txt", "md", "tmp", "bak", "res", "png", "svg", "sh",
 ]
@@ -28,6 +38,10 @@ var _id_literal: RegEx = RegEx.create_from_string("&?\"([a-z][a-z0-9_]*)\\.([a-z
 var _scene_ref: RegEx = RegEx.create_from_string(
 		"\\b(Node|SceneTree|get_tree|get_main_loop|get_node|[A-Z][A-Za-z]*(?<!Transform)[23]D)\\b")
 var _memory_ref: RegEx = RegEx.create_from_string("\\bNpcfMemoryLog\\b")
+var _http_ref: RegEx = RegEx.create_from_string(
+		"\\b(HTTPClient|HTTPRequest|StreamPeerTCP|TCPServer|NpcfProvider[A-Za-z]*|NpcfHttp[A-Za-z]*)\\b")
+var _dialogue_ref: RegEx = RegEx.create_from_string(
+		"\\bNpcf(Dialogue|Intent|LineGenerator|LineResult|LineValidator|Prompt|Llm|Presentation)[A-Za-z]*\\b")
 var _secret_prop: RegEx = RegEx.create_from_string(
 		"^\\s*([A-Za-z0-9_]*(api_key|token|secret)[A-Za-z0-9_]*)\\s*=\\s*\"([^\"]*)\"")
 var _deny: Array[RegEx] = []
@@ -76,6 +90,10 @@ func _check_addon_file(path: String, root: String) -> void:
 	for d: String in MEMORY_ALLOWED_DIRS:
 		if rel.begins_with(d):
 			memory_allowed = true
+	var dialogue_forbidden: bool = false
+	for d: String in DIALOGUE_FORBIDDEN_DIRS:
+		if rel.begins_with(d):
+			dialogue_forbidden = true
 	var lines: PackedStringArray = FileAccess.get_file_as_string(path).split("\n")
 	for n: int in lines.size():
 		var line: String = lines[n]
@@ -101,9 +119,17 @@ func _check_addon_file(path: String, root: String) -> void:
 			if sm != null:
 				_failures += CiUtil.report(path, n + 1, "scene-tree",
 						"core/ and config/ must not reference %s" % sm.get_string(1))
+		if scene_free:
+			var hm: RegExMatch = _http_ref.search(bare)
+			if hm != null:
+				_failures += CiUtil.report(path, n + 1, "http-boundary",
+						"core and config code must not do HTTP or name provider classes")
 		if not memory_allowed and _memory_ref.search(bare) != null:
 			_failures += CiUtil.report(path, n + 1, "memory-boundary",
 					"NpcfMemoryLog may only be referenced by memory, dialogue, debug, persistence, world and knowledge code")
+		if dialogue_forbidden and _dialogue_ref.search(bare) != null:
+			_failures += CiUtil.report(path, n + 1, "dialogue-boundary",
+					"decision, planning, needs, knowledge, social, director and memory code must not reference dialogue classes")
 
 
 func _check_secrets(path: String) -> void:

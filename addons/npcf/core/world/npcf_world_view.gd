@@ -50,8 +50,4 @@ func running_action(npc: StringName) -> StringName:
 
 ## IDs of NPCs whose location is `location_id`, sorted.
 func npcs_at(location_id: StringName) -> Array[StringName]:
-	var out: Array[StringName] = []
-	for id: StringName in _world.npc_ids:
-		if _world.location_of(id) == location_id:
-			out.append(id)
-	return out
+	return _world.occupancy.at(location_id)

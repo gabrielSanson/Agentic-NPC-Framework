@@ -9,3 +9,5 @@ extends Resource
 @export var capacity: int = 0
 ## Name of the scene anchor for this location (NpcfLocationAnchor2D); defaults to the ID.
 @export var anchor_name: StringName = &""
+## Name shown in dialogue ({location_name}) and prompts; empty means the ID.
+@export var display_name: String = ""

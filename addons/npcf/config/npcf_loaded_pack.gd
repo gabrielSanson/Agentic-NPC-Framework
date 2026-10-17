@@ -21,6 +21,18 @@ var locations: Dictionary[StringName, NpcfLocationDef] = {}
 var schedules: Dictionary[StringName, NpcfScheduleDef] = {}
 var reactions: Array[NpcfReactionRuleDef] = []
 var invariants: Array[NpcfInvariantDef] = []
+## Never null after load: an empty NpcfSocialDef when the manifest has none.
+var social: NpcfSocialDef = null
+var rel_dims: Dictionary[StringName, NpcfRelDimDef] = {}
+## Never null after load.
+var rumor_rules: NpcfRumorRules = null
+## Never null after load: an empty NpcfDirectorDef when the manifest has none.
+var director: NpcfDirectorDef = null
+var macros: Dictionary[StringName, NpcfMacroVarDef] = {}
+## Dialogue intents by ID. Empty when the pack has no dialogue.
+var intents: Dictionary[StringName, NpcfIntentDef] = {}
+## The pack's dialogue rules, or null when the manifest has none.
+var dialogue: NpcfDialogueDef = null
 var location_index: NpcfLocationIndex = null
 
 

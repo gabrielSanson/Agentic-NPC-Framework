@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="NpcfEventKindDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_fact_template.gd" id="1_poebk"]
+[ext_resource type="Resource" path="res://packs/cw/facts/shift_done.tres" id="2_j881l"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_field_def.gd" id="3_4bwig"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_event_kind_def.gd" id="4_80txn"]
+
+[sub_resource type="Resource" id="Resource_4mpc7"]
+script = ExtResource("1_poebk")
+fact = ExtResource("2_j881l")
+value_literal = true
+
+[resource]
+script = ExtResource("4_80txn")
+id = &"cw.shift_completed"
+salience = 10
+beliefs = Array[ExtResource("1_poebk")]([SubResource("Resource_4mpc7")])

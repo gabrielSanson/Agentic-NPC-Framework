@@ -1,0 +1,373 @@
+[gd_resource type="Resource" script_class="NpcfDialogueDef" format=3]
+
+[ext_resource type="Resource" path="res://packs/cw/social/trust.tres" id="1_b6ep3"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_prompt_macro.gd" id="2_uw5tk"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_prompt_template.gd" id="3_wcffe"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_prompt_variant.gd" id="4_tue82"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_fact_def.gd" id="5_0wdkm"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_outcome_def.gd" id="6_fq40a"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_intent_def.gd" id="7_dm2ta"]
+[ext_resource type="Script" path="res://packs/cw/hooks/cw_news.gd" id="8_be63c"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_dialogue_line_set.gd" id="9_jvrfq"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_llm_config.gd" id="10_jnq3f"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_lore_rules.gd" id="11_51sch"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_presentation_question_def.gd" id="12_hoju5"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_presentation_rule.gd" id="13_kqena"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_dialogue_def.gd" id="14_bw7sd"]
+
+[sub_resource type="Resource" id="Resource_i1u4w"]
+script = ExtResource("2_uw5tk")
+name = &"npc_name"
+
+[sub_resource type="Resource" id="Resource_21hou"]
+script = ExtResource("2_uw5tk")
+name = &"persona"
+source = 1
+
+[sub_resource type="Resource" id="Resource_ytn0q"]
+script = ExtResource("2_uw5tk")
+name = &"location_name"
+source = 2
+
+[sub_resource type="Resource" id="Resource_4xsin"]
+script = ExtResource("2_uw5tk")
+name = &"time_of_day"
+source = 3
+
+[sub_resource type="Resource" id="Resource_p7y3q"]
+script = ExtResource("2_uw5tk")
+name = &"memories"
+source = 8
+
+[sub_resource type="Resource" id="Resource_em7uw"]
+script = ExtResource("2_uw5tk")
+name = &"facts"
+source = 9
+
+[sub_resource type="Resource" id="Resource_dx6kd"]
+script = ExtResource("2_uw5tk")
+name = &"actions"
+source = 10
+
+[sub_resource type="Resource" id="Resource_i5mcd"]
+script = ExtResource("4_tue82")
+id = &"cw.default"
+text = "Shifts are long and the quota never moves."
+
+[sub_resource type="Resource" id="Resource_ro2b8"]
+script = ExtResource("3_wcffe")
+system_text = "You are {{npc_name}}, a crew member on a corporate ship that bakes luxury cakes. Management's branding is relentlessly cheerful. {{persona}} Stay in character. Speak in one or two short sentences. Only mention facts you were given. Reply only with JSON: {\"line\": string, \"cited_facts\": [handles], \"action\": null or {\"id\": action id, \"args\": {}}}. Facts you may cite:
+{{facts}}
+Actions you may take: {{actions}}."
+scenario_text = "{{npc_name}} is at {{location_name}} at {{time_of_day}}. {{situation}} You remember: {{memories}}."
+variants = Array[ExtResource("4_tue82")]([SubResource("Resource_i5mcd")])
+macros = Array[ExtResource("2_uw5tk")]([SubResource("Resource_i1u4w"), SubResource("Resource_21hou"), SubResource("Resource_ytn0q"), SubResource("Resource_4xsin"), SubResource("Resource_p7y3q"), SubResource("Resource_em7uw"), SubResource("Resource_dx6kd")])
+
+[sub_resource type="Resource" id="Resource_ao1lo"]
+script = ExtResource("6_fq40a")
+result = &"cw.neutral"
+
+[sub_resource type="Resource" id="Resource_mbpbw"]
+script = ExtResource("7_dm2ta")
+id = &"cw.smalltalk"
+description = "The player makes small talk about the day or the weather."
+keywords = PackedStringArray("weather", "day", "tired")
+patterns = PackedStringArray()
+outcome = SubResource("Resource_ao1lo")
+
+[sub_resource type="Resource" id="Resource_q81y8"]
+script = ExtResource("6_fq40a")
+result = &"cw.friendly"
+rel_deltas = Dictionary[StringName, int]({
+&"cw.liking": 1
+})
+
+[sub_resource type="Resource" id="Resource_xy787"]
+script = ExtResource("7_dm2ta")
+id = &"cw.greet"
+description = "The player greets the crew member."
+keywords = PackedStringArray("hi", "hello", "hey", "morning", "evening")
+patterns = PackedStringArray()
+outcome = SubResource("Resource_q81y8")
+
+[sub_resource type="Resource" id="Resource_pq6yq"]
+script = ExtResource("6_fq40a")
+result = &"cw.neutral"
+
+[sub_resource type="Resource" id="Resource_6w23u"]
+script = ExtResource("7_dm2ta")
+id = &"cw.ask_work"
+description = "The player asks about the shift, the quota or the line."
+keywords = PackedStringArray("shift", "quota", "work", "production", "line")
+patterns = PackedStringArray()
+outcome = SubResource("Resource_pq6yq")
+
+[sub_resource type="Resource" id="Resource_ldltj"]
+script = ExtResource("6_fq40a")
+result = &"cw.no_news"
+
+[sub_resource type="Resource" id="Resource_3oikk"]
+script = ExtResource("7_dm2ta")
+id = &"cw.ask_news"
+description = "The player asks what the crew member has heard lately."
+keywords = PackedStringArray("news", "heard", "rumor", "rumour", "happened", "gossip")
+patterns = PackedStringArray()
+outcome = SubResource("Resource_ldltj")
+hook = ExtResource("8_be63c")
+
+[sub_resource type="Resource" id="Resource_ts5qs"]
+script = ExtResource("6_fq40a")
+result = &"cw.guarded"
+
+[sub_resource type="Resource" id="Resource_ch6wj"]
+script = ExtResource("7_dm2ta")
+id = &"cw.complain_policy"
+description = "The player complains about policy, overtime or management."
+keywords = PackedStringArray("unfair", "ration", "overtime", "policy", "management")
+patterns = PackedStringArray()
+outcome = SubResource("Resource_ts5qs")
+
+[sub_resource type="Resource" id="Resource_fwonv"]
+script = ExtResource("6_fq40a")
+result = &"cw.neutral"
+
+[sub_resource type="Resource" id="Resource_koy75"]
+script = ExtResource("7_dm2ta")
+id = &"cw.goodbye"
+description = "The player says goodbye."
+keywords = PackedStringArray("bye", "later", "see you")
+patterns = PackedStringArray()
+outcome = SubResource("Resource_fwonv")
+
+[sub_resource type="Resource" id="Resource_5fars"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_xy787")
+result = &"cw.friendly"
+band = &"cw.wary"
+lines = PackedStringArray("Oh. Hello. Didn\'t expect you here.", "Hi. Good morning, I suppose.")
+
+[sub_resource type="Resource" id="Resource_cic3f"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_xy787")
+result = &"cw.friendly"
+band = &"cw.neutral"
+lines = PackedStringArray("Hello there. I\'m {npc_name}.", "Hi! The quota is waiting, but hello.")
+
+[sub_resource type="Resource" id="Resource_wavm0"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_xy787")
+result = &"cw.friendly"
+band = &"cw.trusting"
+lines = PackedStringArray("Good to see you again, friend.", "Morning, sugar! It\'s {npc_name}.")
+
+[sub_resource type="Resource" id="Resource_d6o8t"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_6w23u")
+result = &"cw.neutral"
+band = &"cw.wary"
+lines = PackedStringArray("The line is the line. Ask someone else.", "Quota\'s quota. Don\'t ask me twice.")
+
+[sub_resource type="Resource" id="Resource_jcdny"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_6w23u")
+result = &"cw.neutral"
+band = &"cw.neutral"
+lines = PackedStringArray("Same shift as always, at {location_name}.", "It is {time_of_day} and the line never stops.")
+
+[sub_resource type="Resource" id="Resource_vcghw"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_6w23u")
+result = &"cw.neutral"
+band = &"cw.trusting"
+lines = PackedStringArray("Busy, but we\'re getting there together.", "Shifts go faster with good company.")
+
+[sub_resource type="Resource" id="Resource_fa2fg"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_3oikk")
+result = &"cw.has_news"
+band = &"cw.wary"
+lines = PackedStringArray("I heard something. I\'m not repeating it.", "Word is someone complained. Keep it quiet.")
+
+[sub_resource type="Resource" id="Resource_ldhck"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_3oikk")
+result = &"cw.has_news"
+band = &"cw.neutral"
+lines = PackedStringArray("Someone complained about the quota. Heard it near {location_name}.", "A complaint is going round. Stay quiet about it.")
+
+[sub_resource type="Resource" id="Resource_oi584"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_3oikk")
+result = &"cw.has_news"
+band = &"cw.trusting"
+lines = PackedStringArray("Between us? Someone spoke up about the quota.", "Quiet, I heard somebody complain about overtime.")
+
+[sub_resource type="Resource" id="Resource_rtc06"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_3oikk")
+result = &"cw.no_news"
+band = &"cw.wary"
+lines = PackedStringArray("Nothing I\'d tell you.", "Nothing new around {location_name}.")
+
+[sub_resource type="Resource" id="Resource_ylvdi"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_3oikk")
+result = &"cw.no_news"
+band = &"cw.neutral"
+lines = PackedStringArray("Nothing new around {location_name}.", "All quiet at {location_name} this {time_of_day}.")
+
+[sub_resource type="Resource" id="Resource_qk21i"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_3oikk")
+result = &"cw.no_news"
+band = &"cw.trusting"
+lines = PackedStringArray("Nothing worth repeating, sorry.", "Nothing, friend. A calm {time_of_day}.")
+
+[sub_resource type="Resource" id="Resource_lh7k6"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_ch6wj")
+result = &"cw.guarded"
+band = &"cw.wary"
+lines = PackedStringArray("Watch what you say about management.", "Policy is policy. I didn\'t hear that.")
+
+[sub_resource type="Resource" id="Resource_hwc7v"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_ch6wj")
+result = &"cw.guarded"
+band = &"cw.neutral"
+lines = PackedStringArray("Management says the branding is cheerful. That\'s all I\'m saying.", "Overtime again. Mm.")
+
+[sub_resource type="Resource" id="Resource_dej3s"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_ch6wj")
+result = &"cw.guarded"
+band = &"cw.trusting"
+lines = PackedStringArray("Between us, the overtime wears everyone down.", "Yeah. Me too.")
+
+[sub_resource type="Resource" id="Resource_llok0"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_koy75")
+result = &"cw.neutral"
+band = &"cw.wary"
+lines = PackedStringArray("Bye.", "Later.")
+
+[sub_resource type="Resource" id="Resource_81igx"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_koy75")
+result = &"cw.neutral"
+band = &"cw.neutral"
+lines = PackedStringArray("See you on the line.", "See you around.")
+
+[sub_resource type="Resource" id="Resource_ppkpu"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_koy75")
+result = &"cw.neutral"
+band = &"cw.trusting"
+lines = PackedStringArray("See you, friend. Take care of yourself.", "Bye, sugar. Mind the quota.")
+
+[sub_resource type="Resource" id="Resource_ahst2"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_mbpbw")
+result = &"cw.neutral"
+band = &"cw.wary"
+lines = PackedStringArray("Mm.", "Is that so?")
+
+[sub_resource type="Resource" id="Resource_2rqud"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_mbpbw")
+result = &"cw.neutral"
+band = &"cw.neutral"
+lines = PackedStringArray("Mm, is that so?", "It is {time_of_day} already.")
+
+[sub_resource type="Resource" id="Resource_lcmt3"]
+script = ExtResource("9_jvrfq")
+intent = SubResource("Resource_mbpbw")
+result = &"cw.neutral"
+band = &"cw.trusting"
+lines = PackedStringArray("Good day for it, isn\'t it?", "A shift goes faster when someone talks to you.")
+
+[sub_resource type="Resource" id="Resource_dp0gc"]
+script = ExtResource("10_jnq3f")
+max_tokens = 80
+
+[sub_resource type="Resource" id="Resource_alabq"]
+script = ExtResource("11_51sch")
+banned_terms = PackedStringArray("internet", "phone")
+max_line_chars = 200
+
+[sub_resource type="Resource" id="Resource_es4oq"]
+script = ExtResource("13_kqena")
+result = &"cw.friendly"
+answer = &"cw.cheerful"
+
+[sub_resource type="Resource" id="Resource_h1wmx"]
+script = ExtResource("13_kqena")
+result = &"cw.guarded"
+answer = &"cw.nervous"
+
+[sub_resource type="Resource" id="Resource_mqhj5"]
+script = ExtResource("13_kqena")
+result = &"cw.has_news"
+answer = &"cw.nervous"
+
+[sub_resource type="Resource" id="Resource_3d8au"]
+script = ExtResource("12_hoju5")
+id = &"cw.emotion"
+description = "The crew member's facial expression."
+options = Array[StringName]([&"cw.calm", &"cw.cheerful", &"cw.tired", &"cw.annoyed", &"cw.nervous"])
+option_descriptions = Dictionary[StringName, String]({
+&"cw.annoyed": "Irritated.",
+&"cw.calm": "Neutral and relaxed.",
+&"cw.cheerful": "Bright and pleased.",
+&"cw.nervous": "Tense and watchful.",
+&"cw.tired": "Drawn and slow."
+})
+rules = Array[ExtResource("13_kqena")]([SubResource("Resource_es4oq"), SubResource("Resource_h1wmx"), SubResource("Resource_mqhj5")])
+
+[sub_resource type="Resource" id="Resource_mfnws"]
+script = ExtResource("13_kqena")
+result = &"cw.has_news"
+answer = &"cw.whisper"
+
+[sub_resource type="Resource" id="Resource_xooii"]
+script = ExtResource("13_kqena")
+result = &"cw.friendly"
+answer = &"cw.excited"
+
+[sub_resource type="Resource" id="Resource_ibif4"]
+script = ExtResource("13_kqena")
+result = &"cw.guarded"
+answer = &"cw.weary"
+
+[sub_resource type="Resource" id="Resource_xh8c5"]
+script = ExtResource("12_hoju5")
+id = &"cw.delivery"
+description = "How the line is delivered."
+options = Array[StringName]([&"cw.normal", &"cw.whisper", &"cw.excited", &"cw.weary"])
+rules = Array[ExtResource("13_kqena")]([SubResource("Resource_mfnws"), SubResource("Resource_xooii"), SubResource("Resource_ibif4")])
+
+[resource]
+script = ExtResource("14_bw7sd")
+intents = Array[ExtResource("7_dm2ta")]([SubResource("Resource_xy787"), SubResource("Resource_6w23u"), SubResource("Resource_3oikk"), SubResource("Resource_ch6wj"), SubResource("Resource_koy75"), SubResource("Resource_mbpbw")])
+fallback_intent = SubResource("Resource_mbpbw")
+lines = Array[ExtResource("9_jvrfq")]([SubResource("Resource_5fars"), SubResource("Resource_cic3f"), SubResource("Resource_wavm0"), SubResource("Resource_d6o8t"), SubResource("Resource_jcdny"), SubResource("Resource_vcghw"), SubResource("Resource_fa2fg"), SubResource("Resource_ldhck"), SubResource("Resource_oi584"), SubResource("Resource_rtc06"), SubResource("Resource_ylvdi"), SubResource("Resource_qk21i"), SubResource("Resource_lh7k6"), SubResource("Resource_hwc7v"), SubResource("Resource_dej3s"), SubResource("Resource_llok0"), SubResource("Resource_81igx"), SubResource("Resource_ppkpu"), SubResource("Resource_ahst2"), SubResource("Resource_2rqud"), SubResource("Resource_lcmt3")])
+default_lines = PackedStringArray("...", "Mm.")
+band_dim = ExtResource("1_b6ep3")
+default_template = SubResource("Resource_ro2b8")
+lore = SubResource("Resource_alabq")
+llm = SubResource("Resource_dp0gc")
+memory_texts = Dictionary[StringName, String]({
+&"cw.chatted": "{actors} chatted at {location}",
+&"cw.complaint": "{actors} complained about the quota at {location}",
+&"cw.shift_completed": "{actors} finished a shift at {location}",
+&"npcf.conversation": "talked with {actors}"
+})
+presentation = Array[ExtResource("12_hoju5")]([SubResource("Resource_3d8au"), SubResource("Resource_xh8c5")])
+default_speech_instruction = "A clear, natural adult voice."
+delivery_question = &"cw.delivery"
+delivery_instructions = Dictionary[StringName, String]({
+&"cw.excited": "Faster and brighter, excited.",
+&"cw.normal": "",
+&"cw.weary": "Slow, sighing, tired.",
+&"cw.whisper": "Whispering, close and quiet."
+})

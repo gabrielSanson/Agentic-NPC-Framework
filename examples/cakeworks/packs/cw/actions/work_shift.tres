@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="NpcfActionDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_field_def.gd" id="1_pv44s"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_effect_def.gd" id="2_j5dsb"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_consideration_def.gd" id="3_ynxtr"]
+[ext_resource type="Resource" path="res://packs/cw/events/shift_completed.tres" id="4_r736d"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_condition_def.gd" id="5_itpqr"]
+[ext_resource type="Resource" path="res://packs/cw/locations/production.tres" id="6_ynp17"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_action_def.gd" id="7_ffx2b"]
+
+[sub_resource type="Resource" id="Resource_hly0x"]
+script = ExtResource("2_j5dsb")
+kind = 7
+value = null
+event_kind = ExtResource("4_r736d")
+
+[resource]
+script = ExtResource("7_ffx2b")
+id = &"cw.work_shift"
+duration_ticks = 120
+required_location = ExtResource("6_ynp17")
+end_effects = Array[ExtResource("2_j5dsb")]([SubResource("Resource_hly0x")])
+per_tick_need_deltas = Dictionary[StringName, int]({
+&"cw.fatigue": 1,
+&"cw.hunger": 1,
+&"cw.stress": 2
+})

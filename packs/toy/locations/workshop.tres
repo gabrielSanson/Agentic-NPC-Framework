@@ -6,3 +6,4 @@
 script = ExtResource("1_7fw0e")
 id = &"toy.workshop"
 tags = Array[StringName]([&"toy.work_place"])
+display_name = "Workshop"

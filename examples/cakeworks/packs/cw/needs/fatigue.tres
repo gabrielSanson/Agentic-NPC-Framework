@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="NpcfNeedDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_need_def.gd" id="1_c1kgv"]
+
+[resource]
+script = ExtResource("1_c1kgv")
+id = &"cw.fatigue"
+start = 200
+change_per_tick = 1
+thresholds = Dictionary[StringName, int]({
+&"cw.exhausted": 850,
+&"cw.tired": 600
+})

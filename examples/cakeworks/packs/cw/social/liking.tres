@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="NpcfRelDimDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_rel_dim_def.gd" id="1_omtx4"]
+
+[resource]
+script = ExtResource("1_omtx4")
+id = &"cw.liking"
+bands = Dictionary[StringName, Vector2i]({
+&"cw.cold": Vector2i(-100, -31),
+&"cw.neutral": Vector2i(-30, 30),
+&"cw.warm": Vector2i(31, 100)
+})

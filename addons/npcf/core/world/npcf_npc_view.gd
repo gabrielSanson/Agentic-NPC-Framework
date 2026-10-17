@@ -51,6 +51,13 @@ func player() -> StringName:
 
 ## Reads one fact under the read rule.
 func fact(subject: StringName, fact_id: StringName) -> NpcfFactRead:
+	var read: NpcfFactRead = _read(subject, fact_id)
+	if _world.audit != null and _world.audit.reading:
+		_world.audit.on_read(_npc, subject, fact_id, read.source, _truth, _world.clock.tick)
+	return read
+
+
+func _read(subject: StringName, fact_id: StringName) -> NpcfFactRead:
 	var def: NpcfFactDef = _world.state.fact_def(fact_id)
 	if def == null:
 		return NpcfFactRead.make(null, 0, NpcfBelief.Source.DEFAULT)
@@ -66,6 +73,16 @@ func fact(subject: StringName, fact_id: StringName) -> NpcfFactRead:
 ## The value of `fact(subject, fact_id)`.
 func fact_value(subject: StringName, fact_id: StringName) -> Variant:
 	return fact(subject, fact_id).value
+
+
+## This NPC's own relationship value toward `other` in one dimension (own relationships are always known).
+func relationship(other: StringName, dim: StringName) -> int:
+	return _world.relationships.value(_world, _npc, other, dim)
+
+
+## The band of this NPC's relationship value toward `other`, or &"" when no band contains it.
+func relationship_band(other: StringName, dim: StringName) -> StringName:
+	return _world.relationships.band(_world, _npc, other, dim)
 
 
 ## This NPC's need value (needs are private to their owner).
@@ -142,3 +159,17 @@ func running_action() -> StringName:
 ## A view of the same NPC that reads ground truth.
 func as_truth() -> NpcfNpcView:
 	return NpcfNpcView.new(_world, _npc, true)
+
+
+## The NPC's display name (its ID when it has none).
+func display_name() -> String:
+	var n: NpcfNpcState = _world.npcs.get(_npc)
+	if n != null and n.resolved != null and n.resolved.display_name != "":
+		return n.resolved.display_name
+	return String(_npc)
+
+
+## Persona text for dialogue: the resolved voice of the personalities and the character (R4.5).
+func persona() -> String:
+	var n: NpcfNpcState = _world.npcs.get(_npc)
+	return n.resolved.voice if n != null and n.resolved != null else ""

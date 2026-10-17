@@ -52,10 +52,50 @@ static func tag_change(p_npc: StringName, p_tag: StringName, add: bool) -> NpcfS
 	return c
 
 
+static func rel_delta(p_subject: StringName, p_other: StringName, p_dim: StringName, p_amount: int) -> NpcfStateChange:
+	var c: NpcfStateChange = NpcfStateChange.new()
+	c.kind = Kind.REL_DELTA
+	c.subject = p_subject
+	c.other = p_other
+	c.dim = p_dim
+	c.amount = p_amount
+	return c
+
+
 static func emit_event(p_event: NpcfEvent) -> NpcfStateChange:
 	var c: NpcfStateChange = NpcfStateChange.new()
 	c.kind = Kind.EMIT_EVENT
 	c.event = p_event
+	return c
+
+
+## Save form: the value is tagged (see NpcfSaveCodec); the event, when set, is saved in full.
+func to_save() -> Dictionary:
+	var ev: Variant = null
+	if event != null:
+		ev = event.to_save()
+	return {
+		"kind": kind, "subject": String(subject), "fact_id": String(fact_id),
+		"value": NpcfSaveCodec.encode_value(value, "state change value"), "amount": amount,
+		"need": String(need), "tag": String(tag), "dim": String(dim), "other": String(other), "event": ev,
+	}
+
+
+## Reads a state change written by to_save.
+static func from_save(r: NpcfSaveCodec.Reader, d: Variant, path: String) -> NpcfStateChange:
+	var c: NpcfStateChange = NpcfStateChange.new()
+	c.kind = r.int_at(d, "kind", path)
+	c.subject = r.name_at(d, "subject", path)
+	c.fact_id = r.name_at(d, "fact_id", path)
+	c.value = r.value_at(d, "value", path)
+	c.amount = r.int_at(d, "amount", path)
+	c.need = r.name_at(d, "need", path)
+	c.tag = r.name_at(d, "tag", path)
+	c.dim = r.name_at(d, "dim", path)
+	c.other = r.name_at(d, "other", path)
+	var ev: Variant = r.get_v(d, "event", path)
+	if ev != null:
+		c.event = NpcfEvent.from_save(r, ev, path + ".event")
 	return c
 
 

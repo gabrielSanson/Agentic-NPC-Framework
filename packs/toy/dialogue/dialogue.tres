@@ -1,0 +1,228 @@
+[gd_resource type="Resource" script_class="NpcfDialogueDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_dialogue_def.gd" id="1_dlg"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_intent_def.gd" id="2_intent"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_outcome_def.gd" id="3_outcome"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_dialogue_line_set.gd" id="4_lines"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_presentation_question_def.gd" id="5_question"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_presentation_rule.gd" id="6_rule"]
+[ext_resource type="Script" path="res://packs/toy/dialogue/hooks/news.gd" id="7_news"]
+[ext_resource type="Resource" path="res://packs/toy/social/trust.tres" id="8_trust"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_lore_rules.gd" id="9_lore"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_prompt_template.gd" id="10_tmpl"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_prompt_variant.gd" id="11_variant"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_prompt_macro.gd" id="12_macro"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_condition_def.gd" id="13_cond"]
+
+[sub_resource type="Resource" id="Resource_greet_out"]
+script = ExtResource("3_outcome")
+result = &"toy.friendly"
+rel_deltas = Dictionary[StringName, int]({
+&"toy.liking": 1
+})
+
+[sub_resource type="Resource" id="Resource_greet"]
+script = ExtResource("2_intent")
+id = &"toy.greet"
+description = "The player greets the NPC."
+keywords = PackedStringArray("hello", "hi", "hey", "morning")
+outcome = SubResource("Resource_greet_out")
+
+[sub_resource type="Resource" id="Resource_news_out"]
+script = ExtResource("3_outcome")
+result = &"toy.no_news"
+
+[sub_resource type="Resource" id="Resource_news"]
+script = ExtResource("2_intent")
+id = &"toy.ask_news"
+description = "The player asks what the NPC has heard lately."
+keywords = PackedStringArray("news", "seen", "happened", "anything")
+patterns = PackedStringArray("what'?s new")
+outcome = SubResource("Resource_news_out")
+hook = ExtResource("7_news")
+
+[sub_resource type="Resource" id="Resource_insult_out"]
+script = ExtResource("3_outcome")
+result = &"toy.offended"
+rel_deltas = Dictionary[StringName, int]({
+&"toy.liking": -5,
+&"toy.trust": -10
+})
+
+[sub_resource type="Resource" id="Resource_insult"]
+script = ExtResource("2_intent")
+id = &"toy.insult"
+description = "The player insults the NPC."
+keywords = PackedStringArray("stupid", "idiot", "hate", "ugly")
+outcome = SubResource("Resource_insult_out")
+
+[sub_resource type="Resource" id="Resource_smalltalk_out"]
+script = ExtResource("3_outcome")
+result = &"toy.neutral"
+
+[sub_resource type="Resource" id="Resource_smalltalk"]
+script = ExtResource("2_intent")
+id = &"toy.smalltalk"
+description = "The player makes small talk about the day or the work."
+keywords = PackedStringArray("weather", "work", "day")
+outcome = SubResource("Resource_smalltalk_out")
+
+[sub_resource type="Resource" id="Resource_line_greet_trusting"]
+script = ExtResource("4_lines")
+intent = SubResource("Resource_greet")
+result = &"toy.friendly"
+band = &"toy.trusting"
+lines = PackedStringArray("Good to see you again, friend.")
+
+[sub_resource type="Resource" id="Resource_line_greet"]
+script = ExtResource("4_lines")
+intent = SubResource("Resource_greet")
+result = &"toy.friendly"
+lines = PackedStringArray("Hello there.", "Hi. I'm {npc_name}.")
+
+[sub_resource type="Resource" id="Resource_line_news_yes"]
+script = ExtResource("4_lines")
+intent = SubResource("Resource_news")
+result = &"toy.has_news"
+lines = PackedStringArray("Word is someone spotted something. Keep your eyes open.")
+
+[sub_resource type="Resource" id="Resource_line_news_no"]
+script = ExtResource("4_lines")
+intent = SubResource("Resource_news")
+result = &"toy.no_news"
+lines = PackedStringArray("Nothing new around {location_name}.")
+
+[sub_resource type="Resource" id="Resource_line_insult"]
+script = ExtResource("4_lines")
+intent = SubResource("Resource_insult")
+result = &"toy.offended"
+lines = PackedStringArray("There's no need for that.")
+
+[sub_resource type="Resource" id="Resource_line_smalltalk"]
+script = ExtResource("4_lines")
+intent = SubResource("Resource_smalltalk")
+result = &"toy.neutral"
+lines = PackedStringArray("Mm, is that so?", "It is {time_of_day} already.")
+
+[sub_resource type="Resource" id="Resource_rule_emotion_offended"]
+script = ExtResource("6_rule")
+result = &"toy.offended"
+answer = &"toy.annoyed"
+
+[sub_resource type="Resource" id="Resource_rule_emotion_friendly"]
+script = ExtResource("6_rule")
+result = &"toy.friendly"
+answer = &"toy.happy"
+
+[sub_resource type="Resource" id="Resource_emotion"]
+script = ExtResource("5_question")
+id = &"toy.emotion"
+description = "The NPC's facial expression."
+options = Array[StringName]([&"toy.calm", &"toy.happy", &"toy.annoyed"])
+option_descriptions = Dictionary[StringName, String]({
+&"toy.annoyed": "Irritated.",
+&"toy.calm": "Neutral and relaxed.",
+&"toy.happy": "Pleased and warm."
+})
+rules = Array[ExtResource("6_rule")]([SubResource("Resource_rule_emotion_offended"), SubResource("Resource_rule_emotion_friendly")])
+
+[sub_resource type="Resource" id="Resource_rule_gesture_greet"]
+script = ExtResource("6_rule")
+intent = SubResource("Resource_greet")
+answer = &"toy.wave"
+
+[sub_resource type="Resource" id="Resource_gesture"]
+script = ExtResource("5_question")
+id = &"toy.gesture"
+description = "A hand gesture, if any."
+options = Array[StringName]([&"toy.none", &"toy.wave"])
+rules = Array[ExtResource("6_rule")]([SubResource("Resource_rule_gesture_greet")])
+
+[sub_resource type="Resource" id="Resource_lore"]
+script = ExtResource("9_lore")
+banned_terms = PackedStringArray("internet", "phone")
+max_line_chars = 200
+
+[sub_resource type="Resource" id="Resource_macro_npc_name"]
+script = ExtResource("12_macro")
+name = &"npc_name"
+source = 0
+
+[sub_resource type="Resource" id="Resource_macro_persona"]
+script = ExtResource("12_macro")
+name = &"persona"
+source = 1
+
+[sub_resource type="Resource" id="Resource_macro_location_name"]
+script = ExtResource("12_macro")
+name = &"location_name"
+source = 2
+
+[sub_resource type="Resource" id="Resource_macro_time_of_day"]
+script = ExtResource("12_macro")
+name = &"time_of_day"
+source = 3
+
+[sub_resource type="Resource" id="Resource_macro_memories"]
+script = ExtResource("12_macro")
+name = &"memories"
+source = 8
+
+[sub_resource type="Resource" id="Resource_macro_facts"]
+script = ExtResource("12_macro")
+name = &"facts"
+source = 9
+
+[sub_resource type="Resource" id="Resource_macro_actions"]
+script = ExtResource("12_macro")
+name = &"actions"
+source = 10
+
+[sub_resource type="Resource" id="Resource_cond_weary"]
+script = ExtResource("13_cond")
+op_kind = 2
+tag = &"toy.weary"
+
+[sub_resource type="Resource" id="Resource_variant_tired"]
+script = ExtResource("11_variant")
+id = &"toy.tired"
+condition = SubResource("Resource_cond_weary")
+text = "{{npc_name}} is exhausted and short with people."
+
+[sub_resource type="Resource" id="Resource_variant_default"]
+script = ExtResource("11_variant")
+id = &"toy.default"
+text = "It is an ordinary day."
+
+[sub_resource type="Resource" id="Resource_template"]
+script = ExtResource("10_tmpl")
+system_text = "You are {{npc_name}}. {{persona}} Stay in character. Reply only with JSON: {\"line\": string, \"cited_facts\": [handles], \"action\": null or {\"id\": action id, \"args\": {}}}. Facts you may cite:\n{{facts}}\nActions you may take: {{actions}}."
+scenario_text = "{{npc_name}} is at {{location_name}} at {{time_of_day}}. {{situation}} You remember: {{memories}}."
+variants = Array[ExtResource("11_variant")]([SubResource("Resource_variant_tired"), SubResource("Resource_variant_default")])
+macros = Array[ExtResource("12_macro")]([SubResource("Resource_macro_npc_name"), SubResource("Resource_macro_persona"), SubResource("Resource_macro_location_name"), SubResource("Resource_macro_time_of_day"), SubResource("Resource_macro_memories"), SubResource("Resource_macro_facts"), SubResource("Resource_macro_actions")])
+
+[resource]
+script = ExtResource("1_dlg")
+intents = Array[ExtResource("2_intent")]([SubResource("Resource_greet"), SubResource("Resource_news"), SubResource("Resource_insult"), SubResource("Resource_smalltalk")])
+fallback_intent = SubResource("Resource_smalltalk")
+confidence_threshold = 0.34
+lines = Array[ExtResource("4_lines")]([SubResource("Resource_line_greet_trusting"), SubResource("Resource_line_greet"), SubResource("Resource_line_news_yes"), SubResource("Resource_line_news_no"), SubResource("Resource_line_insult"), SubResource("Resource_line_smalltalk")])
+default_lines = PackedStringArray("...")
+band_dim = ExtResource("8_trust")
+presentation = Array[ExtResource("5_question")]([SubResource("Resource_emotion"), SubResource("Resource_gesture")])
+last_talk_window_ticks = 30
+max_prompt_facts = 8
+default_speech_instruction = "A clear adult voice at a natural pace."
+delivery_question = &"toy.emotion"
+delivery_instructions = Dictionary[StringName, String]({
+&"toy.calm": "Calm and even.",
+&"toy.happy": "Warm and cheerful.",
+&"toy.annoyed": "Clipped and irritated."
+})
+lore = SubResource("Resource_lore")
+memory_texts = Dictionary[StringName, String]({
+&"npcf.conversation": "talked with {actors}",
+&"toy.chatted": "{actors} chatted at {location}",
+&"toy.spotted": "{actors} spotted something at {location}"
+})
+default_template = SubResource("Resource_template")

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="NpcfGoalDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_action_def.gd" id="1_cn3kh"]
+[ext_resource type="Resource" path="res://packs/cw/actions/rest.tres" id="2_o3bl8"]
+[ext_resource type="Resource" path="res://packs/cw/actions/sleep.tres" id="3_plauf"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_consideration_def.gd" id="4_uyq22"]
+[ext_resource type="Resource" path="res://packs/cw/needs/fatigue.tres" id="5_ln0v0"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_goal_def.gd" id="6_th3tn"]
+
+[sub_resource type="Resource" id="Resource_b8txp"]
+script = ExtResource("4_uyq22")
+need = ExtResource("5_ln0v0")
+
+[resource]
+script = ExtResource("6_th3tn")
+id = &"cw.rest"
+considerations = Array[ExtResource("4_uyq22")]([SubResource("Resource_b8txp")])
+candidate_actions = Array[ExtResource("1_cn3kh")]([ExtResource("2_o3bl8"), ExtResource("3_plauf")])

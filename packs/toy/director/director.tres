@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="NpcfDirectorDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_director_def.gd" id="1_dir"]
+[ext_resource type="Resource" path="res://packs/toy/director/idle_pressure.tres" id="2_idle"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_macro_var_def.gd" id="3_mvd"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_director_rule_def.gd" id="4_rule"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_macro_condition.gd" id="5_cond"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_tag_query.gd" id="6_tags"]
+[ext_resource type="Resource" path="res://packs/toy/goals/work.tres" id="7_work"]
+
+[sub_resource type="Resource" id="Resource_cond_idle"]
+script = ExtResource("5_cond")
+macro = ExtResource("2_idle")
+compare = 5
+value = 30.0
+
+[sub_resource type="Resource" id="Resource_target_not_weary"]
+script = ExtResource("6_tags")
+tags_none = Array[StringName]([&"toy.weary"])
+
+[sub_resource type="Resource" id="Resource_back_to_work"]
+script = ExtResource("4_rule")
+id = &"toy.back_to_work"
+cadence_ticks = 30
+conditions = Array[ExtResource("5_cond")]([SubResource("Resource_cond_idle")])
+target = SubResource("Resource_target_not_weary")
+goal = ExtResource("7_work")
+priority = 0.5
+duration_ticks = 60
+
+[resource]
+script = ExtResource("1_dir")
+macros = Array[ExtResource("3_mvd")]([ExtResource("2_idle")])
+rules = Array[ExtResource("4_rule")]([SubResource("Resource_back_to_work")])

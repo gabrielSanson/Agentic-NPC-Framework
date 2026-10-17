@@ -42,3 +42,23 @@ func to_dict() -> Dictionary:
 		"priority": priority, "expires_tick": expires_tick, "tags_all": NpcfValueCodec.names(target_tags_all),
 		"tags_any": NpcfValueCodec.names(target_tags_any), "tags_none": NpcfValueCodec.names(target_tags_none),
 	}
+
+
+## Save form: every field, with the same keys as to_dict (see NpcfSaveCodec for the value tags).
+func to_save() -> Dictionary:
+	return to_dict()
+
+
+## Reads a directive written by to_save.
+static func from_save(r: NpcfSaveCodec.Reader, d: Variant, path: String) -> NpcfDirective:
+	var n: NpcfDirective = NpcfDirective.new()
+	n.id = r.int_at(d, "id", path)
+	n.origin = r.name_at(d, "origin", path)
+	n.target_npc = r.name_at(d, "target_npc", path)
+	n.goal = r.name_at(d, "goal", path)
+	n.priority = r.float_at(d, "priority", path)
+	n.expires_tick = r.int_at(d, "expires_tick", path)
+	n.target_tags_all = r.names_at(d, "tags_all", path)
+	n.target_tags_any = r.names_at(d, "tags_any", path)
+	n.target_tags_none = r.names_at(d, "tags_none", path)
+	return n
