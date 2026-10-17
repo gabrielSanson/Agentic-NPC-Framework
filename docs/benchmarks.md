@@ -55,6 +55,37 @@ The p99 target (4 ms) is not met. On spike ticks the remaining cost is spread ac
 writes for every witness), the decision phase (about 33 NPC decisions per spike tick) and the actions phase.
 The median target (2 ms) is met.
 
+## Round 2: behaviour-preserving speedups (perf-ticks-2)
+
+Cloud sandbox, headless, debug build (Godot 4.7.2). Same command as above. Each row is the median of three runs of
+the bench's `median_ms`, `p99_ms` and `max_ms`. The sandbox drifts by about 1 ms between sessions, so the last
+table is the reliable comparison: `origin/main` and the branch, interleaved in one session, three runs each.
+
+| Step (cumulative) | Median (ms) | p99 (ms) | Max (ms) |
+| --- | --- | --- | --- |
+| Before (`origin/main`, 1e9ccdb) | 6.04 | 24.9 | 44.2 |
+| a. invariant checks read beliefs in place | 3.29 | 23.0 | 40.9 |
+| c. belief key built once per event | 2.98 | 20.1 | 32.3 |
+| d. location-index lookup caches | 3.81 (same-session `HEAD` before d: 3.8 to 4.1) | 20.9 | 32.6 |
+| e. `take_due` sorts by integer key | 2.88 | 20.1 | 32.2 |
+
+Interleaved A/B, three runs each, same session (median of the three runs' values, range of the medians):
+
+| Build | Median (ms) | p99 (ms) | Max (ms) |
+| --- | --- | --- | --- |
+| `origin/main` (1e9ccdb) | 5.85 (5.81 to 5.95) | 23.43 | 32.51 |
+| `perf-ticks-2` (a, c, d, e, f1 to f3; db5266d) | 3.24 (3.14 to 3.78) | 19.55 | 32.34 |
+
+Fix f (decisions) is in the branch head: a static empty args dictionary, one planning session per decision and
+one reused belief view on start. Its gain is inside the run-to-run noise, so it has no row of its own. The
+comparator in `npcf_goal_selector.gd` is unchanged: `StringName` `<` does not order by name, so it cannot replace
+the `String` compare on score ties.
+
+Not kept: fix b (per-recipient allocations). Memory records cannot be shared between recipients because
+`NpcfMemoryLog.append` assigns each record its own `id`, and a recipient-only iteration measured no gain.
+
+The p99 target (4 ms) is still not met in a debug build. See `slow-ticks-findings.md`.
+
 ## Bench scene (runtime, 2D)
 
 `samples/toy_room/bench.tscn` runs the same population through the `Npcf` runtime, one 60 fps frame at a time,

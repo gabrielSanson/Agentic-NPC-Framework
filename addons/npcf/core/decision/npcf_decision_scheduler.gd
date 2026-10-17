@@ -61,14 +61,7 @@ func take_due(world: NpcfWorld, cap: int) -> Array[StringName]:
 			var period: int = _period(n)
 			while n.next_periodic_tick <= tick:
 				n.next_periodic_tick += period
-	var ids: Array[StringName] = []
-	ids.assign(_due.keys())
-	ids.sort_custom(func(a: StringName, b: StringName) -> bool:
-		var ea: NpcfDueEntry = _due[a]
-		var eb: NpcfDueEntry = _due[b]
-		if ea.due_tick != eb.due_tick:
-			return ea.due_tick < eb.due_tick
-		return String(a) < String(b))
+	var ids: Array[StringName] = _due_order(world)
 	var out: Array[StringName] = []
 	for id: StringName in ids:
 		if out.size() >= maxi(0, cap):
@@ -105,6 +98,34 @@ func _add(npc: StringName, due_tick: int, reason: StringName, bypass: bool, rule
 		entry.reason = reason
 		entry.rule = rule
 	entry.bypass = entry.bypass or bypass
+
+
+## Every due NPC ID in (due tick, ID) order. World NPC IDs are sorted already, so the IDs are read in that
+## order and sorted by an integer key (tick, then position). An ID that is not a world NPC gets the full sort.
+func _due_order(world: NpcfWorld) -> Array[StringName]:
+	var ids: Array[StringName] = []
+	var by_id: Array[StringName] = []
+	for id: StringName in world.npc_ids:
+		if _due.has(id):
+			by_id.append(id)
+	if by_id.size() != _due.size():
+		ids.assign(_due.keys())
+		ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+			var ea: NpcfDueEntry = _due[a]
+			var eb: NpcfDueEntry = _due[b]
+			if ea.due_tick != eb.due_tick:
+				return ea.due_tick < eb.due_tick
+			return String(a) < String(b))
+		return ids
+	var n: int = by_id.size()
+	var keys: PackedInt64Array = PackedInt64Array()
+	for i: int in n:
+		var due: int = _due[by_id[i]].due_tick
+		keys.append(due * n + i)
+	keys.sort()
+	for key: int in keys:
+		ids.append(by_id[posmod(key, n)])
+	return ids
 
 
 func _period(n: NpcfNpcState) -> int:

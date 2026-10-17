@@ -26,8 +26,8 @@ func start(world: NpcfWorld, npc: StringName, call: NpcfActionCall, report: Npcf
 	if cooldown_until > tick:
 		return &"cooldown"
 
-	var truth: NpcfNpcView = world.view(npc).as_truth()
 	var belief: NpcfNpcView = world.view(npc)
+	var truth: NpcfNpcView = belief.as_truth()
 	var failed: bool = false
 	for c: NpcfConditionDef in def.preconditions:
 		if not NpcfConditions.check(world, truth, c, call.args, false):
