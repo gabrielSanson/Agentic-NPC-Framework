@@ -22,6 +22,8 @@ const MAX_SPEED: float = 16.0
 ## Sample rates the voice calls use: transcribe takes 16 kHz mono PCM, speak returns 24 kHz mono PCM.
 const TRANSCRIBE_SAMPLE_RATE: int = 16000
 const SPEECH_SAMPLE_RATE: int = 24000
+## The save slot autosave writes to.
+const AUTOSAVE_SLOT: String = "autosave"
 
 ## When false, _process does nothing; tests drive frames with advance_frame().
 var auto_process: bool = true
@@ -32,9 +34,17 @@ var paused: bool = false
 var capped_frames: int = 0
 var frames: int = 0
 var agents: NpcfAgentRegistry2D = NpcfAgentRegistry2D.new()
+## Save files (save_game and load_game). Tests point `saves.dir` at a test folder.
+var saves: NpcfSaveService = NpcfSaveService.new()
+## Real seconds between autosaves into the "autosave" slot; 0 disables. Read from npcf/save/autosave_seconds at start.
+var autosave_seconds: float = 300.0
 
 var _world: NpcfWorld = null
 var _acc: float = 0.0
+var _pack: NpcfLoadedPack = null
+var _scenario: NpcfScenarioDef = null
+var _adapters: NpcfAdapterSet = null
+var _autosave_elapsed: float = 0.0
 var _movement: NpcfMovementAdapter = null
 var _perception: NpcfPerceptionAdapter = null
 var _presentation: NpcfPresentationAdapter = null
@@ -76,27 +86,27 @@ func start(manifest: NpcfPackManifest, scenario: NpcfScenarioDef, world_seed: in
 		_movement if _movement != null else defaults.movement,
 		_perception if _perception != null else defaults.perception,
 		_presentation if _presentation != null else defaults.presentation)
-	_world = NpcfWorldBuilder.build(loaded.pack, scenario, world_seed, adapters)
-	_world.headless = false
-	_world.dialogue.line.connect(_relay_line)
-	_world.dialogue.no_addressee.connect(_relay_no_addressee)
-	_apply_dialogue_plugins()
-	_load_providers_from_settings()
-	_acc = 0.0
+	_pack = loaded.pack
+	_scenario = scenario
+	_adapters = adapters
+	_install_world(NpcfWorldBuilder.build(loaded.pack, scenario, world_seed, adapters))
 	capped_frames = 0
 	frames = 0
 	paused = false
-	for npc: StringName in agents.ids():
-		_world.queue_input(NpcfInput.embodiment(npc, true))
+	var seconds: float = ProjectSettings.get_setting("npcf/save/autosave_seconds", 300.0)
+	autosave_seconds = seconds
+	_autosave_elapsed = 0.0
 	return OK
 
 
-## Releases the world. Safe to call when nothing runs.
+## Releases the world. Safe to call when nothing runs. Also forgets the pack, so load_game needs start() again.
 func stop() -> void:
-	if _world == null:
-		return
-	_world.dispose()
+	if _world != null:
+		_world.dispose()
 	_world = null
+	_pack = null
+	_scenario = null
+	_adapters = null
 
 
 func is_running() -> bool:
@@ -130,6 +140,7 @@ func advance_frame(delta: float) -> int:
 		return 0
 	frames += 1
 	_acc += delta * speed
+	_tick_autosave(delta)
 	var interval: float = _world.sim.real_seconds_per_tick
 	var steps: int = 0
 	while _world != null and _acc >= interval and steps < _world.sim.max_ticks_per_frame:
@@ -368,14 +379,53 @@ func dialogue_records() -> Array[NpcfDialogueTurnRecord]:
 	return out
 
 
-## Saving arrives in task 21.
-func save_game(_slot: String) -> Error:
-	return ERR_UNAVAILABLE
+## Writes the running world to a save slot. Refused (nothing written) when an invariant fails.
+func save_game(slot: String) -> Error:
+	if _world == null:
+		return ERR_UNCONFIGURED
+	var failures: Array[NpcfInvariantFailure] = _world.invariants.check(_world)
+	if not failures.is_empty():
+		var lines: PackedStringArray = []
+		for f: NpcfInvariantFailure in failures:
+			lines.append(f.format())
+		sim_error.emit("save refused, invariants failed:\n" + "\n".join(lines))
+		return ERR_INVALID_DATA
+	var data: Dictionary = NpcfSaveCodec.encode(_world)
+	if data.is_empty():
+		sim_error.emit("save refused: " + NpcfSaveCodec.last_error())
+		return ERR_INVALID_DATA
+	var written: Error = saves.write(slot, NpcfSaveCodec.to_text(data))
+	if written != OK:
+		sim_error.emit("save to slot %s failed: %s" % [slot, error_string(written)])
+	return written
 
 
-## Loading arrives in task 21.
-func load_game(_slot: String, _use_backup: bool = false) -> Error:
-	return ERR_UNAVAILABLE
+## Replaces the running world with a saved one (same pack and scenario). Files and the running world are
+## untouched when the save is refused.
+func load_game(slot: String, use_backup: bool = false) -> Error:
+	if _pack == null:
+		return ERR_UNCONFIGURED
+	var read_result: Array = saves.read(slot, use_backup)
+	var read_error: Error = read_result[0]
+	if read_error != OK:
+		sim_error.emit(str(read_result[1]))
+		return read_error
+	var data: Dictionary = NpcfSaveCodec.parse(str(read_result[1]))
+	var header: String = NpcfSaveCodec.check_compatible(data, _pack, _scenario)
+	if header != "":
+		sim_error.emit(header)
+		return ERR_FILE_CORRUPT
+	var w: NpcfWorld = NpcfWorldBuilder.build(_pack, _scenario, NpcfSaveCodec.seed_of(data), _adapters)
+	var restore_error: String = NpcfSaveCodec.restore(w, data)
+	if restore_error != "":
+		w.dispose()
+		sim_error.emit("load failed: " + restore_error)
+		return ERR_FILE_CORRUPT
+	if _world != null:
+		_world.dispose()
+	_install_world(w)
+	tick_advanced.emit(w.clock.tick)
+	return OK
 
 
 func _process(delta: float) -> void:
@@ -432,3 +482,28 @@ func _step() -> void:
 		action_finished.emit(o.npc, o.action, o.call_id, o.outcome)
 	for f: NpcfInvariantFailure in r.invariant_failures:
 		sim_error.emit(f.format())
+
+
+## Makes `w` the running world: signal connections, dialogue plugins, providers (loaded once), and the
+## embodiment inputs for registered agents. Used by start() and load_game().
+func _install_world(w: NpcfWorld) -> void:
+	_world = w
+	_world.headless = false
+	_world.dialogue.line.connect(_relay_line)
+	_world.dialogue.no_addressee.connect(_relay_no_addressee)
+	_apply_dialogue_plugins()
+	_load_providers_from_settings()
+	_acc = 0.0
+	for npc: StringName in agents.ids():
+		_world.queue_input(NpcfInput.embodiment(npc, true))
+
+
+## Adds the frame's real time to the autosave clock and saves into the "autosave" slot when it is due.
+func _tick_autosave(delta: float) -> void:
+	if autosave_seconds <= 0.0:
+		return
+	_autosave_elapsed += delta
+	if _autosave_elapsed < autosave_seconds:
+		return
+	_autosave_elapsed = 0.0
+	save_game(AUTOSAVE_SLOT)
