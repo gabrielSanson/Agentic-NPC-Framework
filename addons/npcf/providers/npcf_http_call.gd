@@ -39,7 +39,9 @@ func poll(now_ms: int) -> void:
 	if done:
 		return
 	if now_ms - _started_ms > _spec.timeout_ms:
-		_finish(&"timeout", now_ms)
+		# Still connecting means the server never accepted us: refused. Windows retries the SYN to a closed port and
+		# reports the refusal only after about 2 s, so without this a stopped local server reads as a timeout.
+		_finish(&"refused" if not _sent else &"timeout", now_ms)
 		return
 	_client.poll()
 	var st: HTTPClient.Status = _client.get_status()

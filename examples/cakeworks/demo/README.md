@@ -21,9 +21,8 @@
 ## Quick start (Linux or macOS)
 
 1. From the repository root, sync the example: `bash tools/ci/sync_example.sh`.
-2. Prepare the models: `examples/cakeworks/servers/get_models.sh`. Set `BREEZE_Q8_URL` and `BREEZE_Q4_URL` to the
-   Hugging Face file URLs first, or Breeze is skipped (see "Breeze" below). Model IDs and file names are checked on
-   Hugging Face, not in this repository: **check on Hugging Face** before you run anything.
+2. Prepare the models: `examples/cakeworks/servers/get_models.sh --profile light`. With `--profile text_only` it
+   prepares only Kev.
 3. Start the servers: `examples/cakeworks/servers/start_all.sh --profile light`. It waits for each server to answer.
 4. Run the smoke check. Every line must say OK:
 
@@ -39,18 +38,28 @@
 
 Use the PowerShell scripts in the same folder, with the same steps:
 
-1. `servers\get_models.ps1` (set `$env:BREEZE_Q8_URL` and `$env:BREEZE_Q4_URL` first, as above).
+1. `servers\get_models.ps1 -Profile light`.
 2. `servers\start_all.ps1 -Profile light`.
 3. The smoke command from step 4 above.
 4. Run the demo as in step 5.
 5. `servers\stop_all.ps1`.
 
-The PowerShell scripts have not been run on Windows yet. Report any problem with them.
+The PowerShell scripts were checked on Windows 11 with an RTX 5060 (8 GB) in the `text_only` profile.
 
 ## Text only
 
 Use no speech servers at all: `servers/start_all.sh --profile text_only`, then run with `--profile=text_only`.
 The demo then needs no Parakeet and no Breeze, and no microphone.
+
+On an 8 GB GPU, use the smaller Gemma quant and the small Kev model (Kev runs on the CPU):
+
+```bash
+export GEMMA_MODEL=unsloth/gemma-4-12b-it-GGUF:UD-Q3_K_XL KEV_MODEL=jaredpalmer/kev-0.8b
+```
+
+In PowerShell: `$env:GEMMA_MODEL="unsloth/gemma-4-12b-it-GGUF:UD-Q3_K_XL"; $env:KEV_MODEL="jaredpalmer/kev-0.8b"`.
+Kev-0.8B is often less confident than the dialogue threshold, so the smoke check's intents line can fall back to
+keywords.
 
 ## Running servers by hand
 
@@ -73,14 +82,17 @@ Every server binds to 127.0.0.1. Breeze has no authentication, so do not change 
 
 ## Breeze
 
-Breeze is built from source (`Breeze-TTS-2.cpp`, Vulkan build, which needs the Vulkan SDK and CMake). Its weights are
-not downloaded by a script in this repository. Copy the two GGUF file URLs from Hugging Face and set
-`BREEZE_Q8_URL` and `BREEZE_Q4_URL`. The file names `breeze-tts-2-q8_0.gguf` and `breeze-tts-2-q4_k.gguf` are
-inferred: **check on Hugging Face**.
+Breeze is built from source (`Breeze-TTS-2.cpp`, Vulkan build, which needs the Vulkan SDK and CMake). `get_models`
+downloads `breeze-tts-2-q8_0.gguf` and `breeze-tts-2-q4_k.gguf` from the `HoppouAI/Breeze-TTS-2.cpp` model repo on
+Hugging Face. Set `BREEZE_Q8_URL` and `BREEZE_Q4_URL` to download them from somewhere else.
 
 ## Troubleshooting
 
 - **Use the provider panel colours and the smoke check first.** The smoke check prints one line per model.
+- **Gemma replies are empty:** Gemma 4 thinks by default and puts nothing in the answer. The scripts pass
+  `--reasoning-budget 0`; keep it when you start llama-server by hand.
+- **Gemma is very slow on an 8 GB GPU:** the model spilled into shared memory. Use the UD-Q3_K_XL quant and one slot
+  (`-np 1`), as the scripts do.
 - **Gemma replies with no JSON:** set `json_schema` to false on the Gemma provider (`extra.json_schema`).
   Some llama-server builds do not honour JSON schemas.
 - **Kev shows "keyword fallback":** the Kev server is down, or its answer is not understood. Check
@@ -89,12 +101,14 @@ inferred: **check on Hugging Face**.
 - **Mic silent:** enable microphone permission for the OS and for Godot.
 - **A server did not start:** read `servers/<name>.log` (and `servers/<name>.err.log` on Windows).
 - **Kev still running after stop_all.sh:** `uv` can leave the Python child running. Stop it by hand.
+  (`stop_all.ps1` stops child processes too.)
 
-## Check on Hugging Face
+## Model IDs
 
-These values were inferred when the scripts were written. Confirm each one before the first run:
+These were checked on Hugging Face on 2026-10-17:
 
-- `ggml-org/gemma-4-12B-GGUF:Q4_K_M` (in `servers/common.sh` and `servers/start_all.ps1`)
-- `jaredpalmer/kev-4b` and `jaredpalmer/kev-0.8b` (the 0.8B ID is inferred)
-- `nvidia/parakeet-tdt-0.6b-v2` (in `servers/parakeet/server.py`)
-- The Breeze GGUF file names `breeze-tts-2-q8_0.gguf` and `breeze-tts-2-q4_k.gguf`
+- `unsloth/gemma-4-12b-it-GGUF` (instruct; `Q4_K_M` about 7.1 GB, `UD-Q3_K_XL` about 6 GB). `GEMMA_MODEL` overrides it.
+- `jaredpalmer/kev-4b` and `jaredpalmer/kev-0.8b`: LoRA adapters. Kev also downloads the base model
+  (`Qwen/Qwen3.5-4B-Base`, about 9.3 GB, or `Qwen/Qwen3.5-0.8B-Base`, about 1.7 GB). `KEV_MODEL` overrides it.
+- `nvidia/parakeet-tdt-0.6b-v2` (about 2.5 GB, in `servers/parakeet/server.py`).
+- `HoppouAI/Breeze-TTS-2.cpp`: `breeze-tts-2-q8_0.gguf` and `breeze-tts-2-q4_k.gguf`.

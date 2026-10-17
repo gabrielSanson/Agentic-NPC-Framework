@@ -10,7 +10,8 @@ foreach ($line in Get-Content $pidsFile) {
 	$name, $procId = $line -split " "
 	$proc = Get-Process -Id ([int]$procId) -ErrorAction SilentlyContinue
 	if ($proc) {
-		Stop-Process -Id $proc.Id
+		# /T also stops child processes (Kev's python workers); Stop-Process would leave them running.
+		taskkill /PID $proc.Id /T /F | Out-Null
 		Write-Host "stopped $name ($procId)"
 	} else {
 		Write-Host "$name was not running"

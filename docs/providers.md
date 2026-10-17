@@ -47,7 +47,7 @@ The key itself is never stored in a set file. Only the variable name goes in `ke
 Start the server with:
 
 ```
-llama-server -m gemma-4-12B-Q4_K_M.gguf --port 8080 --jinja
+llama-server -m gemma-4-12B-Q4_K_M.gguf --port 8080 --jinja --reasoning-budget 0
 ```
 
 `--jinja` is needed for Gemma's chat template. Then describe it in a set with `kind = GENERATE`, `adapter =
@@ -64,7 +64,8 @@ Nothing waits for a provider. Every feature falls back at once:
 - **Voice:** voice is off (from C3c).
 
 A provider is `checking` while its first health check runs, and `down` after a failed check or request. A refused
-connection marks it `down` until the next recheck (`retry_ms`). A provider in `checking` counts as not ready. Failed
+connection marks it `down` until the next recheck (`retry_ms`). A call that times out before the connection is
+accepted counts as refused, because Windows takes about 2 s to refuse a connection to a closed local port. A provider in `checking` counts as not ready. Failed
 requests are not retried. A provider that cannot load its key variable, or whose config is refused (bad URL, unknown
 adapter, or a kind mismatch), never receives a request.
 
