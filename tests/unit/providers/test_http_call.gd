@@ -178,6 +178,16 @@ func test_a_closed_port_is_refused() -> void:
 	assert_str(str(got[0].status)).is_equal("refused")
 
 
+func test_a_timeout_before_the_request_is_sent_is_refused() -> void:
+	var server: FakeHttpServer = _server()
+	var got: Array[NpcfHttpResult] = []
+	var started: int = Time.get_ticks_msec()
+	var call: NpcfHttpCall = _start(_spec(HTTPClient.METHOD_GET, "/x", 0), _endpoint(server.url()), got)
+	call.poll(started + 1000)
+	assert_int(got.size()).is_equal(1)
+	assert_str(str(got[0].status)).is_equal("refused")
+
+
 func test_a_reply_cut_short_of_its_content_length_is_http_and_keeps_what_came() -> void:
 	var server: FakeHttpServer = _server()
 	var route: FakeHttpServer.Route = FakeHttpServer.Route.new()
