@@ -15,9 +15,15 @@ if (Test-Path $pidsFile) {
 
 # Each server: the command, its arguments, and the health URL (strict = only 200 counts).
 $servers = [ordered]@{}
-$servers["gemma"] = @{ File = "llama-server"; Args = @("-hf", "ggml-org/gemma-4-12B-GGUF:Q4_K_M", "--jinja", "--host", "127.0.0.1", "--port", "8090", "-c", "8192", "-ngl", "99"); Health = "http://127.0.0.1:8090/v1/models"; Strict = $false }
-$kevRun = if ($Profile -eq "light") { "jaredpalmer/kev-0.8b" } else { "jaredpalmer/kev-4b" }
-$servers["kev"] = @{ File = "uv"; Args = @("run", "--extra", "serve", "python", "-m", "kev.serve", "--run", $kevRun, "--port", "8009"); WorkDir = (Join-Path $ModelsDir "kev"); Health = "http://127.0.0.1:8009/v1/models"; Strict = $false }
+# $env:GEMMA_MODEL overrides the Gemma quant (use unsloth/gemma-4-12b-it-GGUF:UD-Q3_K_XL on an 8 GB GPU).
+# --reasoning-budget 0 turns off Gemma 4's default thinking, which otherwise leaves the answer content empty.
+# One slot with a q8_0 KV cache keeps the model inside 8 GB of VRAM; more slots spill into shared memory.
+$gemmaModel = if ($env:GEMMA_MODEL) { $env:GEMMA_MODEL } else { "unsloth/gemma-4-12b-it-GGUF:Q4_K_M" }
+$servers["gemma"] = @{ File = "llama-server"; Args = @("-hf", $gemmaModel, "--jinja", "--no-mmproj", "--reasoning-budget", "0", "--host", "127.0.0.1", "--port", "8090", "-c", "8192", "-ngl", "99", "-np", "1", "-fa", "on", "-ctk", "q8_0", "-ctv", "q8_0"); Health = "http://127.0.0.1:8090/v1/models"; Strict = $false }
+# $env:KEV_MODEL overrides the Kev model. Kev runs from its venv's python: on Windows "uv run" exits while the server
+# keeps running, which would look like an early exit and lose the pid.
+$kevRun = if ($env:KEV_MODEL) { $env:KEV_MODEL } elseif ($Profile -eq "light") { "jaredpalmer/kev-0.8b" } else { "jaredpalmer/kev-4b" }
+$servers["kev"] = @{ File = (Join-Path $ModelsDir "kev\.venv\Scripts\python.exe"); Args = @("-m", "kev.serve", "--run", $kevRun, "--host", "127.0.0.1", "--port", "8009"); WorkDir = (Join-Path $ModelsDir "kev"); Health = "http://127.0.0.1:8009/v1/models"; Strict = $false }
 $parakeetArgs = @((Join-Path $serversDir "parakeet\server.py"), "--host", "127.0.0.1", "--port", "8010")
 if ($Profile -eq "light") { $parakeetArgs += "--cpu" }
 $servers["parakeet"] = @{ File = (Join-Path $ModelsDir "parakeet-venv\Scripts\python.exe"); Args = $parakeetArgs; Health = "http://127.0.0.1:8010/health"; Strict = $true }

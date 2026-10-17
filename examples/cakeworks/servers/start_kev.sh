@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs kev serve in the foreground on port 8009. The model is jaredpalmer/kev-4b, or the 0.8B model with --light.
+# Runs kev serve in the foreground on 127.0.0.1:8009. The model is jaredpalmer/kev-4b, or the 0.8B model with --light.
 # If KEV_API_KEY is set in the environment, kev serve requires it as a bearer token, and the provider sends it.
 # Usage: start_kev.sh [--light]
 set -euo pipefail
@@ -19,4 +19,4 @@ if [ ! -d "$MODELS_DIR/kev" ]; then
 fi
 
 cd "$MODELS_DIR/kev"
-exec uv run --extra serve python -m kev.serve --run "$RUN_MODEL" --port "$KEV_PORT"
+exec uv run --extra serve python -m kev.serve --run "$RUN_MODEL" --host 127.0.0.1 --port "$KEV_PORT"
