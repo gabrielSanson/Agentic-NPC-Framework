@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="NpcfArchetypeDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_goal_def.gd" id="1_8esb3"]
+[ext_resource type="Resource" path="res://packs/toy/goals/rest.tres" id="2_557v8"]
+[ext_resource type="Resource" path="res://packs/toy/goals/explore.tres" id="3_uyqik"]
+[ext_resource type="Resource" path="res://packs/toy/goals/chat.tres" id="4_4nmwe"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_need_def.gd" id="5_fox42"]
+[ext_resource type="Resource" path="res://packs/toy/needs/energy.tres" id="6_8t5nt"]
+[ext_resource type="Resource" path="res://packs/toy/needs/curiosity.tres" id="7_7vwit"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_planner_ref.gd" id="8_hs5h3"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_archetype_def.gd" id="9_n5avl"]
+
+[sub_resource type="Resource" id="Resource_c740d"]
+script = ExtResource("8_hs5h3")
+
+[resource]
+script = ExtResource("9_n5avl")
+id = &"toy.drifter"
+needs = Array[ExtResource("5_fox42")]([ExtResource("6_8t5nt"), ExtResource("7_7vwit")])
+goals = Array[ExtResource("1_8esb3")]([ExtResource("2_557v8"), ExtResource("3_uyqik"), ExtResource("4_4nmwe")])
+planner = SubResource("Resource_c740d")
+decision_period_ticks = 7

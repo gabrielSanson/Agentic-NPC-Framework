@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="NpcfPackManifest" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_action_def.gd" id="1_7mq1n"]
+[ext_resource type="Resource" path="res://packs/toy/actions/rest.tres" id="2_fwbkt"]
+[ext_resource type="Resource" path="res://packs/toy/actions/explore.tres" id="3_8bujf"]
+[ext_resource type="Resource" path="res://packs/toy/actions/chat.tres" id="4_xyp2w"]
+[ext_resource type="Resource" path="res://packs/toy/actions/work.tres" id="5_i5u7l"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_archetype_def.gd" id="6_k2ov5"]
+[ext_resource type="Resource" path="res://packs/toy/archetypes/villager.tres" id="7_67hj3"]
+[ext_resource type="Resource" path="res://packs/toy/archetypes/drifter.tres" id="8_vl5tf"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_character_def.gd" id="9_85ooj"]
+[ext_resource type="Resource" path="res://packs/toy/characters/ana.tres" id="10_rorqk"]
+[ext_resource type="Resource" path="res://packs/toy/characters/bo.tres" id="11_8iuky"]
+[ext_resource type="Resource" path="res://packs/toy/characters/cy.tres" id="12_x72gk"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_event_kind_def.gd" id="13_tswtn"]
+[ext_resource type="Resource" path="res://packs/toy/events/chatted.tres" id="14_80xsk"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_fact_def.gd" id="15_7l7rd"]
+[ext_resource type="Resource" path="res://packs/toy/facts/discoveries.tres" id="16_4d38p"]
+[ext_resource type="Resource" path="res://packs/toy/facts/safe.tres" id="17_p0lnu"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_goal_def.gd" id="18_lcp3j"]
+[ext_resource type="Resource" path="res://packs/toy/goals/work.tres" id="19_yvtkx"]
+[ext_resource type="Resource" path="res://packs/toy/goals/rest.tres" id="20_j85og"]
+[ext_resource type="Resource" path="res://packs/toy/goals/explore.tres" id="21_wlxi8"]
+[ext_resource type="Resource" path="res://packs/toy/goals/chat.tres" id="22_8nopt"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_invariant_def.gd" id="23_jjy1v"]
+[ext_resource type="Resource" path="res://packs/toy/invariants/discoveries.tres" id="24_byccu"]
+[ext_resource type="Resource" path="res://packs/toy/locations/graph.tres" id="25_vp6m5"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_need_def.gd" id="26_dm7b8"]
+[ext_resource type="Resource" path="res://packs/toy/needs/energy.tres" id="27_shjk6"]
+[ext_resource type="Resource" path="res://packs/toy/needs/curiosity.tres" id="28_26vf4"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_personality_def.gd" id="29_as1p2"]
+[ext_resource type="Resource" path="res://packs/toy/personalities/lazy.tres" id="30_323pg"]
+[ext_resource type="Resource" path="res://packs/toy/personalities/diligent.tres" id="31_0e3na"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_reaction_rule_def.gd" id="32_p0j5h"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_schedule_def.gd" id="33_g0iqo"]
+[ext_resource type="Resource" path="res://packs/toy/schedules/work_day.tres" id="34_sc61f"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_pack_manifest.gd" id="35_4jipq"]
+[ext_resource type="Resource" path="res://packs/toy/sim.tres" id="36_kdq0f"]
+
+[resource]
+script = ExtResource("35_4jipq")
+pack_namespace = &"toy"
+pack_version = "1.0.0"
+facts = Array[ExtResource("15_7l7rd")]([ExtResource("16_4d38p"), ExtResource("17_p0lnu")])
+needs = Array[ExtResource("26_dm7b8")]([ExtResource("27_shjk6"), ExtResource("28_26vf4")])
+event_kinds = Array[ExtResource("13_tswtn")]([ExtResource("14_80xsk")])
+goals = Array[ExtResource("18_lcp3j")]([ExtResource("19_yvtkx"), ExtResource("20_j85og"), ExtResource("21_wlxi8"), ExtResource("22_8nopt")])
+actions = Array[ExtResource("1_7mq1n")]([ExtResource("2_fwbkt"), ExtResource("3_8bujf"), ExtResource("4_xyp2w"), ExtResource("5_i5u7l")])
+archetypes = Array[ExtResource("6_k2ov5")]([ExtResource("7_67hj3"), ExtResource("8_vl5tf")])
+personalities = Array[ExtResource("29_as1p2")]([ExtResource("30_323pg"), ExtResource("31_0e3na")])
+characters = Array[ExtResource("9_85ooj")]([ExtResource("10_rorqk"), ExtResource("11_8iuky"), ExtResource("12_x72gk")])
+location_graph = ExtResource("25_vp6m5")
+schedules = Array[ExtResource("33_g0iqo")]([ExtResource("34_sc61f")])
+invariants = Array[ExtResource("23_jjy1v")]([ExtResource("24_byccu")])
+sim = ExtResource("36_kdq0f")

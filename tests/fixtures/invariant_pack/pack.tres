@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="NpcfPackManifest" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_pack_manifest.gd" id="1_manifest"]
+[ext_resource type="Resource" path="res://tests/fixtures/invariant_pack/invariants/broken.tres" id="2_broken"]
+[ext_resource type="Resource" path="res://tests/fixtures/invariant_pack/goals/idle.tres" id="3_idle"]
+[ext_resource type="Resource" path="res://tests/fixtures/invariant_pack/archetypes/drone.tres" id="4_drone"]
+[ext_resource type="Resource" path="res://tests/fixtures/invariant_pack/characters/npc.tres" id="5_npc"]
+[ext_resource type="Resource" path="res://tests/fixtures/invariant_pack/locations/graph.tres" id="6_graph"]
+
+[resource]
+script = ExtResource("1_manifest")
+pack_namespace = &"fixture"
+pack_version = "1.0.0"
+goals = [ExtResource("3_idle")]
+archetypes = [ExtResource("4_drone")]
+characters = [ExtResource("5_npc")]
+location_graph = ExtResource("6_graph")
+invariants = [ExtResource("2_broken")]

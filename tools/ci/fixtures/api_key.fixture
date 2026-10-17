@@ -1,0 +1,6 @@
+; place: packs/zz_fixture/llm.tres
+; check: check_boundaries
+[gd_resource type="Resource" format=3]
+
+[resource]
+api_key = "sk-not-a-real-key"

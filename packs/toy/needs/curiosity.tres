@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="NpcfNeedDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_need_def.gd" id="1_om5ws"]
+
+[resource]
+script = ExtResource("1_om5ws")
+id = &"toy.curiosity"
+change_per_tick = 1

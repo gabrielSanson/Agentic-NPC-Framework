@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="NpcfEventKindDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_fact_template.gd" id="1_wkblf"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_field_def.gd" id="2_ry6nj"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_event_kind_def.gd" id="3_6lpw0"]
+
+[resource]
+script = ExtResource("3_6lpw0")
+id = &"toy.chatted"
+salience = 40

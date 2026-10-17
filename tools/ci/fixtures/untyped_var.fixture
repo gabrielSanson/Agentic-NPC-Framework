@@ -1,0 +1,8 @@
+# place: addons/npcf/core/zz_fixture_untyped.gd
+# check: check_types
+extends RefCounted
+
+
+func f() -> void:
+	var x = 1
+	print(x)

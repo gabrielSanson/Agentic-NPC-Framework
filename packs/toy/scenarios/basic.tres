@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="NpcfScenarioDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_cast_entry.gd" id="1_mes5y"]
+[ext_resource type="Resource" path="res://packs/toy/characters/ana.tres" id="2_rhqfq"]
+[ext_resource type="Resource" path="res://packs/toy/locations/home_a.tres" id="3_512fg"]
+[ext_resource type="Resource" path="res://packs/toy/characters/bo.tres" id="4_6s6be"]
+[ext_resource type="Resource" path="res://packs/toy/locations/home_b.tres" id="5_p802p"]
+[ext_resource type="Resource" path="res://packs/toy/characters/cy.tres" id="6_16xwf"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_fact_seed.gd" id="7_e40vp"]
+[ext_resource type="Resource" path="res://packs/toy/facts/safe.tres" id="8_onfqp"]
+[ext_resource type="Resource" path="res://packs/toy/locations/yard.tres" id="9_qxcno"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_rel_seed.gd" id="10_u5gv7"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_scenario_def.gd" id="11_hxanu"]
+
+[sub_resource type="Resource" id="Resource_qrsop"]
+script = ExtResource("1_mes5y")
+character = ExtResource("2_rhqfq")
+start_location = ExtResource("3_512fg")
+
+[sub_resource type="Resource" id="Resource_tn5qg"]
+script = ExtResource("1_mes5y")
+character = ExtResource("4_6s6be")
+start_location = ExtResource("5_p802p")
+
+[sub_resource type="Resource" id="Resource_5m1lp"]
+script = ExtResource("1_mes5y")
+character = ExtResource("6_16xwf")
+start_location = ExtResource("3_512fg")
+
+[sub_resource type="Resource" id="Resource_di5rj"]
+script = ExtResource("7_e40vp")
+fact = ExtResource("8_onfqp")
+subject = &"toy.home_a"
+value = true
+
+[sub_resource type="Resource" id="Resource_wye1w"]
+script = ExtResource("7_e40vp")
+fact = ExtResource("8_onfqp")
+subject = &"toy.home_b"
+value = true
+
+[resource]
+script = ExtResource("11_hxanu")
+id = &"toy.basic"
+cast = Array[ExtResource("1_mes5y")]([SubResource("Resource_qrsop"), SubResource("Resource_tn5qg"), SubResource("Resource_5m1lp")])
+facts = Array[ExtResource("7_e40vp")]([SubResource("Resource_di5rj"), SubResource("Resource_wye1w")])
+player_start = ExtResource("9_qxcno")

@@ -1,0 +1,17 @@
+# Words that belong to the CakeWorks example game and must never appear in addons/npcf/.
+# One word per line, matched case-insensitively as a whole word. Lines starting with # are comments.
+cakeworks
+cake
+cakes
+frosting
+icing
+batter
+bakery
+baker
+oven
+ovens
+sprinkles
+spaceship
+grievance
+grievances
+foreman

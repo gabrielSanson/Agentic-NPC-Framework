@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="NpcfLocationDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_location_def.gd" id="1_oayjp"]
+
+[resource]
+script = ExtResource("1_oayjp")
+id = &"toy.yard"
+tags = Array[StringName]([&"toy.outdoors"])

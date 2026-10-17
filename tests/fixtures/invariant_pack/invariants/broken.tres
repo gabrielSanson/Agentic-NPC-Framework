@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="NpcfInvariantDef" format=3]
+
+[ext_resource type="Script" path="res://tests/fixtures/invariant_pack/hooks/always_fails.gd" id="1_hook"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_invariant_def.gd" id="2_def"]
+
+[resource]
+script = ExtResource("2_def")
+id = &"fixture.inv.broken"
+hook = ExtResource("1_hook")

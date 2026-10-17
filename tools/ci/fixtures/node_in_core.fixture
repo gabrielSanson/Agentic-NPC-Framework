@@ -1,0 +1,7 @@
+# place: addons/npcf/core/zz_fixture_node.gd
+# check: check_boundaries
+extends RefCounted
+
+
+func f(n: Node) -> void:
+	print(n)

@@ -1,0 +1,5 @@
+# place: addons/npcf/core/zz_fixture_pack_path.gd
+# check: check_boundaries
+extends RefCounted
+
+const P: String = "res://packs/toy/pack.tres"
