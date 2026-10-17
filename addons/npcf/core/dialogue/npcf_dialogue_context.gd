@@ -17,3 +17,5 @@ var band: StringName = &""
 var authored_line: String = ""
 var presentation: Dictionary[StringName, StringName] = {}
 var line_id: int = -1
+## The request the LLM generator built for this turn, or null (set by the generator).
+var last_request: NpcfDialogueRequest = null

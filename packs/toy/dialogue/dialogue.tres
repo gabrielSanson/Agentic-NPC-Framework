@@ -8,6 +8,11 @@
 [ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_presentation_rule.gd" id="6_rule"]
 [ext_resource type="Script" path="res://packs/toy/dialogue/hooks/news.gd" id="7_news"]
 [ext_resource type="Resource" path="res://packs/toy/social/trust.tres" id="8_trust"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_lore_rules.gd" id="9_lore"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_prompt_template.gd" id="10_tmpl"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_prompt_variant.gd" id="11_variant"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_prompt_macro.gd" id="12_macro"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_condition_def.gd" id="13_cond"]
 
 [sub_resource type="Resource" id="Resource_greet_out"]
 script = ExtResource("3_outcome")
@@ -133,6 +138,69 @@ description = "A hand gesture, if any."
 options = Array[StringName]([&"toy.none", &"toy.wave"])
 rules = Array[ExtResource("6_rule")]([SubResource("Resource_rule_gesture_greet")])
 
+[sub_resource type="Resource" id="Resource_lore"]
+script = ExtResource("9_lore")
+banned_terms = PackedStringArray("internet", "phone")
+max_line_chars = 200
+
+[sub_resource type="Resource" id="Resource_macro_npc_name"]
+script = ExtResource("12_macro")
+name = &"npc_name"
+source = 0
+
+[sub_resource type="Resource" id="Resource_macro_persona"]
+script = ExtResource("12_macro")
+name = &"persona"
+source = 1
+
+[sub_resource type="Resource" id="Resource_macro_location_name"]
+script = ExtResource("12_macro")
+name = &"location_name"
+source = 2
+
+[sub_resource type="Resource" id="Resource_macro_time_of_day"]
+script = ExtResource("12_macro")
+name = &"time_of_day"
+source = 3
+
+[sub_resource type="Resource" id="Resource_macro_memories"]
+script = ExtResource("12_macro")
+name = &"memories"
+source = 8
+
+[sub_resource type="Resource" id="Resource_macro_facts"]
+script = ExtResource("12_macro")
+name = &"facts"
+source = 9
+
+[sub_resource type="Resource" id="Resource_macro_actions"]
+script = ExtResource("12_macro")
+name = &"actions"
+source = 10
+
+[sub_resource type="Resource" id="Resource_cond_weary"]
+script = ExtResource("13_cond")
+op_kind = 2
+tag = &"toy.weary"
+
+[sub_resource type="Resource" id="Resource_variant_tired"]
+script = ExtResource("11_variant")
+id = &"toy.tired"
+condition = SubResource("Resource_cond_weary")
+text = "{{npc_name}} is exhausted and short with people."
+
+[sub_resource type="Resource" id="Resource_variant_default"]
+script = ExtResource("11_variant")
+id = &"toy.default"
+text = "It is an ordinary day."
+
+[sub_resource type="Resource" id="Resource_template"]
+script = ExtResource("10_tmpl")
+system_text = "You are {{npc_name}}. {{persona}} Stay in character. Reply only with JSON: {\"line\": string, \"cited_facts\": [handles], \"action\": null or {\"id\": action id, \"args\": {}}}. Facts you may cite:\n{{facts}}\nActions you may take: {{actions}}."
+scenario_text = "{{npc_name}} is at {{location_name}} at {{time_of_day}}. {{situation}} You remember: {{memories}}."
+variants = Array[ExtResource("11_variant")]([SubResource("Resource_variant_tired"), SubResource("Resource_variant_default")])
+macros = Array[ExtResource("12_macro")]([SubResource("Resource_macro_npc_name"), SubResource("Resource_macro_persona"), SubResource("Resource_macro_location_name"), SubResource("Resource_macro_time_of_day"), SubResource("Resource_macro_memories"), SubResource("Resource_macro_facts"), SubResource("Resource_macro_actions")])
+
 [resource]
 script = ExtResource("1_dlg")
 intents = Array[ExtResource("2_intent")]([SubResource("Resource_greet"), SubResource("Resource_news"), SubResource("Resource_insult"), SubResource("Resource_smalltalk")])
@@ -143,3 +211,11 @@ default_lines = PackedStringArray("...")
 band_dim = ExtResource("8_trust")
 presentation = Array[ExtResource("5_question")]([SubResource("Resource_emotion"), SubResource("Resource_gesture")])
 last_talk_window_ticks = 30
+max_prompt_facts = 8
+lore = SubResource("Resource_lore")
+memory_texts = Dictionary[StringName, String]({
+&"npcf.conversation": "talked with {actors}",
+&"toy.chatted": "{actors} chatted at {location}",
+&"toy.spotted": "{actors} spotted something at {location}"
+})
+default_template = SubResource("Resource_template")

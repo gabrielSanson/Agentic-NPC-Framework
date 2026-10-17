@@ -913,6 +913,95 @@ func _dialogue(d: NpcfDialogueDef, file: String, path: String) -> void:
 			_err(file, _join(path, "presentation[%d]" % i), "is empty", "")
 			continue
 		_presentation(q, _file(file, q), _path(file, path, "presentation[%d]" % i, q))
+	if d.max_prompt_facts < 1 or d.max_prompt_facts > 32:
+		_err(file, _join(path, "max_prompt_facts"), "%d is outside 1..32" % d.max_prompt_facts, "")
+	if d.lore != null and (d.lore.max_line_chars < 20 or d.lore.max_line_chars > 2000):
+		_err(file, _join(_join(path, "lore"), "max_line_chars"), "%d is outside 20..2000" % d.lore.max_line_chars, "")
+	if d.llm != null:
+		if d.llm.max_tokens < 16:
+			_err(file, _join(_join(path, "llm"), "max_tokens"), "must be at least 16", "")
+		if d.llm.temperature < 0.0 or d.llm.temperature > 2.0:
+			_err(file, _join(_join(path, "llm"), "temperature"), "%s is outside 0..2" % d.llm.temperature, "")
+	for key: StringName in d.templates:
+		var tp: String = _join(path, "templates[%s]" % key)
+		if not _pack.archetypes.has(key):
+			_err(file, tp, "\"%s\" is not an archetype" % key, "key templates by an archetype ID")
+		var t: NpcfPromptTemplate = d.templates[key]
+		if t == null:
+			_err(file, tp, "is empty", "assign a template")
+		else:
+			_template(t, _file(file, t), _path(file, tp, "", t))
+	if d.default_template != null:
+		_template(d.default_template, _file(file, d.default_template), _path(file, path, "default_template", d.default_template))
+
+
+## A prompt template: every {{name}} is a declared macro (or the built-in situation), macros are well formed and
+## the variants have unique IDs (R13.5).
+func _template(t: NpcfPromptTemplate, file: String, path: String) -> void:
+	if not _first_visit(t):
+		return
+	var declared: Dictionary[StringName, bool] = {}
+	for i: int in t.macros.size():
+		var m: NpcfPromptMacro = t.macros[i]
+		var mp: String = _join(path, "macros[%d]" % i)
+		if m == null:
+			_err(file, mp, "is empty", "")
+			continue
+		var mname: String = str(m.name)
+		if not _macro_name_ok(mname):
+			_err(file, _join(mp, "name"), "\"%s\" is not a valid macro name" % mname, "use lowercase letters, digits and underscores; not situation")
+		elif declared.has(m.name):
+			_err(file, _join(mp, "name"), "macro \"%s\" is declared twice" % mname, "")
+		declared[m.name] = true
+		match m.source:
+			NpcfPromptMacro.Source.FACT:
+				if m.fact == null:
+					_err(file, _join(mp, "fact"), "a FACT macro needs a fact", "")
+				else:
+					_require_def(&"fact", m.fact, file, _join(mp, "fact"))
+			NpcfPromptMacro.Source.NEED_BAND:
+				if m.need == null:
+					_err(file, _join(mp, "need"), "a NEED_BAND macro needs a need", "")
+				else:
+					_require_def(&"need", m.need, file, _join(mp, "need"))
+			NpcfPromptMacro.Source.RELATIONSHIP_BAND:
+				if m.dim == null:
+					_err(file, _join(mp, "dim"), "a RELATIONSHIP_BAND macro needs a dimension", "")
+				else:
+					_require_def(&"relationship dimension", m.dim, file, _join(mp, "dim"))
+	var texts: Array[String] = [t.system_text, t.scenario_text]
+	for i: int in t.variants.size():
+		var v: NpcfPromptVariant = t.variants[i]
+		var vp: String = _join(path, "variants[%d]" % i)
+		if v == null:
+			_err(file, vp, "is empty", "")
+			continue
+		if v.id == &"":
+			_err(file, _join(vp, "id"), "variant has no id", "")
+		for j: int in i:
+			if t.variants[j] != null and t.variants[j].id == v.id:
+				_err(file, _join(vp, "id"), "variant \"%s\" is declared twice" % v.id, "")
+				break
+		if v.condition != null:
+			_condition(v.condition, _file(file, v.condition), _path(file, vp, "condition", v.condition), [] as Array[NpcfFieldDef])
+		texts.append(v.text)
+	var seen: Dictionary[String, bool] = {}
+	var re: RegEx = RegEx.create_from_string("\\{\\{([a-z_][a-z0-9_]*)\\}\\}")
+	for text: String in texts:
+		for m: RegExMatch in re.search_all(text):
+			var name: String = m.get_string(1)
+			if name == "situation" or seen.has(name):
+				continue
+			seen[name] = true
+			if not declared.has(StringName(name)):
+				_err(file, path, "\"{{%s}}\" is not a declared macro" % name, "add an NpcfPromptMacro named %s" % name)
+
+
+static func _macro_name_ok(name: String) -> bool:
+	if name == "situation":
+		return false
+	var re: RegEx = RegEx.create_from_string("^[a-z_][a-z0-9_]*$")
+	return re.search(name) != null
 
 
 func _intent(it: NpcfIntentDef, file: String, path: String) -> void:

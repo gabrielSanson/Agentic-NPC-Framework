@@ -13,7 +13,13 @@ extends Resource
 @export var default_lines: PackedStringArray = []
 ## The relationship dimension (NPC toward the player) whose band selects authored lines.
 @export var band_dim: NpcfRelDimDef = null
+## Archetype ID -> prompt template. NPCs whose archetype has no entry use default_template.
+@export var templates: Dictionary[StringName, NpcfPromptTemplate] = {}
+@export var default_template: NpcfPromptTemplate = null
+@export var lore: NpcfLoreRules = null
+@export var llm: NpcfLlmConfig = null
 ## Memory message key -> text with {actors} {targets} {location} and {<payload field>} placeholders.
 @export var memory_texts: Dictionary[StringName, String] = {}
+@export var max_prompt_facts: int = 8
 @export var presentation: Array[NpcfPresentationQuestionDef] = []
 @export var last_talk_window_ticks: int = 30

@@ -223,14 +223,19 @@ func _on_presented(answers: Dictionary, world: NpcfWorld, ctx: NpcfDialogueConte
 func _on_generated(r: NpcfLineResult, world: NpcfWorld, ctx: NpcfDialogueContext, rec: NpcfDialogueTurnRecord) -> void:
 	if _disposed:
 		return
+	var req: NpcfDialogueRequest = ctx.last_request
+	if req != null:
+		rec.variant = req.variant
+		rec.injected_facts = req.injected_facts.duplicate()
+		rec.injected_memories = req.memory_ids.duplicate()
 	var text: String = ctx.authored_line
 	var source: StringName = &"authored"
 	rec.latency_ms = r.latency_ms
 	if not r.ok and r.failure == &"off":
 		rec.llm_status = &"off"
-	elif r.ok and r.text.strip_edges() != "":
+	elif r.ok and NpcfLineValidator.text_failure(r.text, ctx) == &"":
 		rec.llm_status = &"ok"
-		text = r.text
+		text = r.text.strip_edges()
 		source = r.source if r.source != &"" else &"llm"
 		if r.action != null:
 			r.action.npc = ctx.npc
@@ -238,7 +243,7 @@ func _on_generated(r: NpcfLineResult, world: NpcfWorld, ctx: NpcfDialogueContext
 			rec.action = r.action.action
 	else:
 		rec.llm_status = &"failed"
-		rec.failure = r.failure
+		rec.failure = r.failure if not r.ok else NpcfLineValidator.text_failure(r.text, ctx)
 		rec.validation_failures = r.validation_failures.duplicate()
 	rec.line_source = source
 	records.append(rec)
