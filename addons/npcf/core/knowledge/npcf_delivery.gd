@@ -54,8 +54,10 @@ func _found(world: NpcfWorld, e: NpcfEvent, ev: NpcfEventView, wv: NpcfWorldView
 func _deliver(world: NpcfWorld, e: NpcfEvent, found: Dictionary[StringName, int]) -> void:
 	var receiver_dependent: bool = NpcfBeliefMapper.depends_on_receiver(world, e)
 	var shared: Array[NpcfFact] = []
+	var shared_keys: Array[String] = []
 	if not receiver_dependent:
 		shared = NpcfBeliefMapper.map(world, e, &"")
+		shared_keys = _keys(shared)
 	var reacts: bool = world.reactions.has_rules(world, e.kind)
 	var remembered: bool = e.salience >= world.sim.memory_threshold
 	var subjects: Array[StringName] = []
@@ -74,20 +76,31 @@ func _deliver(world: NpcfWorld, e: NpcfEvent, found: Dictionary[StringName, int]
 		var npc: NpcfNpcState = world.npc(id)
 		var source: int = found[id]
 		var facts: Array[NpcfFact] = shared
+		var keys: Array[String] = shared_keys
 		if receiver_dependent:
 			facts = NpcfBeliefMapper.map(world, e, id)
+			keys = _keys(facts)
 		if not metas.has(source):
 			metas[source] = _meta(world, e, source)
 		var meta: NpcfBeliefMeta = metas[source]
-		for f: NpcfFact in facts:
+		for i: int in facts.size():
+			var f: NpcfFact = facts[i]
 			if world.audit != null:
 				world.audit.on_delivered(id, f.subject, f.fact_id, world.clock.tick)
-			npc.beliefs.put(f, meta)
+			npc.beliefs.put_keyed(keys[i], f, meta)
 		if remembered:
 			npc.memory.append(_record(e, source, subjects, message_key, params))
 		if reacts:
 			world.reactions.on_delivery(world, id, e, source)
 	world.relationships.apply_event_rules(world, e, found)
+
+
+## The belief-store key of each fact, in the same order as the facts.
+static func _keys(facts: Array[NpcfFact]) -> Array[String]:
+	var out: Array[String] = []
+	for f: NpcfFact in facts:
+		out.append(NpcfBeliefStore.key_for(f.subject, f.fact_id))
+	return out
 
 
 ## The participants of an event, actors then targets, without duplicates (first occurrence kept).

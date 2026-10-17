@@ -9,7 +9,11 @@ var _beliefs: Dictionary[String, NpcfBelief] = {}
 ## Stores a belief when it is newer than the current one, or equally new and more confident.
 ## Returns true when stored.
 func put(fact: NpcfFact, meta: NpcfBeliefMeta) -> bool:
-	var key: String = _key(fact.subject, fact.fact_id)
+	return put_keyed(key_for(fact.subject, fact.fact_id), fact, meta)
+
+
+## put() with the key from key_for(), for callers that store one fact at many NPCs and build the key once.
+func put_keyed(key: String, fact: NpcfFact, meta: NpcfBeliefMeta) -> bool:
 	var b: NpcfBelief = _beliefs.get(key)
 	if b != null:
 		var newer: bool = meta.tick > b.tick
@@ -39,7 +43,7 @@ func put(fact: NpcfFact, meta: NpcfBeliefMeta) -> bool:
 
 ## The belief about a fact, or null when none is held.
 func get_belief(subject: StringName, fact_id: StringName) -> NpcfBelief:
-	var b: NpcfBelief = _beliefs.get(_key(subject, fact_id))
+	var b: NpcfBelief = _beliefs.get(key_for(subject, fact_id))
 	return b
 
 
@@ -88,14 +92,15 @@ func live_values() -> Array[NpcfBelief]:
 
 ## Inserts a saved belief as it is, in saved order (no newer-than check). Used only by restores.
 func restore(b: NpcfBelief) -> void:
-	_beliefs[_key(b.subject, b.fact_id)] = b
+	_beliefs[key_for(b.subject, b.fact_id)] = b
 
 
 func size() -> int:
 	return _beliefs.size()
 
 
-func _key(subject: StringName, fact_id: StringName) -> String:
+## The dictionary key of one subject's belief about one fact.
+static func key_for(subject: StringName, fact_id: StringName) -> String:
 	return "%s|%s" % [subject, fact_id]
 
 
