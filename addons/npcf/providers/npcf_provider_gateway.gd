@@ -265,9 +265,11 @@ func _add_auth(e: _Entry, spec: NpcfHttpSpec) -> void:
 	spec.headers.append(AUTH_PREFIX + OS.get_environment(e.cfg.key_env))
 
 
-## Adapter registry. C3b and C3c add their own arms.
+## Adapter registry. C3c adds its own arms.
 func _make_adapter(adapter_name: StringName) -> NpcfProviderAdapter:
 	match adapter_name:
 		&"openai_chat":
 			return NpcfOpenAiChatAdapter.new()
+		&"kev_systemone":
+			return NpcfKevAdapter.new()
 	return null

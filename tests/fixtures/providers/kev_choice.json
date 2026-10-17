@@ -1,0 +1,13 @@
+{
+  "model": "kev-latest",
+  "answers": {
+    "intent": {
+      "type": "choice",
+      "choice": "toy.greet",
+      "confidence": 0.91,
+      "probabilities": {"toy.greet": 0.91, "toy.ask_news": 0.09}
+    }
+  },
+  "usage": {"input_tokens": 120, "output_tokens": 1},
+  "latency_ms": 85
+}

@@ -273,7 +273,8 @@ func set_line_generator(g: NpcfLineGenerator) -> void:
 
 
 ## Replaces every model provider with the ones in `providers_set`. The first provider with &"lines" in use_for
-## becomes the line generator. Wiring does not wait for health: the bridges fall back while a provider is down.
+## becomes the line generator; the first with &"intents" the intent classifier and the first with &"presentation" the
+## presentation chooser. Wiring does not wait for health: the bridges fall back while a provider is down.
 func use_providers(providers_set: NpcfProviderSet) -> Error:
 	if providers_set == null:
 		return ERR_INVALID_PARAMETER
@@ -289,13 +290,25 @@ func use_providers(providers_set: NpcfProviderSet) -> Error:
 	for cfg: NpcfProviderConfig in providers_set.providers:
 		_gateway.add_provider(cfg)
 	var wired: bool = false
+	var classifier_wired: bool = false
+	var chooser_wired: bool = false
 	for id: StringName in _gateway.ids():
-		if _gateway.config(id).use_for.has(&"lines"):
+		var uses: Array[StringName] = _gateway.config(id).use_for
+		if not wired and uses.has(&"lines"):
 			set_line_generator(NpcfLlmLineGenerator.new(NpcfProviderLlmTransport.new(_gateway, id)))
 			wired = true
-			break
+		if not classifier_wired and uses.has(&"intents"):
+			set_intent_classifier(NpcfProviderIntentClassifier.new(_gateway, id))
+			classifier_wired = true
+		if not chooser_wired and uses.has(&"presentation"):
+			set_presentation_chooser(NpcfProviderPresentationChooser.new(_gateway, id))
+			chooser_wired = true
 	if not wired and was_provider_generator:
 		set_line_generator(null)
+	if not classifier_wired and _classifier is NpcfProviderIntentClassifier:
+		set_intent_classifier(null)
+	if not chooser_wired and _chooser is NpcfProviderPresentationChooser:
+		set_presentation_chooser(null)
 	return OK
 
 

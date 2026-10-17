@@ -10,7 +10,7 @@ provider kinds. Each kind serves one or more features:
 | `TRANSCRIBE` | `openai_transcribe` | Parakeet wrapper (C6) | speech in (C3c, C4) |
 | `SPEAK` | `breeze_speech` | `breeze-server` | speech out (C3c, C4) |
 
-Only the `GENERATE` adapter exists in C3a. The other kinds are added by later parts of this batch.
+The `GENERATE` adapter exists from C3a and the `CHOOSE` adapter from C3b. The other kinds are added by later parts of this batch.
 
 ## Set file and project setting
 
@@ -85,3 +85,28 @@ and 2 on bad usage. `--allow-non-commercial` is accepted but has no effect until
 Code under `addons/npcf/core/` and `addons/npcf/config/` does no HTTP and does not name provider classes. All HTTP
 lives in `addons/npcf/providers/` and in the runtime that wires it. CI enforces this rule (`check_boundaries`).
 The simulation never waits for a model server, so a slow or missing server never changes the ticks.
+
+## Kev: intents and presentation (C3b)
+
+The `kev_systemone` adapter (kind `CHOOSE`) serves two features. Its `use_for` may list `intents` and `presentation`:
+
+- **Intents.** The first provider with `intents` classifies the player's text. One choice question has the pack's
+  intents as its options, with each intent's description as the option's description. The answer is used only when it
+  names an intent of the pack; a failure or an unknown option falls back to the keyword classifier.
+- **Presentation.** The first provider with `presentation` answers every presentation question of a line in one
+  request. An option the provider names that is not one of the question's options gets the rule answer. A newer turn
+  replaces a waiting older one, so a slow answer never comes after a newer line.
+
+The request is `POST /v1/systemone` with the `state` text, `model` (default `kev-latest`) and one question of type
+`choice` per question, each with `instructions` and `criteria` (option to description). Options keep their authored
+order on the wire. The reply's `answers` are read by question id. The chosen option is read from `answer`, `option`
+or `choice`, whichever is a non-empty string first. The Kev README names it `choice`. Confidence is `confidence` when
+present, else the highest probability, else 1.0. Probabilities that are not numbers are skipped.
+
+`extra.intent_instructions` (a string) replaces the default question for the intent choice:
+"Which option best describes what the player means?".
+
+Start the server with `uv run --extra serve python -m kev.serve --run jaredpalmer/kev-4b --port 8009`. On a small GPU,
+use Kev-0.8B: `--run jaredpalmer/kev-0.8b`. Leave `model` empty in the provider config, so the request names
+`kev-latest`. Kev is open by default on `127.0.0.1`. Set `KEV_API_KEY` on the server and `key_env` in the config to
+require a key. The health check is `GET /`: any answer below 500 means the server is up.
