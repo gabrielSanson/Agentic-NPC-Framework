@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="NpcfLocationGraph" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_location_graph.gd" id="1_graph"]
+[ext_resource type="Resource" path="res://tests/fixtures/invariant_pack/locations/home.tres" id="2_home"]
+
+[resource]
+script = ExtResource("1_graph")
+locations = [ExtResource("2_home")]

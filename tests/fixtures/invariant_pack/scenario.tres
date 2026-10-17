@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="NpcfScenarioDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_scenario_def.gd" id="1_scenario"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_cast_entry.gd" id="2_cast"]
+[ext_resource type="Resource" path="res://tests/fixtures/invariant_pack/characters/npc.tres" id="3_npc"]
+[ext_resource type="Resource" path="res://tests/fixtures/invariant_pack/locations/home.tres" id="4_home"]
+
+[sub_resource type="Resource" id="Resource_entry"]
+script = ExtResource("2_cast")
+character = ExtResource("3_npc")
+start_location = ExtResource("4_home")
+
+[resource]
+script = ExtResource("1_scenario")
+id = &"fixture.basic"
+start_minute = 480
+cast = [SubResource("Resource_entry")]

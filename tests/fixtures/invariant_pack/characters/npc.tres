@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="NpcfCharacterDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_character_def.gd" id="1_char"]
+[ext_resource type="Resource" path="res://tests/fixtures/invariant_pack/archetypes/drone.tres" id="2_drone"]
+
+[resource]
+script = ExtResource("1_char")
+id = &"fixture.npc"
+display_name = "Npc"
+archetype = ExtResource("2_drone")

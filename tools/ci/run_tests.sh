@@ -29,3 +29,7 @@ bash tools/ci/test_checks.sh
 
 step "gdUnit4"
 bash addons/gdUnit4/runtest.sh --headless --ignoreHeadlessMode -a res://tests "$@"
+
+step "toy day (CLI, 1440 ticks)"
+"$GODOT_BIN" --headless --path . -s res://addons/npcf/tools/npcf_cli.gd -- run \
+	--manifest res://packs/toy/pack.tres --scenario res://packs/toy/scenarios/basic.tres --seed 7 --ticks 1440
