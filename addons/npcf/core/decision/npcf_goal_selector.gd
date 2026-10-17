@@ -78,11 +78,12 @@ func _decide(world: NpcfWorld, npc: StringName, report: NpcfTickReport) -> NpcfD
 		if s.goal != chosen:
 			order.append(s.goal)
 	record.chosen_goal = &""
+	var planning: NpcfPlanning.Session = NpcfPlanning.Session.new(world, npc)
 	for g: StringName in order:
 		var goal: NpcfGoalDef = _goal_def(n, g)
 		if goal == null:
 			continue
-		var plan: NpcfPlan = NpcfPlanning.plan_for(world, npc, goal)
+		var plan: NpcfPlan = planning.plan_for(goal)
 		if plan == null or plan.is_empty():
 			_cool_down(world, n, goal)
 			record.rejected.append(NpcfRejectedGoal.make(g, &"no_plan"))
