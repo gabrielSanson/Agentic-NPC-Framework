@@ -54,7 +54,7 @@ func _framework(world: NpcfWorld, out: Array[NpcfInvariantFailure]) -> void:
 		var npc: NpcfNpcState = world.npc(id)
 		if npc == null:
 			continue
-		for b: NpcfBelief in npc.beliefs.export_live():
+		for b: NpcfBelief in npc.beliefs.live_values():
 			if b.confidence < 0 or b.confidence > 100:
 				out.append(NpcfInvariantFailure.make(&"npcf.inv.belief_confidence", world.clock.tick, [id],
 						"belief \"%s/%s\" has confidence %d, outside 0..100" % [b.subject, b.fact_id, b.confidence]))

@@ -81,6 +81,11 @@ func export_live() -> Array[NpcfBelief]:
 	return out
 
 
+## The same beliefs as export_live(), built by one native call. Read-only: callers must not add or remove beliefs.
+func live_values() -> Array[NpcfBelief]:
+	return _beliefs.values()
+
+
 ## Inserts a saved belief as it is, in saved order (no newer-than check). Used only by restores.
 func restore(b: NpcfBelief) -> void:
 	_beliefs[_key(b.subject, b.fact_id)] = b
