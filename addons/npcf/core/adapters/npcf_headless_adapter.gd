@@ -9,6 +9,16 @@ class Perception extends NpcfPerceptionAdapter:
 		var at: StringName = event.location()
 		return at != &"" and world.location_of(npc) == at
 
+	func perceivers(event: NpcfEventView, world: NpcfWorldView, exclude: Dictionary[StringName, int]) -> Array[StringName]:
+		var out: Array[StringName] = []
+		var at: StringName = event.location()
+		if at == &"":
+			return out
+		for id: StringName in world.npcs_at(at):
+			if not exclude.has(id):
+				out.append(id)
+		return out
+
 
 static func adapter_set() -> NpcfAdapterSet:
 	return NpcfAdapterSet.make(NpcfMovementAdapter.new(), Perception.new(), NpcfPresentationAdapter.new())

@@ -27,6 +27,34 @@ Each sample is one `world.step()` measured with `Time.get_ticks_usec()`. The fir
 decision and delivery work of a fresh population; p99 and max are dominated by the busiest decision ticks.
 `capped_frames_at_speed_16` simulates 3,600 frames at 60 fps and 16x speed against `max_ticks_per_frame`.
 
+## Before and after the delivery and need changes
+
+Same command, same machine, three runs each. Figures are the median of the three runs' medians and the
+ranges across runs.
+
+| Metric | Before (`origin/main`) | After (`perf-ticks`) |
+| --- | --- | --- |
+| median_ms | 1.46 to 1.58 | 0.94 to 1.09 |
+| p99_ms | 41.996 to 44.100 | 17.029 to 17.964 |
+| max_ms | 57.081 to 113.128 | 26.478 to 30.917 |
+
+Per-phase totals over the 1,440-tick run, from the throwaway profiler (ms, one run each):
+
+| Phase | Before | After |
+| --- | --- | --- |
+| clock | 13.6 | 12.0 |
+| inputs | 3.2 | 3.8 |
+| director | 5.1 | 4.8 |
+| needs | 1,787.4 | 873.9 |
+| actions | 356.0 | 328.2 |
+| delivery | 1,710.8 | 417.5 |
+| decisions | 492.1 | 488.0 |
+| checks | 388.5 | 391.0 |
+
+The p99 target (4 ms) is not met. On spike ticks the remaining cost is spread across delivery (belief
+writes for every witness), the decision phase (about 33 NPC decisions per spike tick) and the actions phase.
+The median target (2 ms) is met.
+
 ## Bench scene (runtime, 2D)
 
 `samples/toy_room/bench.tscn` runs the same population through the `Npcf` runtime, one 60 fps frame at a time,

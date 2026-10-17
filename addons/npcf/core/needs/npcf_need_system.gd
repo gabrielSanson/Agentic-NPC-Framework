@@ -4,25 +4,27 @@ extends RefCounted
 
 
 ## One tick of need change for every NPC: the need's change_per_tick plus the running action's
-## per-tick delta. All changes go through the effect applier.
+## per-tick delta. Applied through the effect applier, NPC by NPC in ID order, needs in definition order.
 func tick(world: NpcfWorld) -> void:
-	var changes: Array[NpcfStateChange] = []
+	var deltas: Dictionary[StringName, int] = {}
 	for id: StringName in world.npc_ids:
 		var npc: NpcfNpcState = world.npc(id)
 		if npc == null or npc.resolved == null:
 			continue
+		deltas.clear()
 		for def: NpcfNeedDef in npc.resolved.needs:
 			var delta: int = def.change_per_tick
 			if npc.is_busy():
 				var extra: int = npc.running.def.per_tick_need_deltas.get(def.id, 0)
 				delta += extra
 			if delta != 0:
-				changes.append(NpcfStateChange.need_delta(id, def.id, delta))
-	if changes.is_empty():
-		return
-	var err: String = world.applier.apply(world, changes, -1)
-	if err != "":
-		push_error("npcf: need tick failed: " + err)
+				if deltas.has(def.id):
+					# A need listed twice gets two changes in a row, so flush the first before recording the second.
+					world.applier.apply_need_deltas(world, id, deltas)
+					deltas.clear()
+				deltas[def.id] = delta
+		if not deltas.is_empty():
+			world.applier.apply_need_deltas(world, id, deltas)
 
 
 ## Stores a need value clamped to its bounds. Unless `quiet`, each threshold crossing emits

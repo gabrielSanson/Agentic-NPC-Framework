@@ -15,6 +15,7 @@ var hooks: NpcfHookRunner
 var adapters: NpcfAdapterSet
 var npcs: Dictionary[StringName, NpcfNpcState] = {}
 var npc_ids: Array[StringName] = []          # sorted
+var occupancy: NpcfOccupancy                  # NPCs by location, mirrors npcf.at
 var headless: bool = true                     # invariants every tick when true
 var next_call_id: int = 1
 var inputs: Array[NpcfInput] = []
@@ -132,6 +133,7 @@ func is_entity(id: StringName) -> bool:
 func dispose() -> void:
 	hooks.dispose()
 	npcs.clear()
+	occupancy = null
 	applier = null
 	need_system = null
 	delivery = null

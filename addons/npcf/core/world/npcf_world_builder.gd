@@ -15,6 +15,7 @@ static func build(pack: NpcfLoadedPack, scenario: NpcfScenarioDef, world_seed: i
 	w.rng = NpcfRng.new(world_seed)
 	w.events = NpcfEventQueue.new(pack.event_kinds)
 	w.state = NpcfWorldState.new(pack.facts)
+	w.occupancy = NpcfOccupancy.new()
 	w.hooks = NpcfHookRunner.new(pack.pack_namespace)
 	w.adapters = adapters if adapters != null else NpcfHeadlessAdapter.adapter_set()
 	w.applier = NpcfEffectApplier.new()
@@ -46,6 +47,7 @@ static func build(pack: NpcfLoadedPack, scenario: NpcfScenarioDef, world_seed: i
 		npc.tags = resolved.tags.duplicate()
 		w.npcs[npc.id] = npc
 		w.npc_ids.append(npc.id)
+		w.occupancy.enter(npc.id, &"")
 		if resolved.start_location != &"":
 			setup.append(NpcfStateChange.set_fact(npc.id, NpcfFramework.AT, resolved.start_location))
 	w.npc_ids.sort_custom(NpcfWorldState.name_less)

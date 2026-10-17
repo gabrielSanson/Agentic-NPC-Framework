@@ -26,3 +26,21 @@ func can_perceive(npc: StringName, event: NpcfEventView, world: NpcfWorldView) -
 			return false
 	var at: StringName = event.location()
 	return at != &"" and world.location_of(npc) == at
+
+
+## Embodied NPCs are asked through can_perceive. Offscreen NPCs have no agent, so they perceive only
+## at the event's location, which the location index gives directly.
+func perceivers(event: NpcfEventView, world: NpcfWorldView, exclude: Dictionary[StringName, int]) -> Array[StringName]:
+	var out: Array[StringName] = []
+	var at: StringName = event.location()
+	if at != &"":
+		for id: StringName in world.npcs_at(at):
+			if not exclude.has(id) and registry.agent(id) == null:
+				out.append(id)
+	for id: StringName in world.npc_ids():
+		if exclude.has(id) or registry.agent(id) == null:
+			continue
+		if can_perceive(id, event, world):
+			out.append(id)
+	out.sort_custom(NpcfWorldState.name_less)
+	return out

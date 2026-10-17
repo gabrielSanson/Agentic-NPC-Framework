@@ -10,19 +10,23 @@ var _beliefs: Dictionary[String, NpcfBelief] = {}
 ## Returns true when stored.
 func put(fact: NpcfFact, meta: NpcfBeliefMeta) -> bool:
 	var key: String = _key(fact.subject, fact.fact_id)
-	var old: NpcfBelief = _beliefs.get(key)
-	if old != null:
-		var newer: bool = meta.tick > old.tick
-		var more_sure: bool = meta.tick == old.tick and meta.confidence > old.confidence
+	var b: NpcfBelief = _beliefs.get(key)
+	if b != null:
+		var newer: bool = meta.tick > b.tick
+		var more_sure: bool = meta.tick == b.tick and meta.confidence > b.confidence
 		if not newer and not more_sure:
 			return false
-	var b: NpcfBelief = NpcfBelief.new()
+	else:
+		b = NpcfBelief.new()
+		_beliefs[key] = b
+	# A replaced belief is overwritten in place: readers copy belief values out and keep no reference.
 	b.subject = fact.subject
 	b.fact_id = fact.fact_id
 	b.value = fact.value
 	b.confidence = meta.confidence
 	b.source = meta.source
 	b.teller = meta.teller
+	b.tellers.clear()
 	for t: StringName in meta.tellers:
 		if b.tellers.size() >= NpcfBelief.MAX_TELLERS:
 			break
@@ -30,7 +34,6 @@ func put(fact: NpcfFact, meta: NpcfBeliefMeta) -> bool:
 	b.tick = meta.tick
 	b.event_id = meta.event_id
 	b.salience = meta.salience
-	_beliefs[key] = b
 	return true
 
 
