@@ -49,7 +49,11 @@ static func manifest() -> NpcfPackManifest:
 	ana.display_name = "Ana"
 	ana.archetype = villager
 	ana.personalities = [lazy]
-	m.characters = [ana]
+	var bo: NpcfCharacterDef = NpcfCharacterDef.new()
+	bo.id = &"toy.bo"
+	bo.display_name = "Bo"
+	bo.archetype = villager
+	m.characters = [ana, bo]
 
 	var home: NpcfLocationDef = make_location(&"toy.home", [&"toy.home_tag"] as Array[StringName])
 	var yard: NpcfLocationDef = make_location(&"toy.yard", [] as Array[StringName])
