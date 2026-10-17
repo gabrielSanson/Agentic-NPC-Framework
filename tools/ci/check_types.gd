@@ -1,14 +1,10 @@
 extends SceneTree
 ## Strict type check (R3.1, R3.2). Re-parses every GDScript file in the project except the
-## vendored gdUnit4, with the project's warnings-as-errors settings and with
-## `exclude_addons` switched off so that addons/npcf is checked too.
-## `godot --headless --import` exits 0 even when scripts fail to parse, so CI uses this instead.
+## vendored gdUnit4 with the project's warnings-as-errors settings (project.godot's
+## directory_rules include addons/npcf). `godot --headless --import` exits 0 even when scripts
+## fail to parse, so CI uses this instead.
 ##
-## Test suites extend gdUnit4 classes, which are not strictly typed, so they are checked in a
-## second run with `-- --tests`, which keeps `exclude_addons` on (the suites themselves are still
-## checked strictly because they live outside addons/).
-##
-## Usage: godot --headless --path . -s res://tools/ci/check_types.gd [-- --tests] [--root res://dir]
+## Usage: godot --headless --path . -s res://tools/ci/check_types.gd [-- --root res://dir]
 
 
 class ParseErrorLog extends Logger:
@@ -29,11 +25,6 @@ func _init() -> void:
 	var i: int = args.find("--root")
 	if i >= 0 and i + 1 < args.size():
 		root = args[i + 1]
-	var tests_pass: bool = args.has("--tests")
-	if tests_pass:
-		root = "res://tests"
-	else:
-		ProjectSettings.set_setting("debug/gdscript/warnings/exclude_addons", false)
 	var log: ParseErrorLog = ParseErrorLog.new()
 	OS.add_logger(log)
 	var failed: int = 0
@@ -42,8 +33,6 @@ func _init() -> void:
 	for path: String in files:
 		if ResourceLoader.has_cached(path):
 			continue  # this checker and its helpers; they were compiled strictly to get here
-		if not tests_pass and path.begins_with("res://tests/"):
-			continue
 		checked += 1
 		var script: GDScript = GDScript.new()
 		script.source_code = FileAccess.get_file_as_string(path)
@@ -56,5 +45,5 @@ func _init() -> void:
 			if log.messages.is_empty():
 				printerr("%s:0: type: script failed to parse" % path)
 	OS.remove_logger(log)
-	print("check_types%s: %d files, %d failing" % [" (tests)" if tests_pass else "", checked, failed])
+	print("check_types: %d files, %d failing" % [checked, failed])
 	quit(1 if failed > 0 else 0)
