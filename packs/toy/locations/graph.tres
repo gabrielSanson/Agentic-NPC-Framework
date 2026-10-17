@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="NpcfLocationGraph" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_edge_def.gd" id="1_7jth1"]
+[ext_resource type="Resource" path="res://packs/toy/locations/home_a.tres" id="2_5dge1"]
+[ext_resource type="Resource" path="res://packs/toy/locations/yard.tres" id="3_8mpcn"]
+[ext_resource type="Resource" path="res://packs/toy/locations/home_b.tres" id="4_2s7t2"]
+[ext_resource type="Resource" path="res://packs/toy/locations/workshop.tres" id="5_jqg7j"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_location_def.gd" id="6_re3lm"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_location_graph.gd" id="7_thwif"]
+
+[sub_resource type="Resource" id="Resource_im6on"]
+script = ExtResource("1_7jth1")
+from_location = ExtResource("2_5dge1")
+to_location = ExtResource("3_8mpcn")
+travel_ticks = 5
+
+[sub_resource type="Resource" id="Resource_68uce"]
+script = ExtResource("1_7jth1")
+from_location = ExtResource("4_2s7t2")
+to_location = ExtResource("3_8mpcn")
+travel_ticks = 7
+
+[sub_resource type="Resource" id="Resource_gdpmq"]
+script = ExtResource("1_7jth1")
+from_location = ExtResource("3_8mpcn")
+to_location = ExtResource("5_jqg7j")
+travel_ticks = 10
+
+[resource]
+script = ExtResource("7_thwif")
+locations = Array[ExtResource("6_re3lm")]([ExtResource("2_5dge1"), ExtResource("4_2s7t2"), ExtResource("3_8mpcn"), ExtResource("5_jqg7j")])
+edges = Array[ExtResource("1_7jth1")]([SubResource("Resource_im6on"), SubResource("Resource_68uce"), SubResource("Resource_gdpmq")])

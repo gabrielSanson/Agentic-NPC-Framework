@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="NpcfSimConfig" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_sim_config.gd" id="1_ajk87"]
+
+[resource]
+script = ExtResource("1_ajk87")
+player_entity = &"toy.player"

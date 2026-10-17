@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="NpcfCharacterDef" format=3]
+
+[ext_resource type="Resource" path="res://packs/toy/archetypes/villager.tres" id="1_0uh57"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_goal_def.gd" id="2_wgev8"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_personality_def.gd" id="3_24hvc"]
+[ext_resource type="Resource" path="res://packs/toy/personalities/diligent.tres" id="4_fixty"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_character_def.gd" id="5_ix5ya"]
+
+[resource]
+script = ExtResource("5_ix5ya")
+id = &"toy.bo"
+display_name = "Bo"
+archetype = ExtResource("1_0uh57")
+personalities = Array[ExtResource("3_24hvc")]([ExtResource("4_fixty")])

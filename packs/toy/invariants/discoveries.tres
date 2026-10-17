@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="NpcfInvariantDef" format=3]
+
+[ext_resource type="Script" path="res://packs/toy/hooks/discoveries_non_negative.gd" id="1_gtwt4"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_invariant_def.gd" id="2_m56wj"]
+
+[resource]
+script = ExtResource("2_m56wj")
+id = &"toy.inv.discoveries"
+hook = ExtResource("1_gtwt4")

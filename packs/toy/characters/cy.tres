@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="NpcfCharacterDef" format=3]
+
+[ext_resource type="Resource" path="res://packs/toy/archetypes/villager.tres" id="1_gcgve"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_goal_def.gd" id="2_sx3mp"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_personality_def.gd" id="3_5kfk8"]
+[ext_resource type="Resource" path="res://packs/toy/personalities/lazy.tres" id="4_l6d8m"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_character_def.gd" id="5_5gp4v"]
+
+[resource]
+script = ExtResource("5_5gp4v")
+id = &"toy.cy"
+display_name = "Cy"
+archetype = ExtResource("1_gcgve")
+personalities = Array[ExtResource("3_5kfk8")]([ExtResource("4_l6d8m")])

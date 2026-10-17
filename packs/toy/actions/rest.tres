@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="NpcfActionDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_field_def.gd" id="1_lgaua"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_effect_def.gd" id="2_8rf0e"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_consideration_def.gd" id="3_83jwi"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_condition_def.gd" id="4_fljok"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_action_def.gd" id="5_d7iqc"]
+
+[resource]
+script = ExtResource("5_d7iqc")
+id = &"toy.rest"
+duration_ticks = 60
+required_location_tag = &"toy.home"
+per_tick_need_deltas = Dictionary[StringName, int]({
+&"toy.energy": 6
+})

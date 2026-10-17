@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="NpcfGoalDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_action_def.gd" id="1_xuunh"]
+[ext_resource type="Resource" path="res://packs/toy/actions/work.tres" id="2_py1af"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_consideration_def.gd" id="3_lroxt"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_goal_def.gd" id="4_d52nk"]
+
+[sub_resource type="Resource" id="Resource_e8mx0"]
+script = ExtResource("3_lroxt")
+input = 5
+curve = 3
+
+[resource]
+script = ExtResource("4_d52nk")
+id = &"toy.work"
+weight = 3.0
+considerations = Array[ExtResource("3_lroxt")]([SubResource("Resource_e8mx0")])
+candidate_actions = Array[ExtResource("1_xuunh")]([ExtResource("2_py1af")])

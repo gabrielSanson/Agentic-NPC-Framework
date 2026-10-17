@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="NpcfGoalDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_action_def.gd" id="1_5aabm"]
+[ext_resource type="Resource" path="res://packs/toy/actions/chat.tres" id="2_5ixv0"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_consideration_def.gd" id="3_tr5h4"]
+[ext_resource type="Script" path="res://packs/toy/hooks/sociable.gd" id="4_3wm0c"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_goal_def.gd" id="5_d1lv5"]
+
+[sub_resource type="Resource" id="Resource_cg6q6"]
+script = ExtResource("3_tr5h4")
+input = 7
+hook = ExtResource("4_3wm0c")
+hook_params = Dictionary[StringName, Variant]({
+&"scale": 0.8
+})
+
+[resource]
+script = ExtResource("5_d1lv5")
+id = &"toy.chat"
+weight = 0.3
+considerations = Array[ExtResource("3_tr5h4")]([SubResource("Resource_cg6q6")])
+candidate_actions = Array[ExtResource("1_5aabm")]([ExtResource("2_5ixv0")])
