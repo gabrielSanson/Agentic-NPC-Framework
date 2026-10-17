@@ -51,3 +51,18 @@ prompt is built, and every fact handed to a belief store. `violations(world)` re
 
 Tests: `tests/audit/test_knowledge_boundary.gd` runs three in-game days of dialogue and expects no violations, and
 injects an undelivered belief to check that it is caught.
+
+## Debug overlay
+
+`NpcfDebugOverlay` (`addons/npcf/debug/npcf_debug_overlay.gd`) is a panel that shows `Npcf.trace(npc)` for one NPC
+while the game runs. The runtime adds it as a child named `NpcfDebugOverlay` in `start()` and `load_game()`, and
+removes it in `stop()`. It is added only in debug builds, or in release builds when the project setting
+`npcf/debug/overlay_in_release` is true.
+
+- F9 shows or hides the panel (hidden at first).
+- F10 selects the next NPC in ID order, wrapping.
+- A left click selects the nearest registered NPC within 48 px. The click still reaches the game.
+- The tree has one item per top-level trace key; sections start collapsed and stay as the user left them. The
+  panel refreshes every 0.5 s while visible.
+
+The overlay is built in code (no `.tscn`) and never changes the world.

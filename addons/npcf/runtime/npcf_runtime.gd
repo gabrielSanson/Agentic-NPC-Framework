@@ -107,6 +107,7 @@ func stop() -> void:
 	_pack = null
 	_scenario = null
 	_adapters = null
+	_drop_debug_overlay()
 
 
 func is_running() -> bool:
@@ -497,6 +498,7 @@ func _install_world(w: NpcfWorld) -> void:
 	_acc = 0.0
 	for npc: StringName in agents.ids():
 		_world.queue_input(NpcfInput.embodiment(npc, true))
+	_ensure_debug_overlay()
 
 
 ## Adds the frame's real time to the autosave clock and saves into the "autosave" slot when it is due.
@@ -508,3 +510,25 @@ func _tick_autosave(delta: float) -> void:
 		return
 	_autosave_elapsed = 0.0
 	save_game(AUTOSAVE_SLOT)
+
+
+## Adds the debug overlay (hidden until F9) when the build and the project setting allow it, and none exists yet.
+func _ensure_debug_overlay() -> void:
+	if get_node_or_null(^"NpcfDebugOverlay") != null:
+		return
+	var in_release: bool = ProjectSettings.get_setting("npcf/debug/overlay_in_release", false)
+	if not NpcfDebugOverlay.should_add(OS.is_debug_build(), in_release):
+		return
+	var overlay: NpcfDebugOverlay = NpcfDebugOverlay.new()
+	overlay.name = "NpcfDebugOverlay"
+	overlay.runtime = self
+	add_child(overlay)
+
+
+## Removes the debug overlay, if one was added.
+func _drop_debug_overlay() -> void:
+	var overlay: NpcfDebugOverlay = get_node_or_null(^"NpcfDebugOverlay") as NpcfDebugOverlay
+	if overlay == null:
+		return
+	remove_child(overlay)
+	overlay.queue_free()
