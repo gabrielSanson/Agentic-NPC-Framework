@@ -13,6 +13,7 @@ curve = 3
 [resource]
 script = ExtResource("4_eurtj")
 id = &"cw.socialize"
-weight = 0.4
+weight = 1.5
 considerations = Array[ExtResource("3_d63xb")]([SubResource("Resource_6h53a")])
 candidate_actions = Array[ExtResource("1_ltja2")]([ExtResource("2_cf5xt")])
+unreachable_cooldown_ticks = 5

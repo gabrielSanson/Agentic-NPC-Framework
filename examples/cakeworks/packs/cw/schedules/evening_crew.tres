@@ -13,15 +13,15 @@
 [sub_resource type="Resource" id="Resource_1yflo"]
 script = ExtResource("1_ym6ku")
 days = PackedInt32Array()
-start_minute = 900
-end_minute = 960
+start_minute = 960
+end_minute = 1080
 goal = ExtResource("2_8v0ct")
 location = ExtResource("3_5rh3s")
 
 [sub_resource type="Resource" id="Resource_khyem"]
 script = ExtResource("1_ym6ku")
 days = PackedInt32Array()
-start_minute = 960
+start_minute = 1080
 end_minute = 1200
 goal = ExtResource("4_i0w02")
 location = ExtResource("5_52uus")

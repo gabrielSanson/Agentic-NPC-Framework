@@ -72,3 +72,17 @@ bench done: 50 NPCs, 1440 ticks, median 1.318 ms, p99 18.199 ms, max 119.166 ms,
 
 The scene's samples are the time of each frame that ran a tick, divided by the ticks it ran. It includes the
 runtime's signal emission and the 2D adapters, so it is slower than the bare step.
+
+## CakeWorks starter (acceptance suite, C6b)
+
+Wall time of one seed in `examples/cakeworks/tests/test_starter_acceptance.gd`: world build plus 4,320 ticks (3 days)
+of the `cw.starter` scenario, headless, no providers. Measured with `Time.get_ticks_msec()` inside the suite; one run.
+The whole example suite (8 cases) takes about 5 s.
+
+| Seed | Wall ms | Events logged | Complaints |
+| --- | --- | --- | --- |
+| 1 | 886 | 727 | 53 |
+| 2 | 996 | 754 | 46 |
+| 3 | 1,013 | 747 | 44 |
+| 5 | 882 | 756 | 46 |
+| 8 | 893 | 720 | 51 |

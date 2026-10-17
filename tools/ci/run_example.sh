@@ -13,9 +13,9 @@ bash tools/ci/sync_example.sh
 echo "== import"
 "$GODOT_BIN" --headless --path "$EX" --import >/dev/null 2>&1 || true
 
-echo "== check cw pack (smoke scenario)"
+echo "== check cw pack (starter scenario)"
 "$GODOT_BIN" --headless --path "$EX" -s res://addons/npcf/tools/npcf_cli.gd -- check \
-	--manifest res://packs/cw/pack.tres --scenario res://packs/cw/scenarios/smoke.tres
+	--manifest res://packs/cw/pack.tres --scenario res://packs/cw/scenarios/starter.tres
 
 echo "== gdUnit4 (example tests)"
 cd "$EX"

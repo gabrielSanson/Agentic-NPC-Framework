@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="NpcfScenarioDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_cast_entry.gd" id="1_ll1qm"]
+[ext_resource type="Resource" path="res://packs/cw/characters/mira.tres" id="2_p5kpk"]
+[ext_resource type="Resource" path="res://packs/cw/locations/production.tres" id="3_rnku8"]
+[ext_resource type="Resource" path="res://packs/cw/characters/oskar.tres" id="4_1lf8j"]
+[ext_resource type="Resource" path="res://packs/cw/characters/juno.tres" id="5_tnlsu"]
+[ext_resource type="Resource" path="res://packs/cw/locations/dormitory.tres" id="6_diolx"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_fact_seed.gd" id="7_a5jd1"]
+[ext_resource type="Resource" path="res://packs/cw/facts/era.tres" id="8_045te"]
+[ext_resource type="Resource" path="res://packs/cw/locations/lounge.tres" id="9_kc5h3"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_rel_seed.gd" id="10_xhf2n"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_scenario_def.gd" id="11_vyxbj"]
+
+[sub_resource type="Resource" id="Resource_g56c1"]
+script = ExtResource("1_ll1qm")
+character = ExtResource("2_p5kpk")
+start_location = ExtResource("3_rnku8")
+
+[sub_resource type="Resource" id="Resource_t83e0"]
+script = ExtResource("1_ll1qm")
+character = ExtResource("4_1lf8j")
+start_location = ExtResource("3_rnku8")
+
+[sub_resource type="Resource" id="Resource_nycyf"]
+script = ExtResource("1_ll1qm")
+character = ExtResource("5_tnlsu")
+start_location = ExtResource("6_diolx")
+
+[sub_resource type="Resource" id="Resource_yxpem"]
+script = ExtResource("7_a5jd1")
+fact = ExtResource("8_045te")
+value = 1
+
+[resource]
+script = ExtResource("11_vyxbj")
+id = &"cw.starter"
+start_minute = 470
+cast = Array[ExtResource("1_ll1qm")]([SubResource("Resource_g56c1"), SubResource("Resource_t83e0"), SubResource("Resource_nycyf")])
+facts = Array[ExtResource("7_a5jd1")]([SubResource("Resource_yxpem")])
+player_start = ExtResource("9_kc5h3")

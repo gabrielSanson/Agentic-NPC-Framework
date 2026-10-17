@@ -28,7 +28,6 @@ func _init() -> void:
 	var director: NpcfDirectorDef = _director(events, goals)
 	var sim: NpcfSimConfig = _sim()
 	var dialogue: NpcfDialogueDef = _dialogue(dims[&"cw.trust"])
-	var scenario: NpcfScenarioDef = _smoke_scenario(characters, locs)
 
 	var manifest: NpcfPackManifest = NpcfPackManifest.new()
 	manifest.pack_namespace = &"cw"
@@ -66,7 +65,8 @@ func _init() -> void:
 	manifest.dialogue = dialogue
 	manifest.sim = sim
 	_save(manifest, "pack")
-	_save(scenario, "scenarios/smoke")
+	_save(_starter(characters, locs, facts), "scenarios/starter")
+	_save(_demo(characters, locs, facts), "scenarios/demo")
 	quit(_exit_code)
 
 
@@ -251,6 +251,7 @@ func _actions(locs: Dictionary[StringName, NpcfLocationDef], events: Dictionary[
 	work.required_location = locs[&"cw.production"]
 	work.per_tick_need_deltas[&"cw.fatigue"] = 1
 	work.per_tick_need_deltas[&"cw.hunger"] = 1
+	work.per_tick_need_deltas[&"cw.stress"] = 2
 	work.end_effects.append(_emit(events[&"cw.shift_completed"]))
 	out[work.id] = _save(work, "actions/work_shift") as NpcfActionDef
 
@@ -308,10 +309,11 @@ func _consider_schedule() -> NpcfConsiderationDef:
 	return c
 
 
-func _goal(id: StringName, weight: float, considerations: Array[NpcfConsiderationDef], candidates: Array[NpcfActionDef], rel: String) -> NpcfGoalDef:
+func _goal(id: StringName, weight: float, considerations: Array[NpcfConsiderationDef], candidates: Array[NpcfActionDef], rel: String, cooldown: int = 30) -> NpcfGoalDef:
 	var g: NpcfGoalDef = NpcfGoalDef.new()
 	g.id = id
 	g.weight = weight
+	g.unreachable_cooldown_ticks = cooldown
 	g.considerations = considerations
 	g.candidate_actions = candidates
 	return _save(g, rel) as NpcfGoalDef
@@ -333,11 +335,11 @@ func _goals(needs: Dictionary[StringName, NpcfNeedDef], actions: Dictionary[Stri
 
 	var social_c: Array[NpcfConsiderationDef] = [_consider_schedule()]
 	var social_a: Array[NpcfActionDef] = [actions[&"cw.chat"]]
-	out[&"cw.socialize"] = _goal(&"cw.socialize", 0.4, social_c, social_a, "goals/socialize")
+	out[&"cw.socialize"] = _goal(&"cw.socialize", 1.5, social_c, social_a, "goals/socialize", 5)
 
 	var vent_c: Array[NpcfConsiderationDef] = [_consider_need(needs[&"cw.stress"])]
 	var vent_a: Array[NpcfActionDef] = [actions[&"cw.complain"]]
-	out[&"cw.vent"] = _goal(&"cw.vent", 1.0, vent_c, vent_a, "goals/vent")
+	out[&"cw.vent"] = _goal(&"cw.vent", 1.5, vent_c, vent_a, "goals/vent")
 	return out
 
 
@@ -376,8 +378,8 @@ func _schedules(goals: Dictionary[StringName, NpcfGoalDef], locs: Dictionary[Str
 	]
 	out[&"cw.day_crew"] = _schedule(&"cw.day_crew", day, "schedules/day_crew")
 	var evening: Array[NpcfScheduleEntry] = [
-		_entry(900, 960, social, lounge),
-		_entry(960, 1200, work, prod),
+		_entry(960, 1080, social, lounge),
+		_entry(1080, 1200, work, prod),
 		_entry(1200, 1230, eat, lounge),
 		_entry(1230, 1440, work, prod),
 		_entry(120, 600, rest, dorm),
@@ -765,19 +767,53 @@ func _macro(name: StringName, source: NpcfPromptMacro.Source) -> NpcfPromptMacro
 	return m
 
 
-func _smoke_scenario(characters: Dictionary[StringName, NpcfCharacterDef], locs: Dictionary[StringName, NpcfLocationDef]) -> NpcfScenarioDef:
-	var s: NpcfScenarioDef = NpcfScenarioDef.new()
-	s.id = &"cw.smoke"
-	s.start_day = 0
-	s.start_minute = 480
+## The starter scenario: three NPCs for the headless acceptance suite (and the 3-day acceptance runs).
+func _starter(characters: Dictionary[StringName, NpcfCharacterDef], locs: Dictionary[StringName, NpcfLocationDef], facts: Dictionary[StringName, NpcfFactDef]) -> NpcfScenarioDef:
+	var s: NpcfScenarioDef = _scenario(&"cw.starter", 470)
 	var cast: Array[NpcfCastEntry] = [
 		_cast(characters[&"cw.mira"], locs[&"cw.production"]),
 		_cast(characters[&"cw.oskar"], locs[&"cw.production"]),
-		_cast(characters[&"cw.juno"], locs[&"cw.lounge"]),
+		_cast(characters[&"cw.juno"], locs[&"cw.dormitory"]),
 	]
 	s.cast = cast
+	s.facts = _seeds(facts)
 	s.player_start = locs[&"cw.lounge"]
 	return s
+
+
+## The demo scenario: seven NPCs, day crew at production and evening crew at the dormitory.
+func _demo(characters: Dictionary[StringName, NpcfCharacterDef], locs: Dictionary[StringName, NpcfLocationDef], facts: Dictionary[StringName, NpcfFactDef]) -> NpcfScenarioDef:
+	var s: NpcfScenarioDef = _scenario(&"cw.demo", 470)
+	var cast: Array[NpcfCastEntry] = [
+		_cast(characters[&"cw.mira"], locs[&"cw.production"]),
+		_cast(characters[&"cw.oskar"], locs[&"cw.production"]),
+		_cast(characters[&"cw.tamsin"], locs[&"cw.production"]),
+		_cast(characters[&"cw.rafi"], locs[&"cw.production"]),
+		_cast(characters[&"cw.juno"], locs[&"cw.dormitory"]),
+		_cast(characters[&"cw.bea"], locs[&"cw.dormitory"]),
+		_cast(characters[&"cw.lev"], locs[&"cw.dormitory"]),
+	]
+	s.cast = cast
+	s.facts = _seeds(facts)
+	s.player_start = locs[&"cw.lounge"]
+	return s
+
+
+func _scenario(id: StringName, minute: int) -> NpcfScenarioDef:
+	var s: NpcfScenarioDef = NpcfScenarioDef.new()
+	s.id = id
+	s.start_day = 0
+	s.start_minute = minute
+	return s
+
+
+## Fact seeds shared by both scenarios: the ship starts in policy era 1 (the start state; eras II and III are director rules).
+func _seeds(facts: Dictionary[StringName, NpcfFactDef]) -> Array[NpcfFactSeed]:
+	var seed: NpcfFactSeed = NpcfFactSeed.new()
+	seed.fact = facts[&"cw.era"]
+	seed.value = 1
+	var out: Array[NpcfFactSeed] = [seed]
+	return out
 
 
 func _cast(character: NpcfCharacterDef, start: NpcfLocationDef) -> NpcfCastEntry:

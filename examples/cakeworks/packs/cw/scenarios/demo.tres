@@ -1,0 +1,65 @@
+[gd_resource type="Resource" script_class="NpcfScenarioDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_cast_entry.gd" id="1_7psnv"]
+[ext_resource type="Resource" path="res://packs/cw/characters/mira.tres" id="2_8twtq"]
+[ext_resource type="Resource" path="res://packs/cw/locations/production.tres" id="3_qbt63"]
+[ext_resource type="Resource" path="res://packs/cw/characters/oskar.tres" id="4_8roaa"]
+[ext_resource type="Resource" path="res://packs/cw/characters/tamsin.tres" id="5_scngo"]
+[ext_resource type="Resource" path="res://packs/cw/characters/rafi.tres" id="6_jq1dy"]
+[ext_resource type="Resource" path="res://packs/cw/characters/juno.tres" id="7_2tg1r"]
+[ext_resource type="Resource" path="res://packs/cw/locations/dormitory.tres" id="8_1vg03"]
+[ext_resource type="Resource" path="res://packs/cw/characters/bea.tres" id="9_dl8gu"]
+[ext_resource type="Resource" path="res://packs/cw/characters/lev.tres" id="10_3von7"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_fact_seed.gd" id="11_blac1"]
+[ext_resource type="Resource" path="res://packs/cw/facts/era.tres" id="12_27ax8"]
+[ext_resource type="Resource" path="res://packs/cw/locations/lounge.tres" id="13_rawh1"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_rel_seed.gd" id="14_3nhmk"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_scenario_def.gd" id="15_hgmcj"]
+
+[sub_resource type="Resource" id="Resource_7cjbl"]
+script = ExtResource("1_7psnv")
+character = ExtResource("2_8twtq")
+start_location = ExtResource("3_qbt63")
+
+[sub_resource type="Resource" id="Resource_vph8l"]
+script = ExtResource("1_7psnv")
+character = ExtResource("4_8roaa")
+start_location = ExtResource("3_qbt63")
+
+[sub_resource type="Resource" id="Resource_s333g"]
+script = ExtResource("1_7psnv")
+character = ExtResource("5_scngo")
+start_location = ExtResource("3_qbt63")
+
+[sub_resource type="Resource" id="Resource_e5lmv"]
+script = ExtResource("1_7psnv")
+character = ExtResource("6_jq1dy")
+start_location = ExtResource("3_qbt63")
+
+[sub_resource type="Resource" id="Resource_t4dff"]
+script = ExtResource("1_7psnv")
+character = ExtResource("7_2tg1r")
+start_location = ExtResource("8_1vg03")
+
+[sub_resource type="Resource" id="Resource_81uaw"]
+script = ExtResource("1_7psnv")
+character = ExtResource("9_dl8gu")
+start_location = ExtResource("8_1vg03")
+
+[sub_resource type="Resource" id="Resource_t4jpx"]
+script = ExtResource("1_7psnv")
+character = ExtResource("10_3von7")
+start_location = ExtResource("8_1vg03")
+
+[sub_resource type="Resource" id="Resource_mr3hj"]
+script = ExtResource("11_blac1")
+fact = ExtResource("12_27ax8")
+value = 1
+
+[resource]
+script = ExtResource("15_hgmcj")
+id = &"cw.demo"
+start_minute = 470
+cast = Array[ExtResource("1_7psnv")]([SubResource("Resource_7cjbl"), SubResource("Resource_vph8l"), SubResource("Resource_s333g"), SubResource("Resource_e5lmv"), SubResource("Resource_t4dff"), SubResource("Resource_81uaw"), SubResource("Resource_t4jpx")])
+facts = Array[ExtResource("11_blac1")]([SubResource("Resource_mr3hj")])
+player_start = ExtResource("13_rawh1")

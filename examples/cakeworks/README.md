@@ -25,12 +25,12 @@ GODOT_BIN=/usr/local/bin/godot bash tools/ci/run_example.sh
 | `packs/cw/` | The `cw` pack. Every resource is generated. |
 | `tools/build_cw_pack.gd` | Builds the pack. Change this script, then run `godot --headless --path . -s res://tools/build_cw_pack.gd`. Never hand-edit the `.tres` files. |
 | `packs/cw/hooks/` | Hook scripts: the chat precondition and the news answer. |
-| `packs/cw/scenarios/` | Scenarios. `smoke.tres` is a three-NPC day used by the tests. |
+| `packs/cw/scenarios/` | Scenarios. `starter.tres` (three NPCs, used by the acceptance suite) and `demo.tres` (seven NPCs, used by the demo). |
 | `tests/` | gdUnit4 suites for the pack and its hooks. |
 
 Check the pack against a scenario:
 
 ```bash
 godot --headless --path . -s res://addons/npcf/tools/npcf_cli.gd -- check \
-  --manifest res://packs/cw/pack.tres --scenario res://packs/cw/scenarios/smoke.tres
+  --manifest res://packs/cw/pack.tres --scenario res://packs/cw/scenarios/starter.tres
 ```

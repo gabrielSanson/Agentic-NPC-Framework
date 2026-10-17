@@ -22,5 +22,6 @@ required_location = ExtResource("6_ynp17")
 end_effects = Array[ExtResource("2_j5dsb")]([SubResource("Resource_hly0x")])
 per_tick_need_deltas = Dictionary[StringName, int]({
 &"cw.fatigue": 1,
-&"cw.hunger": 1
+&"cw.hunger": 1,
+&"cw.stress": 2
 })

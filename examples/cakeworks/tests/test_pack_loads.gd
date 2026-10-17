@@ -1,6 +1,6 @@
 extends GdUnitTestSuite
 ## The cw pack loads with zero errors, has the planned content counts, every ID starts with cw.,
-## and one headless day with the smoke scenario runs without an invariant failure.
+## both scenarios validate, and one headless day with the starter scenario runs without an invariant failure.
 
 const DAY_TICKS: int = 1440
 
@@ -9,12 +9,14 @@ func _manifest() -> NpcfPackManifest:
 	return ResourceLoader.load(CwFixture.MANIFEST, "", ResourceLoader.CACHE_MODE_IGNORE) as NpcfPackManifest
 
 
-func test_manifest_and_smoke_scenario_load_with_zero_errors() -> void:
+func test_manifest_and_both_scenarios_load_with_zero_errors() -> void:
 	var result: NpcfLoadResult = NpcfPackLoader.new().load_pack(_manifest())
 	assert_bool(result.ok).is_true()
 	assert_str(result.format_errors()).is_equal("")
-	var errors: Array[NpcfConfigError] = NpcfPackLoader.new().check_scenario(result.pack, CwFixture.smoke())
-	assert_int(errors.size()).is_equal(0)
+	var starter: Array[NpcfConfigError] = NpcfPackLoader.new().check_scenario(result.pack, CwFixture.starter())
+	assert_int(starter.size()).is_equal(0)
+	var demo: Array[NpcfConfigError] = NpcfPackLoader.new().check_scenario(result.pack, CwFixture.demo())
+	assert_int(demo.size()).is_equal(0)
 
 
 func test_content_counts_match_the_plan() -> void:
@@ -57,7 +59,7 @@ func test_every_id_starts_with_cw() -> void:
 
 
 func test_one_headless_day_runs_without_invariant_failures() -> void:
-	var w: NpcfWorld = NpcfWorldBuilder.build(CwFixture.load_pack(), CwFixture.smoke(), 1)
+	var w: NpcfWorld = NpcfWorldBuilder.build(CwFixture.load_pack(), CwFixture.starter(), 1)
 	var failures: int = 0
 	var decisions: int = 0
 	for _i: int in DAY_TICKS:
