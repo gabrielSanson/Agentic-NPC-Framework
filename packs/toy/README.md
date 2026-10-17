@@ -13,6 +13,8 @@ example of the pack layout. Every file is listed once below.
 - `social/trust.tres`: `toy.trust`, a directed relationship dimension from -100 to 100 with bands wary, neutral and trusting.
 - `social/liking.tres`: `toy.liking`, a directed relationship dimension from -100 to 100 with bands cold, neutral and warm.
 - `social/social.tres`: the social definition: witnesses of `toy.chatted` gain 2 liking toward the speaker; the tag transitions `toy.tire_out` (energy below 200 adds `toy.weary`) and `toy.recover` (energy at least 500 removes it).
+- `director/idle_pressure.tres`: `toy.idle_pressure`, a 0 to 100 macro variable that rises by 10 for every `toy.chatted`.
+- `director/director.tres`: the Director: one rule, `toy.back_to_work`, checked every 30 ticks, emits a `toy.work` directive (priority 0.5, 60 ticks) for NPCs without `toy.weary` once the pressure is at least 30.
 - `events/chatted.tres`: `toy.chatted`, a local event with no payload.
 - `events/spotted.tres`: `toy.spotted`, a local event, salience 60, that tells witnesses a sighting at the location. Nothing in the toy day emits it.
 - `locations/graph.tres`: the location graph and its three bidirectional edges.

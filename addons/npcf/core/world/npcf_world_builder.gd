@@ -33,6 +33,7 @@ static func build(pack: NpcfLoadedPack, scenario: NpcfScenarioDef, world_seed: i
 	w.relationships = NpcfRelationships.new()
 	w.tags = NpcfTags.new()
 	w.rumors = NpcfRumors.new()
+	w.director = NpcfDirector.new()
 	w.applier.rel_handler = w.relationships.on_change
 	w.applier.share_handler = w.rumors.on_change
 
@@ -80,4 +81,5 @@ static func build(pack: NpcfLoadedPack, scenario: NpcfScenarioDef, world_seed: i
 
 	for id: StringName in w.npc_ids:
 		w.scheduler.init_npc(w, id)
+	w.director.reset(w)
 	return w

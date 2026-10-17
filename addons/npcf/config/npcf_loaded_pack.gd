@@ -26,6 +26,9 @@ var social: NpcfSocialDef = null
 var rel_dims: Dictionary[StringName, NpcfRelDimDef] = {}
 ## Never null after load.
 var rumor_rules: NpcfRumorRules = null
+## Never null after load: an empty NpcfDirectorDef when the manifest has none.
+var director: NpcfDirectorDef = null
+var macros: Dictionary[StringName, NpcfMacroVarDef] = {}
 var location_index: NpcfLocationIndex = null
 
 

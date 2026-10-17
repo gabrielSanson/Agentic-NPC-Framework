@@ -20,5 +20,6 @@ extends Resource
 @export var schedules: Array[NpcfScheduleDef] = []
 @export var reactions: Array[NpcfReactionRuleDef] = []
 @export var social: NpcfSocialDef = null
+@export var director: NpcfDirectorDef = null
 @export var invariants: Array[NpcfInvariantDef] = []
 @export var sim: NpcfSimConfig = null

@@ -108,6 +108,17 @@ func mapper(hook: Script, event: NpcfEventView, receiver: StringName) -> Array[N
 	return out
 
 
+## Directives a Director hook returns for this tick. Safe default: no directives.
+func director(hook: Script, macros: NpcfMacroView, tick: int) -> Array[NpcfDirectiveSpec]:
+	var r: Variant = _call(hook, &"evaluate", [macros, tick], &"")
+	var out: Array[NpcfDirectiveSpec] = []
+	if _errored:
+		return out
+	if not _typed_array(r, out, hook, &""):
+		return []
+	return out
+
+
 ## RUNNING, SUCCESS or FAILURE (NpcfResolverHook constants); FAILURE on any failure.
 func resolver(hook: Script, call_view: NpcfActionCallView, world: NpcfWorldView, elapsed: int) -> int:
 	var r: Variant = _call(hook, &"resolve", [call_view, world, elapsed], call_view.npc())

@@ -270,3 +270,60 @@ func test_scenario_relationship_value_outside_bounds() -> void:
 	assert_int(errors.size()).is_equal(1)
 	if errors.size() == 1:
 		assert_str(errors[0].format()).contains("150 is outside -100..100")
+
+
+func _macro_pack() -> NpcfPackManifest:
+	var m: NpcfPackManifest = MiniPackFixture.manifest()
+	m.director = NpcfDirectorDef.new()
+	var pressure: NpcfMacroVarDef = NpcfMacroVarDef.new()
+	pressure.id = &"toy.pressure"
+	pressure.min_value = 0.0
+	pressure.max_value = 100.0
+	pressure.start = 0.0
+	m.director.macros = [pressure] as Array[NpcfMacroVarDef]
+	return m
+
+
+func _rule(m: NpcfPackManifest, target: NpcfTagQuery) -> NpcfDirectorRuleDef:
+	var r: NpcfDirectorRuleDef = NpcfDirectorRuleDef.new()
+	r.id = &"toy.back_to_work"
+	r.goal = m.goals[0]
+	r.target = target
+	m.director.rules = [r] as Array[NpcfDirectorRuleDef]
+	return r
+
+
+func test_director_rule_without_target() -> void:
+	var m: NpcfPackManifest = _macro_pack()
+	_rule(m, null)
+	_expect_contains(_load(m), "needs a target tag query")
+
+
+func test_director_condition_with_exists() -> void:
+	var m: NpcfPackManifest = _macro_pack()
+	var r: NpcfDirectorRuleDef = _rule(m, NpcfTagQuery.new())
+	var c: NpcfMacroCondition = NpcfMacroCondition.new()
+	c.macro = m.director.macros[0]
+	c.compare = NpcfConditionDef.Compare.EXISTS
+	r.conditions = [c] as Array[NpcfMacroCondition]
+	_expect_contains(_load(m), "EXISTS does not apply to a macro")
+
+
+func test_macro_start_outside_bounds() -> void:
+	var m: NpcfPackManifest = _macro_pack()
+	m.director.macros[0].start = 150.0
+	_expect_contains(_load(m), "150.0 is outside 0.0..100.0")
+
+
+func test_scenario_macro_start_with_unknown_macro() -> void:
+	var m: NpcfPackManifest = _macro_pack()
+	var r: NpcfLoadResult = _load(m)
+	assert_bool(r.ok).override_failure_message(r.format_errors()).is_true()
+	if not r.ok:
+		return
+	var s: NpcfScenarioDef = MiniPackFixture.scenario(m)
+	s.macro_start = {&"toy.nope": 5.0}
+	var errors: Array[NpcfConfigError] = NpcfPackLoader.new().check_scenario(r.pack, s)
+	assert_int(errors.size()).is_equal(1)
+	if errors.size() == 1:
+		assert_str(errors[0].format()).contains("unknown macro \"toy.nope\"")

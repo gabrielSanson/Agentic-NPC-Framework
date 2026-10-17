@@ -72,6 +72,11 @@ func load_pack(manifest: NpcfPackManifest, framework_version: String = NpcfVersi
 		var sp: String = _path(mf, "", "social", manifest.social)
 		_register_list(manifest.social.dims, &"relationship dimension", sf, _join(sp, "dims"), _pack.rel_dims)
 		_register_list(manifest.social.tag_transitions, &"tag transition", sf, _join(sp, "tag_transitions"), no_map)
+	if manifest.director != null:
+		var df: String = _file(mf, manifest.director)
+		var dp: String = _path(mf, "", "director", manifest.director)
+		_register_list(manifest.director.macros, &"macro", df, _join(dp, "macros"), _pack.macros)
+		_register_list(manifest.director.rules, &"director rule", df, _join(dp, "rules"), no_map)
 	if manifest.location_graph != null:
 		var gf: String = _file(mf, manifest.location_graph)
 		var gp: String = _path(mf, "", "location_graph", manifest.location_graph)
@@ -105,6 +110,8 @@ func load_pack(manifest: NpcfPackManifest, framework_version: String = NpcfVersi
 		_schedule(manifest.schedules[i], _file(mf, manifest.schedules[i]), _path(mf, "", "schedules[%d]" % i, manifest.schedules[i]))
 	if manifest.social != null:
 		_social(manifest.social, _file(mf, manifest.social), _path(mf, "", "social", manifest.social))
+	if manifest.director != null:
+		_director(manifest.director, _file(mf, manifest.director), _path(mf, "", "director", manifest.director))
 	for i: int in manifest.reactions.size():
 		_reaction(manifest.reactions[i], _file(mf, manifest.reactions[i]), _path(mf, "", "reactions[%d]" % i, manifest.reactions[i]))
 	for i: int in manifest.invariants.size():
@@ -114,6 +121,7 @@ func load_pack(manifest: NpcfPackManifest, framework_version: String = NpcfVersi
 	_sim(_pack.sim, _file(mf, manifest.sim) if manifest.sim != null else mf, _path(mf, "", "sim", manifest.sim) if manifest.sim != null else "sim")
 	_pack.social = manifest.social if manifest.social != null else NpcfSocialDef.new()
 	_pack.rumor_rules = _pack.social.rumors if _pack.social.rumors != null else NpcfRumorRules.new()
+	_pack.director = manifest.director if manifest.director != null else NpcfDirectorDef.new()
 
 	for r: NpcfReactionRuleDef in manifest.reactions:
 		if r != null:
@@ -196,6 +204,15 @@ func check_scenario(pack: NpcfLoadedPack, scenario: NpcfScenarioDef) -> Array[Np
 			var v: int = rs.values[dim]
 			if v < d.min_value or v > d.max_value:
 				_err(rf, vp, "%d is outside %d..%d" % [v, d.min_value, d.max_value], "")
+	for key: StringName in scenario.macro_start:
+		var mp: String = "macro_start[\"%s\"]" % key
+		if not pack.macros.has(key):
+			_require(&"macro", key, f, mp)
+			continue
+		var m: NpcfMacroVarDef = pack.macros[key]
+		var mv: float = scenario.macro_start[key]
+		if mv < m.min_value or mv > m.max_value:
+			_err(f, mp, "%s is outside %s..%s" % [mv, m.min_value, m.max_value], "")
 	if pack.location_index != null and not starts.is_empty():
 		var reachable: Array[StringName] = pack.location_index.reachable_from(starts)
 		for id: StringName in pack.location_index.location_ids:
@@ -813,6 +830,77 @@ func _rumors(r: NpcfRumorRules, file: String, path: String) -> void:
 		_err(file, _join(path, "period_ticks"), "must be at least 1", "")
 	if r.beliefs_per_share < 1:
 		_err(file, _join(path, "beliefs_per_share"), "must be at least 1", "")
+
+
+func _director(d: NpcfDirectorDef, file: String, path: String) -> void:
+	for i: int in d.macros.size():
+		var m: NpcfMacroVarDef = d.macros[i]
+		if m == null:
+			_err(file, _join(path, "macros[%d]" % i), "is empty", "")
+			continue
+		_macro(m, _file(file, m), _path(file, path, "macros[%d]" % i, m))
+	for i: int in d.rules.size():
+		var r: NpcfDirectorRuleDef = d.rules[i]
+		if r == null:
+			_err(file, _join(path, "rules[%d]" % i), "is empty", "")
+			continue
+		_director_rule(r, _file(file, r), _path(file, path, "rules[%d]" % i, r))
+	if d.hook != null:
+		_hook(d.hook, &"director", file, _join(path, "hook"))
+	if d.hook_cadence_ticks < 1:
+		_err(file, _join(path, "hook_cadence_ticks"), "must be at least 1", "")
+
+
+func _macro(m: NpcfMacroVarDef, file: String, path: String) -> void:
+	if not _first_visit(m):
+		return
+	if m.min_value >= m.max_value:
+		_err(file, _join(path, "max_value"), "max_value must be greater than min_value", "")
+	elif m.start < m.min_value or m.start > m.max_value:
+		_err(file, _join(path, "start"), "%s is outside %s..%s" % [m.start, m.min_value, m.max_value], "")
+	for i: int in m.deltas.size():
+		var d: NpcfMacroDelta = m.deltas[i]
+		var dp: String = _join(path, "deltas[%d]" % i)
+		if d == null:
+			_err(file, dp, "is empty", "")
+		elif d.event_kind == null:
+			_err(file, _join(dp, "event_kind"), "no event kind set", "")
+		else:
+			_require_def(&"event kind", d.event_kind, file, _join(dp, "event_kind"))
+
+
+func _director_rule(r: NpcfDirectorRuleDef, file: String, path: String) -> void:
+	if not _first_visit(r):
+		return
+	if r.cadence_ticks < 1:
+		_err(file, _join(path, "cadence_ticks"), "must be at least 1", "")
+	if r.duration_ticks < 1:
+		_err(file, _join(path, "duration_ticks"), "must be at least 1", "")
+	if r.priority < 0.0 or r.priority > 1.0:
+		_err(file, _join(path, "priority"), "%s is outside 0.0..1.0" % r.priority, "")
+	if r.goal == null:
+		_err(file, _join(path, "goal"), "no goal set", "")
+	else:
+		_require_def(&"goal", r.goal, file, _join(path, "goal"))
+	if r.target == null:
+		_err(file, _join(path, "target"), "needs a target tag query", "")
+	else:
+		var tp: String = _join(path, "target")
+		_tags(r.target.tags_all, file, _join(tp, "tags_all"))
+		_tags(r.target.tags_any, file, _join(tp, "tags_any"))
+		_tags(r.target.tags_none, file, _join(tp, "tags_none"))
+	for i: int in r.conditions.size():
+		var c: NpcfMacroCondition = r.conditions[i]
+		var cp: String = _join(path, "conditions[%d]" % i)
+		if c == null:
+			_err(file, cp, "is empty", "")
+			continue
+		if c.macro == null:
+			_err(file, _join(cp, "macro"), "no macro set", "")
+		else:
+			_require_def(&"macro", c.macro, file, _join(cp, "macro"))
+		if c.compare == NpcfConditionDef.Compare.EXISTS:
+			_err(file, _join(cp, "compare"), "EXISTS does not apply to a macro", "use EQ, NE, LT, LE, GT or GE")
 
 
 func _sim(s: NpcfSimConfig, file: String, path: String) -> void:

@@ -39,6 +39,7 @@
 [ext_resource type="Resource" path="res://packs/toy/social/social.tres" id="37_social"]
 [ext_resource type="Resource" path="res://packs/toy/facts/sighting.tres" id="38_sight"]
 [ext_resource type="Resource" path="res://packs/toy/events/spotted.tres" id="39_spotted"]
+[ext_resource type="Resource" path="res://packs/toy/director/director.tres" id="40_director"]
 
 [resource]
 script = ExtResource("35_4jipq")
@@ -57,3 +58,4 @@ schedules = Array[ExtResource("33_g0iqo")]([ExtResource("34_sc61f")])
 invariants = Array[ExtResource("23_jjy1v")]([ExtResource("24_byccu")])
 sim = ExtResource("36_kdq0f")
 social = ExtResource("37_social")
+director = ExtResource("40_director")

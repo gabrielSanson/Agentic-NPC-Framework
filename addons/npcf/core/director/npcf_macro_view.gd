@@ -1,8 +1,13 @@
 class_name NpcfMacroView
 extends RefCounted
-## Read-only view of the Director's macro variables, for Director hooks. Filled in task 18.
+## Read-only view of the Director's macro variables, for Director hooks.
 
 var _values: Dictionary[StringName, float] = {}
+
+
+## A view over a copy of the given values.
+func _init(values: Dictionary[StringName, float] = {}) -> void:
+	_values = values.duplicate()
 
 
 func value(id: StringName) -> float:

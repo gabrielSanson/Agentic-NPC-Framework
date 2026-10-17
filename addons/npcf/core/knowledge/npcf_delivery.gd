@@ -13,6 +13,7 @@ func deliver_pending(world: NpcfWorld) -> void:
 		var wv: NpcfWorldView = world.world_view()
 		var found: Dictionary[StringName, int] = _found(world, e, ev, wv)
 		_deliver(world, e, found)
+	world.director.observe(batch)
 
 
 ## Recipients of an event, NPC -> NpcfBelief.Source, in sorted ID order.

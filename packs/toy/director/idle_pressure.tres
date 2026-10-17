@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="NpcfMacroVarDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_macro_var_def.gd" id="1_macro"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_macro_delta.gd" id="2_delta"]
+[ext_resource type="Resource" path="res://packs/toy/events/chatted.tres" id="3_chatted"]
+
+[sub_resource type="Resource" id="Resource_chatted_delta"]
+script = ExtResource("2_delta")
+event_kind = ExtResource("3_chatted")
+amount = 10.0
+
+[resource]
+script = ExtResource("1_macro")
+id = &"toy.idle_pressure"
+min_value = 0.0
+max_value = 100.0
+start = 0.0
+deltas = Array[ExtResource("2_delta")]([SubResource("Resource_chatted_delta")])

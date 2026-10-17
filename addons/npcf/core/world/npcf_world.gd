@@ -35,6 +35,7 @@ var invariants: NpcfInvariants
 var relationships: NpcfRelationships
 var tags: NpcfTags
 var rumors: NpcfRumors
+var director: NpcfDirector
 ## Optional per-phase callbacks for tests: phase name -> Callable(world). Empty by default.
 var phase_probes: Dictionary[StringName, Callable] = {}
 
@@ -61,8 +62,8 @@ func step() -> NpcfTickReport:
 		_apply_input(i)
 	_finish_phase(&"inputs", report)
 
-	# 3. director
-	directives.expire(clock.tick)
+	# 3. director: expires directives, then applies last tick's events and emits directives
+	director.step(self)
 	_finish_phase(&"director", report)
 
 	# 4. needs (beliefs decay once per day change)
@@ -153,6 +154,7 @@ func dispose() -> void:
 	relationships = null
 	tags = null
 	rumors = null
+	director = null
 
 
 func _apply_input(i: NpcfInput) -> void:
