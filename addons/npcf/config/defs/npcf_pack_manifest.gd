@@ -19,5 +19,6 @@ extends Resource
 @export var location_graph: NpcfLocationGraph = null
 @export var schedules: Array[NpcfScheduleDef] = []
 @export var reactions: Array[NpcfReactionRuleDef] = []
+@export var social: NpcfSocialDef = null
 @export var invariants: Array[NpcfInvariantDef] = []
 @export var sim: NpcfSimConfig = null

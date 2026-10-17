@@ -1,7 +1,7 @@
 class_name NpcfBeliefStore
 extends RefCounted
 ## One NPC's beliefs, keyed by subject and fact (design "5. Beliefs"). Only the delivery service
-## writes here, through put().
+## and rumors write here, through put().
 
 var _beliefs: Dictionary[String, NpcfBelief] = {}
 

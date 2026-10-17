@@ -32,6 +32,9 @@ var selector: NpcfGoalSelector
 var reactions: NpcfReactionRules
 var scheduler: NpcfDecisionScheduler
 var invariants: NpcfInvariants
+var relationships: NpcfRelationships
+var tags: NpcfTags
+var rumors: NpcfRumors
 ## Optional per-phase callbacks for tests: phase name -> Callable(world). Empty by default.
 var phase_probes: Dictionary[StringName, Callable] = {}
 
@@ -66,6 +69,7 @@ func step() -> NpcfTickReport:
 	need_system.tick(self)
 	if _day_changed:
 		delivery.decay_beliefs(self)
+	tags.evaluate_transitions(self)
 	_finish_phase(&"needs", report)
 
 	# 5. actions
@@ -146,6 +150,9 @@ func dispose() -> void:
 	reactions = null
 	scheduler = null
 	invariants = null
+	relationships = null
+	tags = null
+	rumors = null
 
 
 func _apply_input(i: NpcfInput) -> void:

@@ -7,9 +7,14 @@ example of the pack layout. Every file is listed once below.
 - `sim.tres`: simulation settings; sets the player entity to `toy.player`.
 - `facts/discoveries.tres`: `toy.discoveries`, a bounded global counter of discoveries.
 - `facts/safe.tres`: `toy.safe`, a public location fact saying whether a place is safe.
+- `facts/sighting.tres`: `toy.sighting`, a private, shareable location fact saying a sighting happened there.
 - `needs/energy.tres`: `toy.energy`, drains by 1 per tick and has a `toy.tired` threshold at 200.
 - `needs/curiosity.tres`: `toy.curiosity`, grows by 1 per tick.
+- `social/trust.tres`: `toy.trust`, a directed relationship dimension from -100 to 100 with bands wary, neutral and trusting.
+- `social/liking.tres`: `toy.liking`, a directed relationship dimension from -100 to 100 with bands cold, neutral and warm.
+- `social/social.tres`: the social definition: witnesses of `toy.chatted` gain 2 liking toward the speaker; the tag transitions `toy.tire_out` (energy below 200 adds `toy.weary`) and `toy.recover` (energy at least 500 removes it).
 - `events/chatted.tres`: `toy.chatted`, a local event with no payload.
+- `events/spotted.tres`: `toy.spotted`, a local event, salience 60, that tells witnesses a sighting at the location. Nothing in the toy day emits it.
 - `locations/graph.tres`: the location graph and its three bidirectional edges.
 - `locations/home_a.tres`: location `toy.home_a`, tagged `toy.home`.
 - `locations/home_b.tres`: location `toy.home_b`, tagged `toy.home`.
@@ -17,7 +22,7 @@ example of the pack layout. Every file is listed once below.
 - `locations/workshop.tres`: location `toy.workshop`, tagged `toy.work_place`.
 - `actions/rest.tres`: `toy.rest`, restores energy at home over 60 ticks.
 - `actions/explore.tres`: `toy.explore`, drains curiosity outdoors over 30 ticks and records a discovery.
-- `actions/chat.tres`: `toy.chat`, talks outdoors in daytime over 10 ticks and emits `toy.chatted`.
+- `actions/chat.tres`: `toy.chat`, talks outdoors in daytime over 10 ticks, emits `toy.chatted` and shares beliefs with the NPCs present.
 - `actions/work.tres`: `toy.work`, works at the workshop over 60 ticks.
 - `goals/rest.tres`: `toy.rest` goal, scored from low energy.
 - `goals/explore.tres`: `toy.explore` goal, scored from curiosity and energy.

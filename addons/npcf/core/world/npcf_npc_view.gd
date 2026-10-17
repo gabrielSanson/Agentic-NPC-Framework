@@ -68,6 +68,16 @@ func fact_value(subject: StringName, fact_id: StringName) -> Variant:
 	return fact(subject, fact_id).value
 
 
+## This NPC's own relationship value toward `other` in one dimension (own relationships are always known).
+func relationship(other: StringName, dim: StringName) -> int:
+	return _world.relationships.value(_world, _npc, other, dim)
+
+
+## The band of this NPC's relationship value toward `other`, or &"" when no band contains it.
+func relationship_band(other: StringName, dim: StringName) -> StringName:
+	return _world.relationships.band(_world, _npc, other, dim)
+
+
 ## This NPC's need value (needs are private to their owner).
 func need(need_id: StringName) -> int:
 	var npc: NpcfNpcState = _world.npcs.get(_npc)

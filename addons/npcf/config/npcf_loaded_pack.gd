@@ -21,6 +21,11 @@ var locations: Dictionary[StringName, NpcfLocationDef] = {}
 var schedules: Dictionary[StringName, NpcfScheduleDef] = {}
 var reactions: Array[NpcfReactionRuleDef] = []
 var invariants: Array[NpcfInvariantDef] = []
+## Never null after load: an empty NpcfSocialDef when the manifest has none.
+var social: NpcfSocialDef = null
+var rel_dims: Dictionary[StringName, NpcfRelDimDef] = {}
+## Never null after load.
+var rumor_rules: NpcfRumorRules = null
 var location_index: NpcfLocationIndex = null
 
 

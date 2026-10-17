@@ -36,14 +36,17 @@
 [ext_resource type="Resource" path="res://packs/toy/schedules/work_day.tres" id="34_sc61f"]
 [ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_pack_manifest.gd" id="35_4jipq"]
 [ext_resource type="Resource" path="res://packs/toy/sim.tres" id="36_kdq0f"]
+[ext_resource type="Resource" path="res://packs/toy/social/social.tres" id="37_social"]
+[ext_resource type="Resource" path="res://packs/toy/facts/sighting.tres" id="38_sight"]
+[ext_resource type="Resource" path="res://packs/toy/events/spotted.tres" id="39_spotted"]
 
 [resource]
 script = ExtResource("35_4jipq")
 pack_namespace = &"toy"
 pack_version = "1.0.0"
-facts = Array[ExtResource("15_7l7rd")]([ExtResource("16_4d38p"), ExtResource("17_p0lnu")])
+facts = Array[ExtResource("15_7l7rd")]([ExtResource("16_4d38p"), ExtResource("17_p0lnu"), ExtResource("38_sight")])
 needs = Array[ExtResource("26_dm7b8")]([ExtResource("27_shjk6"), ExtResource("28_26vf4")])
-event_kinds = Array[ExtResource("13_tswtn")]([ExtResource("14_80xsk")])
+event_kinds = Array[ExtResource("13_tswtn")]([ExtResource("14_80xsk"), ExtResource("39_spotted")])
 goals = Array[ExtResource("18_lcp3j")]([ExtResource("19_yvtkx"), ExtResource("20_j85og"), ExtResource("21_wlxi8"), ExtResource("22_8nopt")])
 actions = Array[ExtResource("1_7mq1n")]([ExtResource("2_fwbkt"), ExtResource("3_8bujf"), ExtResource("4_xyp2w"), ExtResource("5_i5u7l")])
 archetypes = Array[ExtResource("6_k2ov5")]([ExtResource("7_67hj3"), ExtResource("8_vl5tf")])
@@ -53,3 +56,4 @@ location_graph = ExtResource("25_vp6m5")
 schedules = Array[ExtResource("33_g0iqo")]([ExtResource("34_sc61f")])
 invariants = Array[ExtResource("23_jjy1v")]([ExtResource("24_byccu")])
 sim = ExtResource("36_kdq0f")
+social = ExtResource("37_social")

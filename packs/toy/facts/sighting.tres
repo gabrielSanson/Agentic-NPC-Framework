@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="NpcfFactDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_fact_def.gd" id="1_sight"]
+
+[resource]
+script = ExtResource("1_sight")
+id = &"toy.sighting"
+scope = 2
+public = false
+shareable = true

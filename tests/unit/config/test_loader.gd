@@ -189,3 +189,84 @@ func test_collects_every_error() -> void:
 		assert_str(r.errors[0].format()).is_equal(U + "facts[0].default_value: 5 (int) does not match value type bool "
 				+ "(hint: set a bool default)")
 		assert_str(r.errors[1].format()).is_equal(U + "needs[0].start: 2000 is outside 0..1000")
+
+
+## The error text must contain `fragment`, and there must be exactly one error.
+func _expect_contains(r: NpcfLoadResult, fragment: String) -> void:
+	assert_bool(r.ok).is_false()
+	assert_int(r.errors.size()).override_failure_message(r.format_errors()).is_equal(1)
+	if r.errors.size() == 1:
+		assert_str(r.errors[0].format()).override_failure_message(r.format_errors()).contains(fragment)
+
+
+func _dim(id: StringName, bands: Dictionary[StringName, Vector2i]) -> NpcfRelDimDef:
+	var d: NpcfRelDimDef = NpcfRelDimDef.new()
+	d.id = id
+	d.min_value = -100
+	d.max_value = 100
+	d.default_value = 0
+	d.bands = bands
+	return d
+
+
+func _social_manifest(dims: Array[NpcfRelDimDef]) -> NpcfPackManifest:
+	var m: NpcfPackManifest = MiniPackFixture.manifest()
+	m.social = NpcfSocialDef.new()
+	m.social.dims = dims
+	return m
+
+
+func test_overlapping_bands() -> void:
+	var bands: Dictionary[StringName, Vector2i] = {&"a": Vector2i(0, 50), &"b": Vector2i(40, 60)}
+	var m: NpcfPackManifest = _social_manifest([_dim(&"toy.trust", bands)] as Array[NpcfRelDimDef])
+	_expect_contains(_load(m), "bands \"a\" and \"b\" overlap")
+
+
+func test_delta_rule_to_witness() -> void:
+	var m: NpcfPackManifest = _social_manifest([_dim(&"toy.trust", {})] as Array[NpcfRelDimDef])
+	var kind: NpcfEventKindDef = NpcfEventKindDef.new()
+	kind.id = &"toy.chatted"
+	m.event_kinds.append(kind)
+	var rule: NpcfRelDeltaRule = NpcfRelDeltaRule.new()
+	rule.event_kind = kind
+	rule.dim = m.social.dims[0]
+	rule.from_role = NpcfRelDeltaRule.Role.ACTOR_0
+	rule.to_role = NpcfRelDeltaRule.Role.WITNESS
+	m.social.delta_rules = [rule] as Array[NpcfRelDeltaRule]
+	_expect_contains(_load(m), "to_role must be ACTOR_0 or TARGET_0")
+
+
+func test_rel_delta_effect_with_unknown_dimension() -> void:
+	var m: NpcfPackManifest = MiniPackFixture.manifest()
+	var e: NpcfEffectDef = NpcfEffectDef.new()
+	e.kind = NpcfEffectDef.Kind.REL_DELTA
+	e.dim = &"toy.nope"
+	e.amount = 1
+	m.actions[0].end_effects = [e] as Array[NpcfEffectDef]
+	_expect_contains(_load(m), "unknown relationship dimension \"toy.nope\"")
+
+
+func test_archetype_rel_default_with_unknown_dimension() -> void:
+	var m: NpcfPackManifest = MiniPackFixture.manifest()
+	m.archetypes[0].rel_defaults = {&"toy.nope": 5}
+	_expect_contains(_load(m), "unknown relationship dimension \"toy.nope\"")
+
+
+func test_scenario_relationship_value_outside_bounds() -> void:
+	var m: NpcfPackManifest = _social_manifest([_dim(&"toy.trust", {})] as Array[NpcfRelDimDef])
+	var r: NpcfLoadResult = _load(m)
+	assert_bool(r.ok).override_failure_message(r.format_errors()).is_true()
+	if not r.ok:
+		return
+	var yard: NpcfLocationDef = MiniPackFixture.location(m, &"toy.yard")
+	var bo: NpcfCastEntry = MiniPackFixture.cast_entry(MiniPackFixture.character(m, &"toy.bo"), yard)
+	var s: NpcfScenarioDef = MiniPackFixture.scenario(m, [bo] as Array[NpcfCastEntry])
+	var seed_rel: NpcfRelSeed = NpcfRelSeed.new()
+	seed_rel.from_character = MiniPackFixture.character(m, &"toy.ana")
+	seed_rel.to_character = MiniPackFixture.character(m, &"toy.bo")
+	seed_rel.values = {&"toy.trust": 150}
+	s.relationships = [seed_rel] as Array[NpcfRelSeed]
+	var errors: Array[NpcfConfigError] = NpcfPackLoader.new().check_scenario(r.pack, s)
+	assert_int(errors.size()).is_equal(1)
+	if errors.size() == 1:
+		assert_str(errors[0].format()).contains("150 is outside -100..100")

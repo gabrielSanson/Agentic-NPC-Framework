@@ -32,8 +32,7 @@ func input(world: NpcfWorld, view: NpcfNpcView, c: NpcfConsiderationDef, goal_id
 				var subject: StringName = NpcfConditions.subject(world, view.npc_id(), c.subject_from, &"", _no_args())
 				x = float(view.fact(subject, c.fact.id).confidence) / 100.0
 		NpcfConsiderationDef.InputKind.RELATIONSHIP:
-			# Relationships arrive with task 17; until then they read as 0.
-			x = 0.0
+			x = _relationship_input(world, view, c)
 		NpcfConsiderationDef.InputKind.TIME_OF_DAY:
 			x = float(view.minute_of_day()) / float(NpcfClock.MINUTES_PER_DAY)
 		NpcfConsiderationDef.InputKind.SCHEDULE:
@@ -108,6 +107,25 @@ func _fact_input(world: NpcfWorld, view: NpcfNpcView, c: NpcfConsiderationDef) -
 			var s: StringName = v
 			return 1.0 if s != &"" else 0.0
 	return 0.0
+
+
+## Normalized relationship toward the player (subject_from PLAYER), else the highest toward any other NPC at the
+## NPC's location. 0.0 when the dimension is unset, there is no player, or the NPC is alone.
+func _relationship_input(world: NpcfWorld, view: NpcfNpcView, c: NpcfConsiderationDef) -> float:
+	if c.dim == &"":
+		return 0.0
+	var holder: StringName = view.npc_id()
+	if c.subject_from == NpcfConditionDef.SubjectFrom.PLAYER:
+		var player: StringName = view.player()
+		if player == &"":
+			return 0.0
+		return world.relationships.normalized(world, holder, player, c.dim)
+	var best: float = 0.0
+	for other: StringName in world.occupancy.at(view.location()):
+		if other == holder:
+			continue
+		best = maxf(best, world.relationships.normalized(world, holder, other, c.dim))
+	return best
 
 
 ## 1.0 while the NPC's active schedule entry names this goal, else 0.0.

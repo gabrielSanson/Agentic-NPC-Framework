@@ -56,6 +56,16 @@ func _deliver(world: NpcfWorld, e: NpcfEvent, found: Dictionary[StringName, int]
 	if not receiver_dependent:
 		shared = NpcfBeliefMapper.map(world, e, &"")
 	var reacts: bool = world.reactions.has_rules(world, e.kind)
+	var remembered: bool = e.salience >= world.sim.memory_threshold
+	var subjects: Array[StringName] = []
+	var params: Dictionary[StringName, Variant] = {}
+	var message_key: StringName = e.kind
+	if remembered:
+		subjects = _subjects(e)
+		params = e.payload.duplicate()
+		var def: NpcfEventKindDef = world.events.kind_def(e.kind)
+		if def != null and def.memory_key != &"":
+			message_key = def.memory_key
 	var metas: Dictionary[int, NpcfBeliefMeta] = {}
 	for id: StringName in world.npc_ids:
 		if not found.has(id):
@@ -70,8 +80,40 @@ func _deliver(world: NpcfWorld, e: NpcfEvent, found: Dictionary[StringName, int]
 		var meta: NpcfBeliefMeta = metas[source]
 		for f: NpcfFact in facts:
 			npc.beliefs.put(f, meta)
+		if remembered:
+			npc.memory.append(_record(e, source, subjects, message_key, params))
 		if reacts:
 			world.reactions.on_delivery(world, id, e, source)
+	world.relationships.apply_event_rules(world, e, found)
+
+
+## The participants of an event, actors then targets, without duplicates (first occurrence kept).
+static func _subjects(e: NpcfEvent) -> Array[StringName]:
+	var out: Array[StringName] = []
+	for id: StringName in e.actors:
+		if not out.has(id):
+			out.append(id)
+	for id: StringName in e.targets:
+		if not out.has(id):
+			out.append(id)
+	return out
+
+
+## One memory record of a delivered event for one recipient. The subject list and params are shared by every
+## recipient of the event; records never change them.
+static func _record(e: NpcfEvent, source: int, subjects: Array[StringName], message_key: StringName,
+		params: Dictionary[StringName, Variant]) -> NpcfMemoryRecord:
+	var r: NpcfMemoryRecord = NpcfMemoryRecord.new()
+	r.tick = e.tick
+	r.event_id = e.id
+	r.kind = e.kind
+	r.subjects = subjects
+	r.location = e.location
+	r.source = source
+	r.salience = e.salience
+	r.message_key = message_key
+	r.params = params
+	return r
 
 
 ## Lowers the confidence of told and broadcast beliefs of every NPC by the sim's daily decay.

@@ -30,6 +30,11 @@ static func build(pack: NpcfLoadedPack, scenario: NpcfScenarioDef, world_seed: i
 	w.reactions = NpcfReactionRules.new()
 	w.scheduler = NpcfDecisionScheduler.new()
 	w.invariants = NpcfInvariants.new()
+	w.relationships = NpcfRelationships.new()
+	w.tags = NpcfTags.new()
+	w.rumors = NpcfRumors.new()
+	w.applier.rel_handler = w.relationships.on_change
+	w.applier.share_handler = w.rumors.on_change
 
 	var setup: Array[NpcfStateChange] = []
 	for entry: NpcfCastEntry in scenario.cast:
@@ -45,6 +50,7 @@ static func build(pack: NpcfLoadedPack, scenario: NpcfScenarioDef, world_seed: i
 			var start: int = resolved.need_start.get(def.id, def.start)
 			npc.needs[def.id] = clampi(start, def.min_value, def.max_value)
 		npc.tags = resolved.tags.duplicate()
+		npc.memory.cap = pack.sim.memory_cap
 		w.npcs[npc.id] = npc
 		w.npc_ids.append(npc.id)
 		w.occupancy.enter(npc.id, &"")
@@ -65,6 +71,12 @@ static func build(pack: NpcfLoadedPack, scenario: NpcfScenarioDef, world_seed: i
 	var err: String = w.applier.apply(w, setup, -1, true)
 	if err != "":
 		push_error("npcf: scenario setup failed: " + err)
+
+	for seed: NpcfRelSeed in scenario.relationships:
+		if seed == null or seed.from_character == null or seed.to_character == null:
+			continue
+		for dim: StringName in seed.values:
+			w.relationships.seed_value(w, seed.from_character.id, seed.to_character.id, dim, seed.values[dim])
 
 	for id: StringName in w.npc_ids:
 		w.scheduler.init_npc(w, id)

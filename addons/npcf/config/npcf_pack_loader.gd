@@ -67,6 +67,11 @@ func load_pack(manifest: NpcfPackManifest, framework_version: String = NpcfVersi
 	var no_map: Dictionary[StringName, Resource] = {}
 	_register_list(manifest.reactions, &"reaction", mf, "reactions", no_map)
 	_register_list(manifest.invariants, &"invariant", mf, "invariants", no_map)
+	if manifest.social != null:
+		var sf: String = _file(mf, manifest.social)
+		var sp: String = _path(mf, "", "social", manifest.social)
+		_register_list(manifest.social.dims, &"relationship dimension", sf, _join(sp, "dims"), _pack.rel_dims)
+		_register_list(manifest.social.tag_transitions, &"tag transition", sf, _join(sp, "tag_transitions"), no_map)
 	if manifest.location_graph != null:
 		var gf: String = _file(mf, manifest.location_graph)
 		var gp: String = _path(mf, "", "location_graph", manifest.location_graph)
@@ -98,6 +103,8 @@ func load_pack(manifest: NpcfPackManifest, framework_version: String = NpcfVersi
 		_character(manifest.characters[i], _file(mf, manifest.characters[i]), _path(mf, "", "characters[%d]" % i, manifest.characters[i]))
 	for i: int in manifest.schedules.size():
 		_schedule(manifest.schedules[i], _file(mf, manifest.schedules[i]), _path(mf, "", "schedules[%d]" % i, manifest.schedules[i]))
+	if manifest.social != null:
+		_social(manifest.social, _file(mf, manifest.social), _path(mf, "", "social", manifest.social))
 	for i: int in manifest.reactions.size():
 		_reaction(manifest.reactions[i], _file(mf, manifest.reactions[i]), _path(mf, "", "reactions[%d]" % i, manifest.reactions[i]))
 	for i: int in manifest.invariants.size():
@@ -105,6 +112,8 @@ func load_pack(manifest: NpcfPackManifest, framework_version: String = NpcfVersi
 	if manifest.location_graph != null:
 		_location_graph(manifest.location_graph, _file(mf, manifest.location_graph), _path(mf, "", "location_graph", manifest.location_graph))
 	_sim(_pack.sim, _file(mf, manifest.sim) if manifest.sim != null else mf, _path(mf, "", "sim", manifest.sim) if manifest.sim != null else "sim")
+	_pack.social = manifest.social if manifest.social != null else NpcfSocialDef.new()
+	_pack.rumor_rules = _pack.social.rumors if _pack.social.rumors != null else NpcfRumorRules.new()
 
 	for r: NpcfReactionRuleDef in manifest.reactions:
 		if r != null:
@@ -178,6 +187,15 @@ func check_scenario(pack: NpcfLoadedPack, scenario: NpcfScenarioDef) -> Array[Np
 			continue
 		if not seen.has(rs.from_character.id) or not seen.has(rs.to_character.id):
 			_err(rf, rp, "relationship seed names a character outside the cast", "")
+		for dim: StringName in rs.values:
+			var vp: String = _join(rp, "values[\"%s\"]" % dim)
+			if not pack.rel_dims.has(dim):
+				_require(&"relationship dimension", dim, rf, vp)
+				continue
+			var d: NpcfRelDimDef = pack.rel_dims[dim]
+			var v: int = rs.values[dim]
+			if v < d.min_value or v > d.max_value:
+				_err(rf, vp, "%d is outside %d..%d" % [v, d.min_value, d.max_value], "")
 	if pack.location_index != null and not starts.is_empty():
 		var reachable: Array[StringName] = pack.location_index.reachable_from(starts)
 		for id: StringName in pack.location_index.location_ids:
@@ -388,6 +406,8 @@ func _consideration(c: NpcfConsiderationDef, file: String, path: String) -> void
 		NpcfConsiderationDef.InputKind.RELATIONSHIP:
 			if String(c.dim) == "":
 				_err(file, _join(path, "dim"), "a RELATIONSHIP input needs a dimension", "")
+			else:
+				_require(&"relationship dimension", c.dim, file, _join(path, "dim"))
 	if c.curve == NpcfConsiderationDef.CurveKind.POWER and c.exponent <= 0.0:
 		_err(file, _join(path, "exponent"), "must be positive", "")
 
@@ -493,8 +513,13 @@ func _effect(e: NpcfEffectDef, file: String, path: String, action: NpcfActionDef
 				_err(file, _join(path, "hook"), "needs a hook script", "")
 			else:
 				_hook(e.hook, &"effect", file, _join(path, "hook"))
-		NpcfEffectDef.Kind.REL_DELTA, NpcfEffectDef.Kind.SHARE_BELIEFS:
-			pass  # validated with the social definitions in task 17
+		NpcfEffectDef.Kind.REL_DELTA:
+			if String(e.dim) == "":
+				_err(file, _join(path, "dim"), "a REL_DELTA effect needs a relationship dimension", "")
+			else:
+				_require(&"relationship dimension", e.dim, file, _join(path, "dim"))
+		NpcfEffectDef.Kind.SHARE_BELIEFS:
+			pass  # the listeners come from the speaker's location; nothing to check
 
 
 func _action(a: NpcfActionDef, file: String, path: String) -> void:
@@ -568,6 +593,15 @@ func _archetype(a: NpcfArchetypeDef, file: String, path: String) -> void:
 		_require_def(&"schedule", a.schedule, file, _join(path, "schedule"))
 	if a.decision_period_ticks < 1:
 		_err(file, _join(path, "decision_period_ticks"), "must be at least 1", "")
+	for k: StringName in a.rel_defaults:
+		var kp: String = _join(path, "rel_defaults[\"%s\"]" % k)
+		if not _pack.rel_dims.has(k):
+			_require(&"relationship dimension", k, file, kp)
+			continue
+		var d: NpcfRelDimDef = _pack.rel_dims[k]
+		var v: int = a.rel_defaults[k]
+		if v < d.min_value or v > d.max_value:
+			_err(file, kp, "%d is outside %d..%d" % [v, d.min_value, d.max_value], "")
 
 
 func _personality(p: NpcfPersonalityDef, file: String, path: String) -> void:
@@ -693,6 +727,92 @@ func _location_graph(g: NpcfLocationGraph, file: String, path: String) -> void:
 				_err(ef, _join(ep, end), "unknown location \"%s\"" % loc.id, "add it to the graph's locations")
 		if e.travel_ticks < 1:
 			_err(ef, _join(ep, "travel_ticks"), "%d must be at least 1" % e.travel_ticks, "")
+
+
+func _social(s: NpcfSocialDef, file: String, path: String) -> void:
+	for i: int in s.dims.size():
+		var d: NpcfRelDimDef = s.dims[i]
+		if d == null:
+			_err(file, _join(path, "dims[%d]" % i), "is empty", "")
+			continue
+		_rel_dim(d, _file(file, d), _path(file, path, "dims[%d]" % i, d))
+	for i: int in s.delta_rules.size():
+		var r: NpcfRelDeltaRule = s.delta_rules[i]
+		if r == null:
+			_err(file, _join(path, "delta_rules[%d]" % i), "is empty", "")
+			continue
+		_rel_delta(r, _file(file, r), _path(file, path, "delta_rules[%d]" % i, r))
+	for i: int in s.tag_transitions.size():
+		var t: NpcfTagTransitionDef = s.tag_transitions[i]
+		if t == null:
+			_err(file, _join(path, "tag_transitions[%d]" % i), "is empty", "")
+			continue
+		_tag_transition(t, _file(file, t), _path(file, path, "tag_transitions[%d]" % i, t))
+	if s.rumors != null:
+		_rumors(s.rumors, _file(file, s.rumors), _path(file, path, "rumors", s.rumors))
+
+
+func _rel_dim(d: NpcfRelDimDef, file: String, path: String) -> void:
+	if not _first_visit(d):
+		return
+	if d.min_value >= d.max_value:
+		_err(file, _join(path, "min_value"), "min_value must be less than max_value", "")
+		return
+	if d.default_value < d.min_value or d.default_value > d.max_value:
+		_err(file, _join(path, "default_value"), "%d is outside %d..%d" % [d.default_value, d.min_value, d.max_value], "")
+	var names: Array[StringName] = []
+	names.assign(d.bands.keys())
+	for name: StringName in names:
+		var r: Vector2i = d.bands[name]
+		var bp: String = _join(path, "bands[\"%s\"]" % name)
+		if String(name) == "":
+			_err(file, _join(path, "bands"), "a band has an empty name", "")
+		if r.x > r.y:
+			_err(file, bp, "band %d..%d is empty" % [r.x, r.y], "x must not be greater than y")
+		elif r.x < d.min_value or r.y > d.max_value:
+			_err(file, bp, "band %d..%d is outside %d..%d" % [r.x, r.y, d.min_value, d.max_value], "")
+	for i: int in names.size():
+		for j: int in range(i + 1, names.size()):
+			var a: Vector2i = d.bands[names[i]]
+			var b: Vector2i = d.bands[names[j]]
+			if a.x <= b.y and b.x <= a.y:
+				_err(file, _join(path, "bands"), "bands \"%s\" and \"%s\" overlap" % [names[i], names[j]], "bands must not share a value")
+
+
+func _rel_delta(r: NpcfRelDeltaRule, file: String, path: String) -> void:
+	if r.event_kind == null:
+		_err(file, _join(path, "event_kind"), "no event kind set", "")
+	else:
+		_require_def(&"event kind", r.event_kind, file, _join(path, "event_kind"))
+	if r.dim == null:
+		_err(file, _join(path, "dim"), "no relationship dimension set", "")
+	else:
+		_require_def(&"relationship dimension", r.dim, file, _join(path, "dim"))
+	if r.to_role == NpcfRelDeltaRule.Role.WITNESS:
+		_err(file, _join(path, "to_role"), "to_role must be ACTOR_0 or TARGET_0", "a relationship is held toward a participant")
+	elif r.from_role == r.to_role:
+		_err(file, _join(path, "from_role"), "from_role and to_role must differ", "a participant has no relationship to itself")
+
+
+func _tag_transition(t: NpcfTagTransitionDef, file: String, path: String) -> void:
+	if not _first_visit(t):
+		return
+	_tags(t.requires_tags, file, _join(path, "requires_tags"))
+	_tags(t.add, file, _join(path, "add"))
+	_tags(t.remove, file, _join(path, "remove"))
+	if t.add.is_empty() and t.remove.is_empty():
+		_err(file, path, "changes no tags", "add or remove at least one tag")
+	if t.condition != null:
+		_condition(t.condition, _file(file, t.condition), _path(file, path, "condition", t.condition), [] as Array[NpcfFieldDef])
+
+
+func _rumors(r: NpcfRumorRules, file: String, path: String) -> void:
+	if r.max_per_period < 1:
+		_err(file, _join(path, "max_per_period"), "must be at least 1", "")
+	if r.period_ticks < 1:
+		_err(file, _join(path, "period_ticks"), "must be at least 1", "")
+	if r.beliefs_per_share < 1:
+		_err(file, _join(path, "beliefs_per_share"), "must be at least 1", "")
 
 
 func _sim(s: NpcfSimConfig, file: String, path: String) -> void:

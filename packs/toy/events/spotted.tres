@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="NpcfEventKindDef" format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_fact_template.gd" id="1_tmpl"]
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_event_kind_def.gd" id="2_kind"]
+[ext_resource type="Resource" path="res://packs/toy/facts/sighting.tres" id="3_sight"]
+
+[sub_resource type="Resource" id="Resource_spotted_belief"]
+script = ExtResource("1_tmpl")
+fact = ExtResource("3_sight")
+subject_from = 2
+value_from = 0
+value_literal = true
+
+[resource]
+script = ExtResource("2_kind")
+id = &"toy.spotted"
+salience = 60
+beliefs = Array[ExtResource("1_tmpl")]([SubResource("Resource_spotted_belief")])
+memory_key = &"toy.spotted"
