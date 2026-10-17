@@ -41,21 +41,33 @@ func test_player_room_is_reported_to_the_runtime() -> void:
 
 func test_typed_line_to_mira_gets_a_subtitle_and_no_voice() -> void:
 	var demo: CwDemoMain = _start_demo()
-	await _frames(2)
+	# The runtime starts inside add_child, so the clock would tick during the first frames. Pause before any frame:
+	# the start state is then the same on every machine.
 	var rt: NpcfRuntime = _runtime()
+	rt.pause()
+	await _frames(2)
 	var hud: CwHud = _hud_of(demo)
 	var player: CwPlayer = _player_of(demo)
 	var mira_body: CharacterBody2D = _body_named(demo, &"cw.mira")
 	assert_object(mira_body).is_not_null()
-	# Walk the player into Mira's room. The NPCs move while the clock runs, so stop the clock the moment both are in
-	# the same room; the addressee is chosen at the submit, while paused.
-	player.position = rt.anchor_position(rt.location_of(&"cw.mira"))
-	await _frames_until(func() -> bool: return rt.location_of(PLAYER) == rt.location_of(&"cw.mira") and rt.location_of(PLAYER) != &"")
+	# Deterministic placement: stop the clock before anything moves. Mira's room is read while paused, so it cannot
+	# change; the player is placed at that room's anchor. A paused clock applies no queued arrivals, so the arrival is
+	# queued directly (the call the demo makes on a room change) and one tick is stepped by hand to apply it. No frames
+	# run during the step, so frame timing cannot change the result.
 	rt.pause()
-	assert_str(String(rt.location_of(PLAYER))).is_equal(String(rt.location_of(&"cw.mira")))
+	var mira_room: StringName = rt.location_of(&"cw.mira")
+	player.position = rt.anchor_position(mira_room)
+	var queued: Error = rt.report_player_location(mira_room)
+	assert_int(queued).override_failure_message("arrival not queued: %s" % str(queued)).is_equal(OK)
+	rt.resume()
+	rt.advance_frame(rt.get_world().sim.real_seconds_per_tick / rt.speed)
+	rt.pause()
+	assert_str(String(rt.location_of(PLAYER))).override_failure_message("player not in Mira's room").is_equal(String(mira_room))
 	# Stand just left of Mira and face her.
 	player.facing_dir = Vector2.RIGHT
 	player.position = mira_body.position + Vector2(-30, 0)
+	# Area overlaps (the NPCs' hearing areas) refresh on physics frames, so wait for five before the submit. Still paused.
+	await _physics_frames(5)
 	var spoken: Array[String] = []
 	rt.npc_line.connect(func(npc: StringName, text: String, _id: int, _src: StringName, _pres: Dictionary) -> void:
 		spoken.append("%s|%s" % [str(npc), text]))
@@ -68,12 +80,14 @@ func test_typed_line_to_mira_gets_a_subtitle_and_no_voice() -> void:
 	assert_int(line_id).override_failure_message("no addressee: %s" % str(refusals)).is_greater_equal(0)
 	# The addressee is fixed by the submit; the answer is produced on the ticks, so the clock runs again.
 	rt.resume()
-	await _frames_until(func() -> bool: return not spoken.is_empty() and not statuses.is_empty(), 60)
-	assert_bool(spoken.size() > 0).is_true()
-	assert_str(spoken[0].get_slice("|", 0)).is_equal("cw.mira")
+	await _frames_until(func() -> bool: return not spoken.is_empty() and not statuses.is_empty(), 600)
+	assert_array(spoken).override_failure_message("no line from Mira").is_not_empty()
+	assert_array(statuses).override_failure_message("no speech status from Mira's voice").is_not_empty()
+	if not spoken.is_empty():
+		assert_str(spoken[0].get_slice("|", 0)).is_equal("cw.mira")
 	assert_str(hud.subtitle_text()).starts_with("Mira:")
-	assert_bool(statuses.size() > 0).is_true()
-	assert_str(statuses[0]).is_equal("off")
+	if not statuses.is_empty():
+		assert_str(statuses[0]).is_equal("off")
 
 
 func test_empty_submit_sends_nothing() -> void:
@@ -116,6 +130,11 @@ func _runtime() -> NpcfRuntime:
 func _frames(n: int) -> void:
 	for _i: int in n:
 		await get_tree().process_frame
+
+
+func _physics_frames(n: int) -> void:
+	for _i: int in n:
+		await get_tree().physics_frame
 
 
 ## Waits until the condition holds, at most `max_frames` frames. Returns when it holds or the budget ends.
