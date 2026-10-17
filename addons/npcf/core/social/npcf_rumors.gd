@@ -92,6 +92,8 @@ func share(world: NpcfWorld, speaker: StringName, listeners: Array[StringName], 
 			meta.event_id = c.event_id
 			meta.salience = c.salience
 			meta.confidence = clampi(c.confidence + rules.confidence_delta, 0, 100)
+			if world.audit != null:
+				world.audit.on_delivered(listener_id, c.subject, c.fact_id, world.clock.tick)
 			if listener.beliefs.put(NpcfFact.make(c.subject, c.fact_id, c.value), meta):
 				stored += 1
 	return stored

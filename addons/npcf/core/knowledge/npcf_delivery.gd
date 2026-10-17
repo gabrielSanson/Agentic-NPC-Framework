@@ -80,6 +80,8 @@ func _deliver(world: NpcfWorld, e: NpcfEvent, found: Dictionary[StringName, int]
 			metas[source] = _meta(world, e, source)
 		var meta: NpcfBeliefMeta = metas[source]
 		for f: NpcfFact in facts:
+			if world.audit != null:
+				world.audit.on_delivered(id, f.subject, f.fact_id, world.clock.tick)
 			npc.beliefs.put(f, meta)
 		if remembered:
 			npc.memory.append(_record(e, source, subjects, message_key, params))

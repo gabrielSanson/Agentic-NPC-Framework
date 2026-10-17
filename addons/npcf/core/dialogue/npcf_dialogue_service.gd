@@ -205,7 +205,12 @@ func _on_classified(result: NpcfIntentResult, world: NpcfWorld, ctx: NpcfDialogu
 	ctx.intent = intent.id
 	ctx.confidence = confidence
 
+	# The intent's outcome decides what the NPC reveals, so its fact reads are audited as a decision (C5c).
+	if world.audit != null:
+		world.audit.begin(&"decision")
 	var outcome: NpcfRuleOutcome = compute_outcome(world, ctx.npc, intent, rec)
+	if world.audit != null:
+		world.audit.end()
 	ctx.outcome = outcome
 	rec.result = outcome.result
 	var facts: Array[String] = []

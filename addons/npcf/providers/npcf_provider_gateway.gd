@@ -8,11 +8,17 @@ signal status_changed(id: StringName, state: StringName, reason: String)
 const AUTH_PREFIX: String = "Authorization: Bearer "
 const BREEZE_ADAPTER: StringName = &"breeze_speech"
 const REFUSED_RELEASE: String = "non-commercial weights are refused in release builds"
+const CALL_RECORDS: int = 32
+const PROMPT_CHARS: int = 4000
 const REFUSED_NOT_ALLOWED: String = "non-commercial weights need the project setting npcf/providers/allow_non_commercial = true"
 
 ## Set before add_provider (tests and the CLI do). Non-commercial providers need allow_non_commercial, and are never
 ## used in a release build.
 var allow_non_commercial: bool = ProjectSettings.get_setting("npcf/providers/allow_non_commercial", false)
+## Keeps the prompt text of text requests in the call records (debug only; off by default).
+var trace_prompts: bool = ProjectSettings.get_setting("npcf/debug/trace_prompts", false)
+## The last call records, oldest first.
+var calls: Array[NpcfProviderCallRecord] = []
 var release_build: bool = OS.has_feature("template_release")
 
 
@@ -124,7 +130,9 @@ func send(id: StringName, spec: NpcfHttpSpec, on_done: Callable, on_chunk: Calla
 		replace_key: StringName = &"") -> void:
 	var e: _Entry = _entry(id)
 	if e == null or _closed or e.state != &"ready":
-		on_done.call(NpcfHttpResult.make(&"down"))
+		var down: NpcfHttpResult = NpcfHttpResult.make(&"down")
+		_record(id, e, spec, down)
+		on_done.call(down)
 		return
 	var pend: _Pending = _Pending.new()
 	pend.spec = spec
@@ -139,11 +147,15 @@ func send(id: StringName, spec: NpcfHttpSpec, on_done: Callable, on_chunk: Calla
 			if e.queue[i].replace_key == replace_key:
 				var old: _Pending = e.queue[i]
 				e.queue.remove_at(i)
-				old.on_done.call(NpcfHttpResult.make(&"dropped"))
+				var dropped: NpcfHttpResult = NpcfHttpResult.make(&"dropped")
+				_record(id, e, old.spec, dropped)
+				old.on_done.call(dropped)
 				e.queue.append(pend)
 				return
 	if e.queue.size() >= e.cfg.max_queue:
-		on_done.call(NpcfHttpResult.make(&"busy"))
+		var busy: NpcfHttpResult = NpcfHttpResult.make(&"busy")
+		_record(id, e, spec, busy)
+		on_done.call(busy)
 		return
 	e.queue.append(pend)
 
@@ -241,16 +253,32 @@ func _on_health(r: NpcfHttpResult, e: _Entry) -> void:
 	e.recheck_at_ms = Time.get_ticks_msec() + e.cfg.retry_ms
 
 
+## Keeps one call record (the last CALL_RECORDS). The prompt is kept only for text kinds and only when trace_prompts is on.
+func _record(id: StringName, e: _Entry, spec: NpcfHttpSpec, r: NpcfHttpResult) -> void:
+	var kind: StringName = &""
+	var text_kind: bool = false
+	if e != null and e.cfg != null:
+		var kind_name: String = NpcfProviderConfig.Kind.keys()[e.cfg.kind]
+		kind = StringName(kind_name.to_lower())
+		text_kind = e.cfg.kind == NpcfProviderConfig.Kind.GENERATE or e.cfg.kind == NpcfProviderConfig.Kind.CHOOSE
+	var rec: NpcfProviderCallRecord = NpcfProviderCallRecord.make(id, kind, r.status, r.latency_ms)
+	if trace_prompts and text_kind and spec != null:
+		rec.prompt = spec.body.get_string_from_utf8().substr(0, PROMPT_CHARS)
+	calls.append(rec)
+	if calls.size() > CALL_RECORDS:
+		calls.remove_at(0)
+
+
 ## Starts a queued or new request. The callback is stored first, so a request that fails at once still finds it.
 func _launch(e: _Entry, pend: _Pending) -> void:
 	_add_auth(e, pend.spec)
-	var call: NpcfHttpCall = NpcfHttpCall.new(pend.spec, e.endpoint, _on_active_done.bind(e, pend.on_done), pend.on_chunk)
+	var call: NpcfHttpCall = NpcfHttpCall.new(pend.spec, e.endpoint, _on_active_done.bind(e, pend.on_done, pend.spec), pend.on_chunk)
 	e.active = call
 	e.active_done = pend.on_done
 	call.start(Time.get_ticks_msec())
 
 
-func _on_active_done(r: NpcfHttpResult, e: _Entry, cb: Callable) -> void:
+func _on_active_done(r: NpcfHttpResult, e: _Entry, cb: Callable, spec: NpcfHttpSpec) -> void:
 	e.active = null
 	e.active_done = Callable()
 	if r.status == &"refused":
@@ -259,7 +287,10 @@ func _on_active_done(r: NpcfHttpResult, e: _Entry, cb: Callable) -> void:
 		var waiting: Array[_Pending] = e.queue.duplicate()
 		e.queue.clear()
 		for p: _Pending in waiting:
-			p.on_done.call(NpcfHttpResult.make(&"down"))
+			var down: NpcfHttpResult = NpcfHttpResult.make(&"down")
+			_record(e.cfg.id, e, p.spec, down)
+			p.on_done.call(down)
+	_record(e.cfg.id, e, spec, r)
 	cb.call(r)
 	_start_next(e)
 

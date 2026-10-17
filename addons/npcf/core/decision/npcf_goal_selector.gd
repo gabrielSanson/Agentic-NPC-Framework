@@ -8,6 +8,15 @@ extends RefCounted
 
 ## Decides one NPC's goal. Returns the record, which is also kept in the NPC's decision ring buffer.
 func decide(world: NpcfWorld, npc: StringName, report: NpcfTickReport = null) -> NpcfDecisionRecord:
+	if world.audit != null:
+		world.audit.begin(&"decision")
+	var record: NpcfDecisionRecord = _decide(world, npc, report)
+	if world.audit != null:
+		world.audit.end()
+	return record
+
+
+func _decide(world: NpcfWorld, npc: StringName, report: NpcfTickReport) -> NpcfDecisionRecord:
 	var record: NpcfDecisionRecord = NpcfDecisionRecord.new()
 	record.tick = world.clock.tick
 	record.npc = npc

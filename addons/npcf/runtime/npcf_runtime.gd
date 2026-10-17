@@ -249,14 +249,15 @@ func anchor_position(location: StringName) -> Vector2:
 
 ## A debugging snapshot of one NPC, or {} when it is not an NPC of the running world.
 func trace(npc: StringName) -> Dictionary:
-	var n: NpcfNpcState = _world.npc(npc) if _world != null else null
-	if n == null:
+	if _world == null:
 		return {}
-	var records: Array = []
-	for r: NpcfDecisionRecord in n.decision_records:
-		records.append(r.to_dict())
-	var running: String = String(n.running.call.action) if n.running != null else ""
-	return {"npc": String(npc), "goal": String(n.current_goal), "running": running, "decisions": records}
+	var out: Dictionary = NpcfTraceService.trace(_world, npc)
+	if not out.is_empty() and _gateway != null:
+		var calls: Array = []
+		for i: int in range(maxi(0, _gateway.calls.size() - 10), _gateway.calls.size()):
+			calls.append(_gateway.calls[i].to_dict())
+		out["providers"] = calls
+	return out
 
 
 ## The player says `text`, to `npc` or to whoever is addressed. Returns the turn's line ID, or -1 after emitting

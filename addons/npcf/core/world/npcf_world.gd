@@ -37,6 +37,8 @@ var tags: NpcfTags
 var rumors: NpcfRumors
 var director: NpcfDirector
 var dialogue: NpcfDialogueService
+## Debug-only knowledge-boundary recorder (C5c). Null in normal runs; it never changes results.
+var audit: NpcfKnowledgeAudit = null
 ## Optional per-phase callbacks for tests: phase name -> Callable(world). Empty by default.
 var phase_probes: Dictionary[StringName, Callable] = {}
 
@@ -159,6 +161,7 @@ func dispose() -> void:
 	tags = null
 	rumors = null
 	director = null
+	audit = null
 
 
 func _apply_input(i: NpcfInput) -> void:
