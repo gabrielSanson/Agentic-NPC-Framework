@@ -52,6 +52,16 @@ static func tag_change(p_npc: StringName, p_tag: StringName, add: bool) -> NpcfS
 	return c
 
 
+static func rel_delta(p_subject: StringName, p_other: StringName, p_dim: StringName, p_amount: int) -> NpcfStateChange:
+	var c: NpcfStateChange = NpcfStateChange.new()
+	c.kind = Kind.REL_DELTA
+	c.subject = p_subject
+	c.other = p_other
+	c.dim = p_dim
+	c.amount = p_amount
+	return c
+
+
 static func emit_event(p_event: NpcfEvent) -> NpcfStateChange:
 	var c: NpcfStateChange = NpcfStateChange.new()
 	c.kind = Kind.EMIT_EVENT

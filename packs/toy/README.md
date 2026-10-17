@@ -44,3 +44,6 @@ example of the pack layout. Every file is listed once below.
 - `hooks/is_daytime.gd`: condition hook that holds between 06:00 and 22:00.
 - `hooks/explore_find.gd`: effect hook that adds one discovery.
 - `hooks/discoveries_non_negative.gd`: invariant hook behind `toy.inv.discoveries`.
+- `actions/wave.tres`: `toy.wave`, a dialogue-tier action (a one-tick wave); no goal chooses it, only a dialogue reply may.
+- `dialogue/dialogue.tres`: the toy dialogue: four intents (`toy.greet`, `toy.ask_news`, `toy.insult`, `toy.smalltalk`), their line sets, two presentation questions and `trust` as the band dimension.
+- `dialogue/hooks/news.gd`: intent hook for `toy.ask_news`; reveals the first sighting the NPC believes in, by location ID.

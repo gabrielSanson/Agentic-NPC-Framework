@@ -7,6 +7,9 @@ extends RefCounted
 ## with a property path starting from its root; an embedded sub-resource is reported at the
 ## owning file with the full property chain (`considerations[0].curve`).
 
+## The placeholders an authored line may use (checked at load).
+const LINE_PLACEHOLDERS: PackedStringArray = ["npc_name", "location_name", "time_of_day", "result"]
+
 const HOOK_BASES: Dictionary[StringName, String] = {
 	&"consideration": "NpcfConsiderationHook", &"condition": "NpcfConditionHook",
 	&"effect": "NpcfEffectHook", &"mapper": "NpcfEventMapperHook", &"resolver": "NpcfResolverHook",
@@ -77,6 +80,11 @@ func load_pack(manifest: NpcfPackManifest, framework_version: String = NpcfVersi
 		var dp: String = _path(mf, "", "director", manifest.director)
 		_register_list(manifest.director.macros, &"macro", df, _join(dp, "macros"), _pack.macros)
 		_register_list(manifest.director.rules, &"director rule", df, _join(dp, "rules"), no_map)
+	if manifest.dialogue != null:
+		var ddf: String = _file(mf, manifest.dialogue)
+		var ddp: String = _path(mf, "", "dialogue", manifest.dialogue)
+		_register_list(manifest.dialogue.intents, &"intent", ddf, _join(ddp, "intents"), _pack.intents)
+		_register_list(manifest.dialogue.presentation, &"presentation question", ddf, _join(ddp, "presentation"), no_map)
 	if manifest.location_graph != null:
 		var gf: String = _file(mf, manifest.location_graph)
 		var gp: String = _path(mf, "", "location_graph", manifest.location_graph)
@@ -112,6 +120,8 @@ func load_pack(manifest: NpcfPackManifest, framework_version: String = NpcfVersi
 		_social(manifest.social, _file(mf, manifest.social), _path(mf, "", "social", manifest.social))
 	if manifest.director != null:
 		_director(manifest.director, _file(mf, manifest.director), _path(mf, "", "director", manifest.director))
+	if manifest.dialogue != null:
+		_dialogue(manifest.dialogue, _file(mf, manifest.dialogue), _path(mf, "", "dialogue", manifest.dialogue))
 	for i: int in manifest.reactions.size():
 		_reaction(manifest.reactions[i], _file(mf, manifest.reactions[i]), _path(mf, "", "reactions[%d]" % i, manifest.reactions[i]))
 	for i: int in manifest.invariants.size():
@@ -122,6 +132,7 @@ func load_pack(manifest: NpcfPackManifest, framework_version: String = NpcfVersi
 	_pack.social = manifest.social if manifest.social != null else NpcfSocialDef.new()
 	_pack.rumor_rules = _pack.social.rumors if _pack.social.rumors != null else NpcfRumorRules.new()
 	_pack.director = manifest.director if manifest.director != null else NpcfDirectorDef.new()
+	_pack.dialogue = manifest.dialogue
 
 	for r: NpcfReactionRuleDef in manifest.reactions:
 		if r != null:
@@ -849,6 +860,122 @@ func _director(d: NpcfDirectorDef, file: String, path: String) -> void:
 		_hook(d.hook, &"director", file, _join(path, "hook"))
 	if d.hook_cadence_ticks < 1:
 		_err(file, _join(path, "hook_cadence_ticks"), "must be at least 1", "")
+
+
+func _dialogue(d: NpcfDialogueDef, file: String, path: String) -> void:
+	if d.confidence_threshold < 0.0 or d.confidence_threshold > 1.0:
+		_err(file, _join(path, "confidence_threshold"), "%s is outside 0..1" % d.confidence_threshold, "")
+	if d.last_talk_window_ticks < 0:
+		_err(file, _join(path, "last_talk_window_ticks"), "must be at least 0", "")
+	if d.fallback_intent == null:
+		_err(file, _join(path, "fallback_intent"), "no fallback intent set", "name one of the intents")
+	elif not d.intents.has(d.fallback_intent):
+		_err(file, _join(path, "fallback_intent"), "the fallback intent is not listed in intents", "add it to intents")
+	else:
+		_require_def(&"intent", d.fallback_intent, file, _join(path, "fallback_intent"))
+	for i: int in d.intents.size():
+		var it: NpcfIntentDef = d.intents[i]
+		var ip: String = _join(path, "intents[%d]" % i)
+		if it == null:
+			_err(file, ip, "is empty", "")
+			continue
+		_intent(it, _file(file, it), _path(file, path, "intents[%d]" % i, it))
+	if d.band_dim != null:
+		_require_def(&"relationship dimension", d.band_dim, file, _join(path, "band_dim"))
+	for i: int in d.lines.size():
+		var ls: NpcfDialogueLineSet = d.lines[i]
+		var lp: String = _join(path, "lines[%d]" % i)
+		if ls == null:
+			_err(file, lp, "is empty", "")
+			continue
+		if ls.intent == null:
+			_err(file, _join(lp, "intent"), "no intent set", "")
+		else:
+			_require_def(&"intent", ls.intent, file, _join(lp, "intent"))
+		if ls.result == &"":
+			_err(file, _join(lp, "result"), "result is empty", "")
+		if ls.band != &"":
+			if d.band_dim == null:
+				_err(file, _join(lp, "band"), "a band needs band_dim to be set", "set band_dim")
+			elif not d.band_dim.bands.has(ls.band):
+				_err(file, _join(lp, "band"), "\"%s\" is not a band of %s" % [ls.band, d.band_dim.id], "")
+		if ls.lines.is_empty():
+			_err(file, _join(lp, "lines"), "no lines", "add at least one line")
+		for line: String in ls.lines:
+			_placeholders(line, LINE_PLACEHOLDERS, file, _join(lp, "lines"))
+	if d.default_lines.is_empty():
+		_err(file, _join(path, "default_lines"), "must not be empty", "add at least one line")
+	for line: String in d.default_lines:
+		_placeholders(line, LINE_PLACEHOLDERS, file, _join(path, "default_lines"))
+	for i: int in d.presentation.size():
+		var q: NpcfPresentationQuestionDef = d.presentation[i]
+		if q == null:
+			_err(file, _join(path, "presentation[%d]" % i), "is empty", "")
+			continue
+		_presentation(q, _file(file, q), _path(file, path, "presentation[%d]" % i, q))
+
+
+func _intent(it: NpcfIntentDef, file: String, path: String) -> void:
+	if not _first_visit(it):
+		return
+	_id(it.id, file, _join(path, "id"))
+	for i: int in it.patterns.size():
+		var re: RegEx = RegEx.new()
+		if re.compile(it.patterns[i]) != OK:
+			_err(file, _join(path, "patterns[%d]" % i), "pattern %d does not compile" % i, "fix the RegEx")
+	if it.outcome == null and it.hook == null:
+		_err(file, path, "needs an outcome or a hook", "set one of them")
+	if it.outcome != null:
+		var op: String = _join(path, "outcome")
+		if it.outcome.result == &"":
+			_err(file, _join(op, "result"), "result is empty", "")
+		for dim: StringName in it.outcome.rel_deltas:
+			if not _pack.rel_dims.has(dim):
+				_err(file, _join(_join(op, "rel_deltas"), str(dim)), "\"%s\" is not a relationship dimension" % dim, "")
+		for i: int in it.outcome.reveal.size():
+			var f: NpcfFactDef = it.outcome.reveal[i]
+			var fp: String = _join(op, "reveal[%d]" % i)
+			if f == null:
+				_err(file, fp, "is empty", "")
+			else:
+				_require_def(&"fact", f, file, fp)
+	if it.hook != null:
+		_hook(it.hook, &"intent", file, _join(path, "hook"))
+
+
+func _presentation(q: NpcfPresentationQuestionDef, file: String, path: String) -> void:
+	if not _first_visit(q):
+		return
+	_id(q.id, file, _join(path, "id"))
+	if q.options.is_empty():
+		_err(file, _join(path, "options"), "must not be empty", "add at least one option")
+	for i: int in q.options.size():
+		if q.options[i] == &"":
+			_err(file, _join(path, "options[%d]" % i), "option is empty", "")
+	for key: StringName in q.option_descriptions:
+		if not q.options.has(key):
+			_err(file, _join(path, "option_descriptions"), "\"%s\" is not an option" % key, "")
+	for i: int in q.rules.size():
+		var r: NpcfPresentationRule = q.rules[i]
+		var rp: String = _join(path, "rules[%d]" % i)
+		if r == null:
+			_err(file, rp, "is empty", "")
+			continue
+		if r.intent != null:
+			_require_def(&"intent", r.intent, file, _join(rp, "intent"))
+		if not q.options.has(r.answer):
+			_err(file, _join(rp, "answer"), "\"%s\" is not an option of %s" % [r.answer, q.id], "pick one of the options")
+		if r.condition != null:
+			_condition(r.condition, _file(file, r.condition), _path(file, rp, "condition", r.condition), [] as Array[NpcfFieldDef])
+
+
+## Every {name} placeholder in an authored line must be one of `allowed`.
+func _placeholders(text: String, allowed: PackedStringArray, file: String, path: String) -> void:
+	var re: RegEx = RegEx.create_from_string("\\{([a-z_]+)\\}")
+	for m: RegExMatch in re.search_all(text):
+		var name: String = m.get_string(1)
+		if not allowed.has(name):
+			_err(file, path, "placeholder {%s} is not allowed here" % name, "use one of: " + ", ".join(allowed))
 
 
 func _macro(m: NpcfMacroVarDef, file: String, path: String) -> void:

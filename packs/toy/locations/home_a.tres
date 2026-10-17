@@ -6,3 +6,4 @@
 script = ExtResource("1_cojgp")
 id = &"toy.home_a"
 tags = Array[StringName]([&"toy.home"])
+display_name = "Ana's house"

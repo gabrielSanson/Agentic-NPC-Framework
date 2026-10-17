@@ -18,3 +18,13 @@ func perceivers(event: NpcfEventView, world: NpcfWorldView, exclude: Dictionary[
 		if can_perceive(id, event, world):
 			out.append(id)
 	return out
+
+
+## The NPCs that can hear `entity` speak, sorted. Default: none.
+func audible_npcs(_entity: StringName, _world: NpcfWorldView) -> Array[StringName]:
+	return []
+
+
+## The NPC `entity` is facing, or &"". Default: none.
+func facing_npc(_entity: StringName, _world: NpcfWorldView) -> StringName:
+	return &""

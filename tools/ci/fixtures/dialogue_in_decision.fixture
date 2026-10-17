@@ -1,0 +1,5 @@
+# place: addons/npcf/core/decision/zz_fixture_dialogue.gd
+# check: check_boundaries
+extends RefCounted
+
+var c: NpcfIntentClassifier = null

@@ -34,6 +34,7 @@ static func build(pack: NpcfLoadedPack, scenario: NpcfScenarioDef, world_seed: i
 	w.tags = NpcfTags.new()
 	w.rumors = NpcfRumors.new()
 	w.director = NpcfDirector.new()
+	w.dialogue = NpcfDialogueService.new()
 	w.applier.rel_handler = w.relationships.on_change
 	w.applier.share_handler = w.rumors.on_change
 

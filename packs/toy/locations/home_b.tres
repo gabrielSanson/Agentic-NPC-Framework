@@ -6,3 +6,4 @@
 script = ExtResource("1_f6s3a")
 id = &"toy.home_b"
 tags = Array[StringName]([&"toy.home"])
+display_name = "Bo's house"

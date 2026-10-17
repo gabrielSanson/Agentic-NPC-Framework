@@ -152,3 +152,17 @@ func running_action() -> StringName:
 ## A view of the same NPC that reads ground truth.
 func as_truth() -> NpcfNpcView:
 	return NpcfNpcView.new(_world, _npc, true)
+
+
+## The NPC's display name (its ID when it has none).
+func display_name() -> String:
+	var n: NpcfNpcState = _world.npcs.get(_npc)
+	if n != null and n.resolved != null and n.resolved.display_name != "":
+		return n.resolved.display_name
+	return String(_npc)
+
+
+## Persona text for dialogue: the resolved voice of the personalities and the character (R4.5).
+func persona() -> String:
+	var n: NpcfNpcState = _world.npcs.get(_npc)
+	return n.resolved.voice if n != null and n.resolved != null else ""

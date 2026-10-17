@@ -36,6 +36,7 @@ var relationships: NpcfRelationships
 var tags: NpcfTags
 var rumors: NpcfRumors
 var director: NpcfDirector
+var dialogue: NpcfDialogueService
 ## Optional per-phase callbacks for tests: phase name -> Callable(world). Empty by default.
 var phase_probes: Dictionary[StringName, Callable] = {}
 
@@ -136,6 +137,9 @@ func is_entity(id: StringName) -> bool:
 
 ## Releases hooks and services. Call before dropping the world.
 func dispose() -> void:
+	if dialogue != null:
+		dialogue.dispose()
+	dialogue = null
 	hooks.dispose()
 	npcs.clear()
 	occupancy = null
@@ -170,6 +174,18 @@ func _apply_input(i: NpcfInput) -> void:
 			executor.on_move_failed(self, i)
 		NpcfInput.Kind.EMBODIED, NpcfInput.Kind.DISEMBODIED:
 			travel.on_embodiment(self, i.npc, i.kind == NpcfInput.Kind.EMBODIED)
+		NpcfInput.Kind.CONVERSATION:
+			if i.event != null:
+				var id: int = emit(i.event)
+				if id >= 0 and not i.changes.is_empty():
+					var reason: String = applier.apply(self, i.changes, id)
+					if reason != "":
+						push_warning("npcf: conversation changes refused: " + reason)
+		NpcfInput.Kind.START_ACTION:
+			if i.call != null:
+				i.call.decision_tick = clock.tick
+				# Dialogue actions are best-effort presentation; a refusal is not an error.
+				executor.start(self, i.npc, i.call)
 
 
 func _finish_phase(phase: StringName, report: NpcfTickReport) -> void:

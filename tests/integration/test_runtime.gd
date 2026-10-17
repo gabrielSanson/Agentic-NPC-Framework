@@ -102,8 +102,8 @@ func test_reported_events_are_applied_in_call_order() -> void:
 		if e.kind == &"toy.chatted":
 			chats.append(e)
 	assert_int(chats.size()).is_equal(2)
-	assert_str(String(chats[0].actors[0])).is_equal("toy.ana")
-	assert_str(String(chats[1].actors[0])).is_equal("toy.bo")
+	assert_str(str(chats[0].actors[0])).is_equal("toy.ana")
+	assert_str(str(chats[1].actors[0])).is_equal("toy.bo")
 
 
 func test_a_bad_event_is_refused_with_one_sim_error() -> void:
@@ -131,10 +131,10 @@ func test_player_location_is_checked_and_applied() -> void:
 	assert_int(rt.report_player_location(&"toy.nowhere")).is_equal(ERR_DOES_NOT_EXIST)
 	assert_int(rt.report_player_location(&"toy.workshop")).is_equal(OK)
 	rt.advance_frame(1.0)
-	assert_str(String(world.location_of(&"toy.player"))).is_equal("toy.workshop")
+	assert_str(str(world.location_of(&"toy.player"))).is_equal("toy.workshop")
 	assert_int(rt.report_player_location(&"toy.yard")).is_equal(OK)
 	rt.advance_frame(1.0)
-	assert_str(String(world.location_of(&"toy.player"))).is_equal("toy.yard")
+	assert_str(str(world.location_of(&"toy.player"))).is_equal("toy.yard")
 
 
 # --- signals ------------------------------------------------------------------------------------
@@ -219,3 +219,49 @@ func test_trace_describes_an_npc_and_is_empty_for_others() -> void:
 	assert_bool(t.has("goal") and t.has("running") and t.has("decisions")).is_true()
 	assert_str(str(t["npc"])).is_equal("toy.ana")
 	assert_bool(rt.trace(&"toy.nobody").is_empty()).is_true()
+
+
+# --- dialogue -----------------------------------------------------------------------------------
+
+func test_player_say_before_start_is_not_running() -> void:
+	var rt: NpcfRuntime = _runtime()
+	var reasons: Array[StringName] = []
+	rt.no_addressee.connect(func(reason: StringName) -> void: reasons.append(reason))
+	assert_int(rt.player_say("hello", &"toy.ana")).is_equal(-1)
+	assert_array(reasons).contains_exactly([&"not_running"])
+
+
+func test_player_say_addresses_whoever_is_in_range_once_the_player_is_placed() -> void:
+	var rt: NpcfRuntime = _started()
+	assert_int(rt.report_player_location(&"toy.home_a")).is_equal(OK)
+	rt.advance_frame(1.0)
+	var reasons: Array[StringName] = []
+	rt.no_addressee.connect(func(reason: StringName) -> void: reasons.append(reason))
+	assert_int(rt.player_say("hello hey")).is_equal(-1)
+	assert_array(reasons).contains_exactly([&"ambiguous"])
+
+
+func test_player_say_emits_npc_line_with_five_arguments_while_paused() -> void:
+	var rt: NpcfRuntime = _started()
+	rt.pause()
+	var got: Array[Array] = []
+	rt.npc_line.connect(func(npc: StringName, text: String, line_id: int, source: StringName, presentation: Dictionary) -> void:
+		got.append([npc, text, line_id, source, presentation]))
+	assert_int(rt.player_say("hello hey", &"toy.ana")).is_equal(1)
+	assert_int(got.size()).is_equal(1)
+	assert_str(str(got[0][0])).is_equal("toy.ana")
+	assert_int(got[0][2]).is_equal(1)
+	assert_str(str(got[0][3])).is_equal("authored")
+	var pres: Dictionary = got[0][4]
+	assert_bool(pres.has(&"toy.emotion")).is_true()
+	assert_int(rt.dialogue_records().size()).is_equal(1)
+
+
+func test_clearing_the_line_generator_keeps_the_authored_lines() -> void:
+	var rt: NpcfRuntime = _started()
+	rt.set_line_generator(null)
+	var sources: Array[StringName] = []
+	rt.npc_line.connect(func(_npc: StringName, _text: String, _line_id: int, source: StringName, _pres: Dictionary) -> void:
+		sources.append(source))
+	assert_int(rt.player_say("hello hey", &"toy.ana")).is_greater(0)
+	assert_array(sources).contains_exactly([&"authored"])

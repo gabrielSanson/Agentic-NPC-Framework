@@ -2,6 +2,7 @@ class_name NpcfAgentRegistry2D
 extends RefCounted
 ## Maps NPC IDs to their scene agents. Holds weak references, so a freed agent drops out by itself.
 ## The runtime owns one; the 2D adapters read it. The player is found by group, not by a node link.
+## The player node may define `func npcf_facing_npc() -> StringName` to say which NPC it faces (dialogue addressee).
 
 ## The player's entity ID, set by the runtime at start (empty when the pack has no player).
 var player_entity: StringName = &""

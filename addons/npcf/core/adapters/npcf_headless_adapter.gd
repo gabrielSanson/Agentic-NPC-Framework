@@ -19,6 +19,16 @@ class Perception extends NpcfPerceptionAdapter:
 				out.append(id)
 		return out
 
+	## Headless NPCs hear whoever stands in their location. Nobody is ever facing an NPC.
+	func audible_npcs(entity: StringName, world: NpcfWorldView) -> Array[StringName]:
+		var at: StringName = world.location_of(entity)
+		if at == &"":
+			return []
+		return world.npcs_at(at)
+
+	func facing_npc(_entity: StringName, _world: NpcfWorldView) -> StringName:
+		return &""
+
 
 static func adapter_set() -> NpcfAdapterSet:
 	return NpcfAdapterSet.make(NpcfMovementAdapter.new(), Perception.new(), NpcfPresentationAdapter.new())

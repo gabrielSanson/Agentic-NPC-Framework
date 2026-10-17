@@ -7,7 +7,11 @@ extends Node
 signal tick_advanced(tick: int)
 signal action_started(npc: StringName, action: StringName, call_id: int)
 signal action_finished(npc: StringName, action: StringName, call_id: int, outcome: StringName)
-signal npc_line(npc: StringName, text: String, line_id: int, source: StringName)
+## One line per dialogue turn. `source` is &"authored" or the generator's name; `presentation` maps each presentation
+## question ID to its answer (the game may use it, it never changes state).
+signal npc_line(npc: StringName, text: String, line_id: int, source: StringName, presentation: Dictionary)
+## A dialogue turn that could not start: nobody to address (reason none_in_range, ambiguous, unknown_npc ...),
+## busy, not_running, no_dialogue or no_player.
 signal no_addressee(reason: StringName)
 signal sim_error(message: String)
 
@@ -29,6 +33,9 @@ var _acc: float = 0.0
 var _movement: NpcfMovementAdapter = null
 var _perception: NpcfPerceptionAdapter = null
 var _presentation: NpcfPresentationAdapter = null
+var _classifier: NpcfIntentClassifier = null
+var _chooser: NpcfPresentationChooser = null
+var _generator: NpcfLineGenerator = null
 
 
 ## Loads and validates the pack, checks the scenario and builds a running world. Returns OK, or the reason.
@@ -65,6 +72,9 @@ func start(manifest: NpcfPackManifest, scenario: NpcfScenarioDef, world_seed: in
 		_presentation if _presentation != null else defaults.presentation)
 	_world = NpcfWorldBuilder.build(loaded.pack, scenario, world_seed, adapters)
 	_world.headless = false
+	_world.dialogue.line.connect(_relay_line)
+	_world.dialogue.no_addressee.connect(_relay_no_addressee)
+	_apply_dialogue_plugins()
 	_acc = 0.0
 	capped_frames = 0
 	frames = 0
@@ -231,9 +241,39 @@ func trace(npc: StringName) -> Dictionary:
 	return {"npc": String(npc), "goal": String(n.current_goal), "running": running, "decisions": records}
 
 
-## Dialogue arrives in task 19.
-func player_say(_text: String, _npc: StringName = &"") -> void:
-	push_warning("player_say arrives in task 19")
+## The player says `text`, to `npc` or to whoever is addressed. Returns the turn's line ID, or -1 after emitting
+## no_addressee. Works while paused.
+func player_say(text: String, npc: StringName = &"") -> int:
+	if _world == null:
+		no_addressee.emit(&"not_running")
+		return -1
+	return _world.dialogue.begin_turn(_world, text, npc)
+
+
+## Replaces the intent classifier for every later turn. Null restores the keyword classifier.
+func set_intent_classifier(c: NpcfIntentClassifier) -> void:
+	_classifier = c
+	_apply_dialogue_plugins()
+
+
+## Replaces the presentation chooser. Null restores the rule-based chooser.
+func set_presentation_chooser(c: NpcfPresentationChooser) -> void:
+	_chooser = c
+	_apply_dialogue_plugins()
+
+
+## Replaces the line generator. Null restores the authored lines only.
+func set_line_generator(g: NpcfLineGenerator) -> void:
+	_generator = g
+	_apply_dialogue_plugins()
+
+
+## Dialogue turn records of the running world (the last NpcfDialogueService.RECORD_CAP turns), or none.
+func dialogue_records() -> Array[NpcfDialogueTurnRecord]:
+	var out: Array[NpcfDialogueTurnRecord] = []
+	if _world != null:
+		out.append_array(_world.dialogue.records)
+	return out
 
 
 ## Saving arrives in task 21.
@@ -249,6 +289,22 @@ func load_game(_slot: String, _use_backup: bool = false) -> Error:
 func _process(delta: float) -> void:
 	if auto_process:
 		advance_frame(delta)
+
+
+func _apply_dialogue_plugins() -> void:
+	if _world == null:
+		return
+	_world.dialogue.classifier = _classifier if _classifier != null else NpcfKeywordIntentClassifier.new()
+	_world.dialogue.chooser = _chooser if _chooser != null else NpcfPresentationChooser.new()
+	_world.dialogue.generator = _generator if _generator != null else NpcfLineGenerator.new()
+
+
+func _relay_line(npc: StringName, text: String, line_id: int, source: StringName, presentation: Dictionary) -> void:
+	npc_line.emit(npc, text, line_id, source, presentation)
+
+
+func _relay_no_addressee(reason: StringName) -> void:
+	no_addressee.emit(reason)
 
 
 func _step() -> void:
