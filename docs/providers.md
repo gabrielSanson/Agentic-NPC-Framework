@@ -139,3 +139,22 @@ project opts in with the project setting `npcf/providers/allow_non_commercial = 
 export builds. A refused provider is never health-checked and never sent a request; it stays `refused` with the reason.
 The CLI accepts `--allow-non-commercial` for checks. A game that ships needs a different speech provider.
 
+
+## Smoke check (C6c)
+
+```
+godot --headless --path . -s res://addons/npcf/tools/npcf_cli.gd -- smoke --set R --manifest P --scenario S --npc ID \
+	[--text T] [--wav PATH] [--seed N] [--allow-non-commercial] [--timeout-ms 20000]
+```
+
+It starts the runtime, loads the set and runs these steps against one NPC, printing `OK` or `FAIL` per step:
+
+- `providers`: every provider is `ready` (the reason is shown for any that is not).
+- `voice_out`: speaks a fixed sentence. A reply cut short after audio arrived is still OK, with the detail "reported as
+  cut" (a chunked close, the open question for Breeze).
+- `voice_in`: transcribes `--wav` (16 kHz mono 16-bit PCM), or the speech from `voice_out` when no `--wav` is given.
+- `intents`, `presentation`, `lines`: one line of dialogue, checked on its turn record. A keyword fallback fails
+  `intents`; an authored line fails `lines`.
+
+A step is skipped (OK, "skipped: no provider") only when no provider in the set has its use. The exit code is 0 when every
+step is OK, 1 when one fails, and 2 on bad usage. `--wav` must be 16 kHz mono 16-bit PCM; other WAV files exit 2.
