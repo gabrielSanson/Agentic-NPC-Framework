@@ -11,3 +11,6 @@ extends Resource
 @export var tags_add: Array[StringName] = []
 ## Persona text for dialogue, at most 300 characters.
 @export_multiline var voice: String = ""
+## How this trait sounds, for text-to-speech voice design (for example "Low, slow, slightly hoarse voice").
+## Joined with the other layers' speech text. Not used in prompts (that is `voice`).
+@export_multiline var speech_instruction: String = ""

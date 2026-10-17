@@ -360,6 +360,22 @@ func speak(text: String, instruction: String, voice_id: String, on_chunk: Callab
 			on_chunk.call(out))
 
 
+## The speech instruction for `npc` given a line's presentation answers ("" when not running or unknown NPC).
+func speech_instruction(npc: StringName, presentation: Dictionary) -> String:
+	var s: NpcfNpcState = _world.npc(npc) if _world != null else null
+	if s == null:
+		return ""
+	return NpcfVoiceText.instruction(s.resolved, _world.pack.manifest.dialogue, presentation)
+
+
+## The voice_id for `npc` ("" when none).
+func speech_voice_id(npc: StringName) -> String:
+	var s: NpcfNpcState = _world.npc(npc) if _world != null else null
+	if s == null:
+		return ""
+	return NpcfVoiceText.voice_id(s.resolved, _world.pack.manifest.dialogue)
+
+
 ## Dialogue turn records of the running world (the last NpcfDialogueService.RECORD_CAP turns), or none.
 func dialogue_records() -> Array[NpcfDialogueTurnRecord]:
 	var out: Array[NpcfDialogueTurnRecord] = []

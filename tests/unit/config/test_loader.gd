@@ -130,6 +130,7 @@ func test_dialogue_tier_action_writing_state() -> void:
 			+ "and may not write state (hint: move the effect to a rules-tier action, or use EMIT_EVENT)")
 
 
+
 func test_duplicate_cast_entry() -> void:
 	var m: NpcfPackManifest = MiniPackFixture.manifest()
 	var r: NpcfLoadResult = _load(m)
@@ -327,3 +328,47 @@ func test_scenario_macro_start_with_unknown_macro() -> void:
 	assert_int(errors.size()).is_equal(1)
 	if errors.size() == 1:
 		assert_str(errors[0].format()).contains("unknown macro \"toy.nope\"")
+
+
+## The toy pack with its dialogue copied, so a test can change dialogue fields without touching the cache.
+func _toy_with_dialogue() -> NpcfPackManifest:
+	var m: NpcfPackManifest = ResourceLoader.load(ToyFixture.MANIFEST, "", ResourceLoader.CACHE_MODE_IGNORE) as NpcfPackManifest
+	m.dialogue = m.dialogue.duplicate()
+	return m
+
+
+func _toy_errors(m: NpcfPackManifest) -> Array[NpcfConfigError]:
+	return NpcfPackLoader.new().load_pack(m).errors
+
+
+func test_delivery_question_must_be_a_presentation_question() -> void:
+	var m: NpcfPackManifest = _toy_with_dialogue()
+	m.dialogue.delivery_question = &"toy.nope"
+	var errors: Array[NpcfConfigError] = _toy_errors(m)
+	assert_int(errors.size()).is_equal(1)
+	if errors.size() == 1:
+		assert_bool(errors[0].property_path.ends_with("delivery_question")).is_true()
+
+
+func test_delivery_instruction_key_must_be_an_option() -> void:
+	var m: NpcfPackManifest = _toy_with_dialogue()
+	var bad: Dictionary[StringName, String] = {&"toy.furious": "Loud."}
+	m.dialogue.delivery_instructions = bad
+	var errors: Array[NpcfConfigError] = _toy_errors(m)
+	assert_int(errors.size()).is_equal(1)
+	if errors.size() == 1:
+		assert_bool(errors[0].property_path.ends_with("delivery_instructions")).is_true()
+
+
+func test_delivery_instructions_without_question_is_an_error() -> void:
+	var m: NpcfPackManifest = _toy_with_dialogue()
+	m.dialogue.delivery_question = &""
+	var errors: Array[NpcfConfigError] = _toy_errors(m)
+	assert_int(errors.size()).is_equal(1)
+	if errors.size() == 1:
+		assert_bool(errors[0].property_path.ends_with("delivery_instructions")).is_true()
+
+
+func test_toy_pack_with_speech_fields_loads_clean() -> void:
+	var errors: Array[NpcfConfigError] = _toy_errors(_toy_with_dialogue())
+	assert_int(errors.size()).is_equal(0)

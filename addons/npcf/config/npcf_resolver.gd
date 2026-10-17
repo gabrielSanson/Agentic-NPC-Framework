@@ -27,6 +27,7 @@ static func resolve(cast: NpcfCastEntry) -> NpcfResolvedCharacter:
 		r.decision_period_ticks = maxi(1, arch.decision_period_ticks)
 		r.rel_defaults = arch.rel_defaults.duplicate()
 	var voices: PackedStringArray = []
+	var speech: PackedStringArray = []
 	for p: NpcfPersonalityDef in ch.personalities:
 		if p == null:
 			continue
@@ -36,6 +37,8 @@ static func resolve(cast: NpcfCastEntry) -> NpcfResolvedCharacter:
 		_append_unique(r.tags, p.tags_add)
 		if p.voice.strip_edges() != "":
 			voices.append(p.voice.strip_edges())
+		if p.speech_instruction.strip_edges() != "":
+			speech.append(p.speech_instruction.strip_edges())
 	_merge(r.need_start, ch.need_start)
 	_multiply(r.goal_multipliers, ch.goal_multipliers)
 	_append_unique(r.tags, ch.tags_add)
@@ -47,7 +50,11 @@ static func resolve(cast: NpcfCastEntry) -> NpcfResolvedCharacter:
 		r.planner = ch.planner
 	if ch.voice.strip_edges() != "":
 		voices.append(ch.voice.strip_edges())
+	if ch.speech_instruction.strip_edges() != "":
+		speech.append(ch.speech_instruction.strip_edges())
 	r.voice = " ".join(voices)
+	r.speech_instruction = " ".join(speech)
+	r.speech_voice_id = ch.speech_voice_id.strip_edges()
 	_merge(r.need_start, cast.need_start)
 	_append_unique(r.tags, cast.tags_add)
 	if cast.schedule != null:

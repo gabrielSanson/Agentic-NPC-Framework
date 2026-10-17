@@ -212,6 +212,13 @@ band_dim = ExtResource("8_trust")
 presentation = Array[ExtResource("5_question")]([SubResource("Resource_emotion"), SubResource("Resource_gesture")])
 last_talk_window_ticks = 30
 max_prompt_facts = 8
+default_speech_instruction = "A clear adult voice at a natural pace."
+delivery_question = &"toy.emotion"
+delivery_instructions = Dictionary[StringName, String]({
+&"toy.calm": "Calm and even.",
+&"toy.happy": "Warm and cheerful.",
+&"toy.annoyed": "Clipped and irritated."
+})
 lore = SubResource("Resource_lore")
 memory_texts = Dictionary[StringName, String]({
 &"npcf.conversation": "talked with {actors}",

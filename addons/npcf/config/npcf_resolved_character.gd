@@ -17,6 +17,8 @@ var planner: NpcfPlannerRef = null
 var schedule: NpcfScheduleDef = null
 var decision_period_ticks: int = 1
 var voice: String = ""
+var speech_instruction: String = ""
+var speech_voice_id: String = ""
 var rel_defaults: Dictionary[StringName, int] = {}
 var start_location: StringName = &""
 
@@ -50,6 +52,7 @@ func to_debug_dict() -> Dictionary:
 		"goal_multipliers": _sorted(goal_multipliers), "action_multipliers": _sorted(action_multipliers),
 		"planner": String(planner_id()), "schedule": String(schedule.id) if schedule != null else "",
 		"decision_period_ticks": decision_period_ticks, "voice": voice,
+		"speech_instruction": speech_instruction, "speech_voice_id": speech_voice_id,
 		"rel_defaults": _sorted(rel_defaults), "start_location": String(start_location),
 	}
 

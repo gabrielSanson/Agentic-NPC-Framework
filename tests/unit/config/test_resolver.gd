@@ -76,6 +76,20 @@ func test_voice_concatenates_in_layer_order() -> void:
 	assert_str(r.voice).is_equal("Tired and blunt. Speaks slowly.")
 
 
+func test_speech_instruction_concatenates_in_layer_order() -> void:
+	var m: NpcfPackManifest = MiniPackFixture.manifest()
+	var p2: NpcfPersonalityDef = NpcfPersonalityDef.new()
+	p2.id = &"toy.second"
+	p2.speech_instruction = " P2. "
+	m.personalities[0].speech_instruction = "P1."
+	_char(m).personalities = [m.personalities[0], p2]
+	_char(m).speech_instruction = "C."
+	_char(m).speech_voice_id = " v1 "
+	var r: NpcfResolvedCharacter = NpcfResolver.resolve(MiniPackFixture.cast_entry(_char(m), MiniPackFixture.location(m, &"toy.home")))
+	assert_str(r.speech_instruction).is_equal("P1. P2. C.")
+	assert_str(r.speech_voice_id).is_equal("v1")
+
+
 func test_decision_period_is_at_least_one() -> void:
 	var m: NpcfPackManifest = MiniPackFixture.manifest()
 	m.archetypes[0].decision_period_ticks = 0

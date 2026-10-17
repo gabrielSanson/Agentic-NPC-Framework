@@ -913,6 +913,19 @@ func _dialogue(d: NpcfDialogueDef, file: String, path: String) -> void:
 			_err(file, _join(path, "presentation[%d]" % i), "is empty", "")
 			continue
 		_presentation(q, _file(file, q), _path(file, path, "presentation[%d]" % i, q))
+	if d.delivery_question != &"":
+		var dq: NpcfPresentationQuestionDef = null
+		for q: NpcfPresentationQuestionDef in d.presentation:
+			if q != null and q.id == d.delivery_question:
+				dq = q
+		if dq == null:
+			_err(file, _join(path, "delivery_question"), "\"%s\" is not a presentation question" % d.delivery_question, "use the ID of one of the presentation questions")
+		else:
+			for key: StringName in d.delivery_instructions:
+				if not dq.options.has(key):
+					_err(file, _join(path, "delivery_instructions"), "\"%s\" is not an option of %s" % [key, dq.id], "")
+	elif not d.delivery_instructions.is_empty():
+		_err(file, _join(path, "delivery_instructions"), "set but delivery_question is empty", "set delivery_question or clear delivery_instructions")
 	if d.max_prompt_facts < 1 or d.max_prompt_facts > 32:
 		_err(file, _join(path, "max_prompt_facts"), "%d is outside 1..32" % d.max_prompt_facts, "")
 	if d.lore != null and (d.lore.max_line_chars < 20 or d.lore.max_line_chars > 2000):

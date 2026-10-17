@@ -23,3 +23,11 @@ extends Resource
 @export var max_prompt_facts: int = 8
 @export var presentation: Array[NpcfPresentationQuestionDef] = []
 @export var last_talk_window_ticks: int = 30
+## Speech instruction for NPCs whose layers give none.
+@export_multiline var default_speech_instruction: String = ""
+## voice_id for NPCs that set none. Empty = none.
+@export var default_speech_voice_id: String = ""
+## The presentation question whose answer shapes the delivery (for example an emotion question). Empty = none.
+@export var delivery_question: StringName = &""
+## Answer of delivery_question -> text appended to the speech instruction (for example "Clipped and irritated.").
+@export var delivery_instructions: Dictionary[StringName, String] = {}

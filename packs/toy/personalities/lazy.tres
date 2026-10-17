@@ -9,3 +9,4 @@ goal_multipliers = Dictionary[StringName, float]({
 &"toy.rest": 1.5
 })
 voice = "Drawls, yawns, and changes the subject."
+speech_instruction = "Slow, low, drowsy voice."

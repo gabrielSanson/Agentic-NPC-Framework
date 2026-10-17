@@ -265,3 +265,20 @@ func test_clearing_the_line_generator_keeps_the_authored_lines() -> void:
 		sources.append(source))
 	assert_int(rt.player_say("hello hey", &"toy.ana")).is_greater(0)
 	assert_array(sources).contains_exactly([&"authored"])
+
+
+# --- speech instruction and voice (C4a) ----------------------------------------------------------
+
+func test_speech_instruction_follows_layers_and_delivery() -> void:
+	var rt: NpcfRuntime = _started()
+	var out: String = rt.speech_instruction(&"toy.ana", {&"toy.emotion": &"toy.annoyed"})
+	assert_str(out).ends_with("Clipped and irritated.")
+	assert_str(out).contains("Brisk, crisp")
+	assert_str(rt.speech_instruction(&"toy.nobody", {})).is_equal("")
+	assert_str(rt.speech_voice_id(&"toy.ana")).is_equal("")
+
+
+func test_speech_calls_answer_empty_when_not_running() -> void:
+	var rt: NpcfRuntime = _runtime()
+	assert_str(rt.speech_instruction(&"toy.ana", {})).is_equal("")
+	assert_str(rt.speech_voice_id(&"toy.ana")).is_equal("")
