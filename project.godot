@@ -9,6 +9,10 @@ config/name="npcf"
 config/description="Agentic NPC framework addon (development project)"
 config/features=PackedStringArray("4.7")
 
+[autoload]
+
+Npcf="*res://addons/npcf/runtime/npcf_runtime.gd"
+
 [debug]
 
 ; Strict typing (R3.1). directory_rules (Godot 4.6+) turns warnings off for the vendored

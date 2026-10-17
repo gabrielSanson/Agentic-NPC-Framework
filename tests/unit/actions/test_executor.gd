@@ -334,3 +334,61 @@ func test_failing_plan_step_clears_the_rest_of_the_plan() -> void:
 	_tick(w, 1)
 	assert_array(w.npc(&"toy.ana").plan).is_empty()
 	assert_bool(w.npc(&"toy.ana").is_busy()).is_false()
+
+
+# --- embodied completion (game-held or by duration) ---------------------------------------------
+
+class EmbodiedMovement extends NpcfMovementAdapter:
+	func is_embodied(_npc: StringName) -> bool:
+		return true
+
+
+class HoldingPresentation extends NpcfPresentationAdapter:
+	var holds: bool = false
+
+	func holds_completion(_npc: StringName, _call: NpcfActionCallView) -> bool:
+		return holds
+
+
+## Makes ana embodied, with a presentation that does or does not hold completion.
+func _embodied(w: NpcfWorld, holds: bool) -> void:
+	var p: HoldingPresentation = HoldingPresentation.new()
+	p.holds = holds
+	w.adapters = NpcfAdapterSet.make(EmbodiedMovement.new(), w.adapters.perception, p)
+
+
+func test_embodied_action_without_a_hold_finishes_by_duration() -> void:
+	var w: NpcfWorld = _world()
+	_embodied(w, false)
+	_action(w, &"toy.embodied", 3)
+	w.executor.start(w, &"toy.ana", _call(w, &"toy.ana", &"toy.embodied"), _report)
+	_tick(w, 2)
+	assert_bool(w.npc(&"toy.ana").is_busy()).is_true()
+	_tick(w, 1)
+	assert_bool(w.npc(&"toy.ana").is_busy()).is_false()
+	assert_str(String(_last_outcome(w, &"toy.ana"))).is_equal("success")
+
+
+func test_embodied_action_with_a_hold_runs_until_the_game_finishes_it() -> void:
+	var w: NpcfWorld = _world()
+	_embodied(w, true)
+	_action(w, &"toy.embodied", 3)
+	var call: NpcfActionCall = _call(w, &"toy.ana", &"toy.embodied")
+	w.executor.start(w, &"toy.ana", call, _report)
+	_tick(w, 10)  # well past the duration: nothing finishes it
+	assert_bool(w.npc(&"toy.ana").is_busy()).is_true()
+	w.executor.on_finished(w, NpcfInput.action_finished(&"toy.ana", call.call_id + 1, true))
+	assert_bool(w.npc(&"toy.ana").is_busy()).is_true()  # a stale call ID is ignored
+	w.executor.on_finished(w, NpcfInput.action_finished(&"toy.ana", call.call_id, true))
+	assert_bool(w.npc(&"toy.ana").is_busy()).is_false()
+	assert_str(String(_last_outcome(w, &"toy.ana"))).is_equal("success")
+
+
+func test_embodied_action_with_a_hold_still_times_out() -> void:
+	var w: NpcfWorld = _world()
+	_embodied(w, true)
+	var def: NpcfActionDef = _action(w, &"toy.embodied", 3)
+	w.executor.start(w, &"toy.ana", _call(w, &"toy.ana", &"toy.embodied"), _report)
+	_tick(w, def.effective_timeout())
+	assert_bool(w.npc(&"toy.ana").is_busy()).is_false()
+	assert_str(String(_last_outcome(w, &"toy.ana"))).is_equal("timeout")
