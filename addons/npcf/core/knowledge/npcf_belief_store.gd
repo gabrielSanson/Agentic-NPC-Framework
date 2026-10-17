@@ -73,6 +73,19 @@ func decay(amount: int) -> void:
 			b.confidence = maxi(0, b.confidence - amount)
 
 
+## Beliefs in live order (all() sorts; this does not), for saves.
+func export_live() -> Array[NpcfBelief]:
+	var out: Array[NpcfBelief] = []
+	for k: String in _beliefs:
+		out.append(_beliefs[k])
+	return out
+
+
+## Inserts a saved belief as it is, in saved order (no newer-than check). Used only by restores.
+func restore(b: NpcfBelief) -> void:
+	_beliefs[_key(b.subject, b.fact_id)] = b
+
+
 func size() -> int:
 	return _beliefs.size()
 

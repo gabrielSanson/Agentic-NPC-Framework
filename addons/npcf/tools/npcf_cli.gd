@@ -9,6 +9,8 @@ extends SceneTree
 ##                                                time world steps for a cloned population
 ##   providers check --set R [--allow-non-commercial]
 ##                                                ask each model provider in a set whether it is up
+##   trace   --manifest P --scenario S --seed N --tick T --npc ID
+##                                                step a headless world T ticks and print one NPC's trace as JSON
 ## Exit codes: 0 success, 1 errors found, 2 usage.
 
 const BENCH_FRAMES: int = 3600
@@ -18,7 +20,8 @@ const USAGE: String = """usage: npcf_cli.gd -- <command> [options]
   resolve --manifest P --scenario S --npc ID
   run     --manifest P --scenario S --seed N --ticks T [--log PATH]
   bench   --manifest P --scenario S [--npcs 50] [--ticks 1440] [--seed 7]
-  providers check --set R [--allow-non-commercial]"""
+  providers check --set R [--allow-non-commercial]
+  trace   --manifest P --scenario S --seed N --tick T --npc ID"""
 
 
 func _init() -> void:
@@ -38,6 +41,8 @@ func _init() -> void:
 				code = _bench(args)
 			"providers":
 				code = _providers(args)
+			"trace":
+				code = _trace(args)
 			_:
 				print(USAGE)
 	quit(code)
@@ -114,6 +119,41 @@ func _run(args: PackedStringArray) -> int:
 			return 1
 		file.store_string(world.events.log_text() + "\n")
 	print("ran %d ticks: %d events, %d actions started, %d finished" % [ticks, world.events.log.size(), started, finished])
+	world.dispose()
+	return 0
+
+
+## Steps a headless world and prints one NPC's trace as JSON (C5c). Exit 1 for an unknown NPC.
+func _trace(args: PackedStringArray) -> int:
+	var manifest_path: String = _option(args, "--manifest")
+	var scenario_path: String = _option(args, "--scenario")
+	var npc_id: String = _option(args, "--npc")
+	if manifest_path == "" or scenario_path == "" or npc_id == "" \
+			or not _option(args, "--seed").is_valid_int() or not _option(args, "--tick").is_valid_int():
+		print(USAGE)
+		return 2
+	var seed_value: int = _option(args, "--seed").to_int()
+	var ticks: int = _option(args, "--tick").to_int()
+	var loaded: Array = _load_pack(manifest_path, scenario_path)
+	var pack: NpcfLoadedPack = loaded[0]
+	var errors: Array[NpcfConfigError] = loaded[1]
+	if not errors.is_empty():
+		return _print_errors(errors)
+	var scenario: NpcfScenarioDef = ResourceLoader.load(scenario_path, "", ResourceLoader.CACHE_MODE_IGNORE) as NpcfScenarioDef
+	var world: NpcfWorld = NpcfWorldBuilder.build(pack, scenario, seed_value)
+	for _i: int in ticks:
+		var report: NpcfTickReport = world.step()
+		if not report.invariant_failures.is_empty():
+			for f: NpcfInvariantFailure in report.invariant_failures:
+				printerr(f.format())
+			world.dispose()
+			return 1
+	var trace: Dictionary = NpcfTraceService.trace(world, StringName(npc_id))
+	if trace.is_empty():
+		printerr("unknown npc %s" % npc_id)
+		world.dispose()
+		return 1
+	print(JSON.stringify(trace, "\t", true))
 	world.dispose()
 	return 0
 

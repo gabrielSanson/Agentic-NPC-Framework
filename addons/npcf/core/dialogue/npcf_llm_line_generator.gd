@@ -12,7 +12,11 @@ func _init(p_transport: NpcfLlmTransport) -> void:
 
 
 func generate(ctx: NpcfDialogueContext, on_done: Callable) -> void:
+	if ctx.world.audit != null:
+		ctx.world.audit.begin(&"prompt")
 	var request: NpcfDialogueRequest = NpcfPromptBuilder.build(ctx)
+	if ctx.world.audit != null:
+		ctx.world.audit.end()
 	if request == null:
 		on_done.call(NpcfLineResult.failed(&"no_template"))
 		return

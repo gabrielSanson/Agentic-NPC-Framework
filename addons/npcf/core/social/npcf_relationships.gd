@@ -72,6 +72,55 @@ func seed_value(world: NpcfWorld, holder: StringName, other: StringName, dim: St
 	_pair(holder, other).values[dim] = clampi(v, def.min_value, def.max_value)
 
 
+## Pair rows in live order, [[key, [[dim, value], ...], [[dim, cause], ...]], ...], for saves.
+func export_pairs() -> Array:
+	var out: Array = []
+	for key: String in _pairs:
+		var p: Pair = _pairs[key]
+		out.append([key, _dim_rows(p.values), _dim_rows(p.causes)])
+	return out
+
+
+## Replaces every pair with saved rows (same shape as export_pairs) in saved order. Clears the change log.
+func restore_pairs(rows: Array) -> void:
+	_pairs.clear()
+	changes.clear()
+	for row: Array in rows:
+		var key: String = row[0]
+		var p: Pair = Pair.new()
+		var values: Array = row[1]
+		var causes: Array = row[2]
+		for dv: Array in values:
+			var dim: StringName = dv[0]
+			var v: int = dv[1]
+			p.values[dim] = v
+		for dc: Array in causes:
+			var cdim: StringName = dc[0]
+			var cause: int = dc[1]
+			p.causes[cdim] = cause
+		_pairs[key] = p
+
+
+## Values outside their dimension's bounds, as [key, dim, value] rows (for the invariant check).
+func out_of_bounds(world: NpcfWorld) -> Array:
+	var out: Array = []
+	for key: String in _pairs:
+		var p: Pair = _pairs[key]
+		for dim: StringName in p.values:
+			var def: NpcfRelDimDef = world.pack.rel_dims.get(dim)
+			var v: int = p.values[dim]
+			if def != null and (v < def.min_value or v > def.max_value):
+				out.append([key, dim, v])
+	return out
+
+
+static func _dim_rows(d: Dictionary[StringName, int]) -> Array:
+	var out: Array = []
+	for dim: StringName in d:
+		out.append([dim, d[dim]])
+	return out
+
+
 ## Applier handler for REL_DELTA: holder = change.subject, other = change.other, dim = change.dim, delta = change.amount.
 ## Clamps, records the cause and a NpcfRelChange. Ignores holder == other, an unknown dim, or a holder that is not an NPC.
 func on_change(world: NpcfWorld, change: NpcfStateChange, cause_event: int) -> String:

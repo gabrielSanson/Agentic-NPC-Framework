@@ -29,5 +29,27 @@ func to_dict() -> Dictionary:
 	}
 
 
-func from_dict(_d: Dictionary) -> void:
-	pass  # completed in task 21 (save and load)
+## Save form: the value is tagged (see NpcfSaveCodec).
+func to_save() -> Dictionary:
+	return {
+		"subject": String(subject), "fact": String(fact_id),
+		"value": NpcfSaveCodec.encode_value(value, "belief value"), "confidence": confidence,
+		"source": source, "teller": String(teller), "tellers": NpcfValueCodec.names(tellers),
+		"tick": tick, "event_id": event_id, "salience": salience,
+	}
+
+
+## Reads a belief written by to_save.
+static func from_save(r: NpcfSaveCodec.Reader, d: Variant, path: String) -> NpcfBelief:
+	var b: NpcfBelief = NpcfBelief.new()
+	b.subject = r.name_at(d, "subject", path)
+	b.fact_id = r.name_at(d, "fact", path)
+	b.value = r.value_at(d, "value", path)
+	b.confidence = r.int_at(d, "confidence", path)
+	b.source = r.int_at(d, "source", path)
+	b.teller = r.name_at(d, "teller", path)
+	b.tellers = r.names_at(d, "tellers", path)
+	b.tick = r.int_at(d, "tick", path)
+	b.event_id = r.int_at(d, "event_id", path)
+	b.salience = r.int_at(d, "salience", path)
+	return b

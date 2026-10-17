@@ -6,6 +6,24 @@ extends RefCounted
 var _shares: Dictionary[StringName, Array] = {}
 
 
+## Share ticks per speaker in live order, [[speaker, [tick, ...]], ...], for saves.
+func export_shares() -> Array:
+	var out: Array = []
+	for speaker: StringName in _shares:
+		var ticks: Array = _shares[speaker]
+		out.append([speaker, ticks.duplicate()])
+	return out
+
+
+## Replaces the share log with saved rows (same shape as export_shares) in saved order.
+func restore_shares(rows: Array) -> void:
+	_shares.clear()
+	for row: Array in rows:
+		var speaker: StringName = row[0]
+		var ticks: Array = row[1]
+		_shares[speaker] = ticks.duplicate()
+
+
 ## One belief chosen to share, copied out of the speaker's store before any listener is written to.
 class Candidate extends RefCounted:
 	var subject: StringName = &""
@@ -74,6 +92,8 @@ func share(world: NpcfWorld, speaker: StringName, listeners: Array[StringName], 
 			meta.event_id = c.event_id
 			meta.salience = c.salience
 			meta.confidence = clampi(c.confidence + rules.confidence_delta, 0, 100)
+			if world.audit != null:
+				world.audit.on_delivered(listener_id, c.subject, c.fact_id, world.clock.tick)
 			if listener.beliefs.put(NpcfFact.make(c.subject, c.fact_id, c.value), meta):
 				stored += 1
 	return stored

@@ -51,6 +51,13 @@ func player() -> StringName:
 
 ## Reads one fact under the read rule.
 func fact(subject: StringName, fact_id: StringName) -> NpcfFactRead:
+	var read: NpcfFactRead = _read(subject, fact_id)
+	if _world.audit != null and _world.audit.reading:
+		_world.audit.on_read(_npc, subject, fact_id, read.source, _truth, _world.clock.tick)
+	return read
+
+
+func _read(subject: StringName, fact_id: StringName) -> NpcfFactRead:
 	var def: NpcfFactDef = _world.state.fact_def(fact_id)
 	if def == null:
 		return NpcfFactRead.make(null, 0, NpcfBelief.Source.DEFAULT)

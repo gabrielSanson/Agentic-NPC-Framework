@@ -54,6 +54,18 @@ func facts_of(subject: StringName) -> Array[StringName]:
 	return out
 
 
+## Stored facts in live order, [[subject, [[fact_id, value], ...]], ...], for saves.
+func export_rows() -> Array:
+	var out: Array = []
+	for subject: StringName in _subjects:
+		var sf: NpcfSubjectFacts = _subjects[subject]
+		var pairs: Array = []
+		for fact_id: StringName in sf.values:
+			pairs.append([fact_id, sf.values[fact_id]])
+		out.append([subject, pairs])
+	return out
+
+
 ## Sort predicate for StringNames by string value (determinism rule).
 static func name_less(a: StringName, b: StringName) -> bool:
 	return String(a) < String(b)
