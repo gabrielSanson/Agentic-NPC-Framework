@@ -7,6 +7,7 @@ config_version=5
 [application]
 
 config/name="cakeworks"
+run/main_scene="res://demo/demo_main.tscn"
 config/description="CakeWorks example for the npcf addon"
 config/features=PackedStringArray("4.7")
 
