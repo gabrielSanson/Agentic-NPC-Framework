@@ -6,6 +6,14 @@ extends Node
 signal status_changed(id: StringName, state: StringName, reason: String)
 
 const AUTH_PREFIX: String = "Authorization: Bearer "
+const BREEZE_ADAPTER: StringName = &"breeze_speech"
+const REFUSED_RELEASE: String = "non-commercial weights are refused in release builds"
+const REFUSED_NOT_ALLOWED: String = "non-commercial weights need the project setting npcf/providers/allow_non_commercial = true"
+
+## Set before add_provider (tests and the CLI do). Non-commercial providers need allow_non_commercial, and are never
+## used in a release build.
+var allow_non_commercial: bool = ProjectSettings.get_setting("npcf/providers/allow_non_commercial", false)
+var release_build: bool = OS.has_feature("template_release")
 
 
 ## A request waiting for the one in flight.
@@ -43,8 +51,9 @@ func _exit_tree() -> void:
 	close()
 
 
-## Adds one provider and starts its health check. Returns OK, or ERR_INVALID_PARAMETER when the config or the
-## adapter is refused (the entry is kept, with state &"refused", so status() can report why).
+## Adds one provider and starts its health check. Returns OK, ERR_INVALID_PARAMETER when the config or the adapter is
+## refused, or ERR_UNAUTHORIZED when the license gate refuses it. A refused entry is kept, with state &"refused", so
+## status() can report why. A refused license is never health-checked and never sent a request.
 func add_provider(cfg: NpcfProviderConfig) -> Error:
 	if _entries.has(cfg.id):
 		push_error("npcf: provider %s is already added" % cfg.id)
@@ -65,6 +74,10 @@ func add_provider(cfg: NpcfProviderConfig) -> Error:
 	if not problems.is_empty():
 		_set_state(e, &"refused", "; ".join(problems))
 		return ERR_INVALID_PARAMETER
+	var refusal: String = license_refusal(cfg, allow_non_commercial, release_build)
+	if refusal != "":
+		_set_state(e, &"refused", refusal)
+		return ERR_UNAUTHORIZED
 	_start_health(e, Time.get_ticks_msec())
 	return OK
 
@@ -265,11 +278,28 @@ func _add_auth(e: _Entry, spec: NpcfHttpSpec) -> void:
 	spec.headers.append(AUTH_PREFIX + OS.get_environment(e.cfg.key_env))
 
 
-## Adapter registry. C3c adds its own arms.
+## Why a provider may not be used under its license, or "" when it may. Every breeze_speech provider counts as
+## non-commercial, whatever its config says, because its weights are non-commercial.
+static func license_refusal(cfg: NpcfProviderConfig, allow_nc: bool, release: bool) -> String:
+	var non_commercial: bool = cfg.license_use == NpcfProviderConfig.License.NON_COMMERCIAL or cfg.adapter == BREEZE_ADAPTER
+	if not non_commercial:
+		return ""
+	if release:
+		return REFUSED_RELEASE
+	if not allow_nc:
+		return REFUSED_NOT_ALLOWED
+	return ""
+
+
+## Adapter registry.
 func _make_adapter(adapter_name: StringName) -> NpcfProviderAdapter:
 	match adapter_name:
 		&"openai_chat":
 			return NpcfOpenAiChatAdapter.new()
 		&"kev_systemone":
 			return NpcfKevAdapter.new()
+		&"openai_transcribe":
+			return NpcfOpenAiTranscribeAdapter.new()
+		&"breeze_speech":
+			return NpcfBreezeSpeechAdapter.new()
 	return null

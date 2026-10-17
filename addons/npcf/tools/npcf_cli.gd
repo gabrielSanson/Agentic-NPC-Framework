@@ -183,6 +183,7 @@ func _providers(args: PackedStringArray) -> int:
 		print("could not load provider set %s" % set_path)
 		return 1
 	var gw: NpcfProviderGateway = NpcfProviderGateway.new()
+	gw.allow_non_commercial = args.has("--allow-non-commercial")
 	for cfg: NpcfProviderConfig in providers_set.providers:
 		gw.add_provider(cfg)
 	gw.check_all_blocking(15000)

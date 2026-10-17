@@ -176,3 +176,64 @@ func test_a_closed_port_is_refused() -> void:
 	_drive(server, call)
 	assert_int(got.size()).is_equal(1)
 	assert_str(str(got[0].status)).is_equal("refused")
+
+
+func test_a_reply_cut_short_of_its_content_length_is_http_and_keeps_what_came() -> void:
+	var server: FakeHttpServer = _server()
+	var route: FakeHttpServer.Route = FakeHttpServer.Route.new()
+	route.chunks.append(PackedByteArray([1, 2, 3, 4]))
+	route.chunks.append(PackedByteArray([5, 6]))
+	route.chunk_gap_ms = 20
+	route.declared_length = 10
+	server.routes["GET /short"] = route
+	var got: Array[NpcfHttpResult] = []
+	var call: NpcfHttpCall = NpcfHttpCall.new(_spec(HTTPClient.METHOD_GET, "/short"), _endpoint(server.url()),
+			func(r: NpcfHttpResult) -> void: got.append(r))
+	call.start(Time.get_ticks_msec())
+	_drive(server, call)
+	assert_int(got.size()).is_equal(1)
+	assert_str(str(got[0].status)).is_equal("http")
+	assert_int(got[0].code).is_equal(200)
+	assert_bool(got[0].body == PackedByteArray([1, 2, 3, 4, 5, 6])).is_true()
+
+
+func test_a_chunked_reply_cut_before_its_last_chunk_is_http() -> void:
+	var server: FakeHttpServer = _server()
+	var route: FakeHttpServer.Route = FakeHttpServer.Route.new()
+	route.chunks.append(PackedByteArray([1, 2]))
+	route.chunks.append(PackedByteArray([3, 4]))
+	route.chunk_gap_ms = 20
+	route.chunked = true
+	route.cut_short = true
+	server.routes["GET /cut"] = route
+	var pieces: Array[PackedByteArray] = []
+	var got: Array[NpcfHttpResult] = []
+	var call: NpcfHttpCall = NpcfHttpCall.new(_spec(HTTPClient.METHOD_GET, "/cut"), _endpoint(server.url()),
+			func(r: NpcfHttpResult) -> void: got.append(r),
+			func(piece: PackedByteArray) -> void: pieces.append(piece))
+	call.start(Time.get_ticks_msec())
+	_drive(server, call)
+	var all: PackedByteArray = PackedByteArray()
+	for piece: PackedByteArray in pieces:
+		all.append_array(piece)
+	assert_bool(all == PackedByteArray([1, 2, 3, 4])).is_true()
+	assert_int(got.size()).is_equal(1)
+	assert_str(str(got[0].status)).is_equal("http")
+
+
+func test_a_complete_chunked_reply_is_ok() -> void:
+	var server: FakeHttpServer = _server()
+	var route: FakeHttpServer.Route = FakeHttpServer.Route.new()
+	route.chunks.append(PackedByteArray([1, 2]))
+	route.chunks.append(PackedByteArray([3, 4]))
+	route.chunk_gap_ms = 20
+	route.chunked = true
+	server.routes["GET /whole"] = route
+	var got: Array[NpcfHttpResult] = []
+	var call: NpcfHttpCall = NpcfHttpCall.new(_spec(HTTPClient.METHOD_GET, "/whole"), _endpoint(server.url()),
+			func(r: NpcfHttpResult) -> void: got.append(r),
+			func(_piece: PackedByteArray) -> void: pass)
+	call.start(Time.get_ticks_msec())
+	_drive(server, call)
+	assert_int(got.size()).is_equal(1)
+	assert_str(str(got[0].status)).is_equal("ok")

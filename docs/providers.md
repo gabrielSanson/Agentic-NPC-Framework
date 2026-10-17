@@ -10,7 +10,7 @@ provider kinds. Each kind serves one or more features:
 | `TRANSCRIBE` | `openai_transcribe` | Parakeet wrapper (C6) | speech in (C3c, C4) |
 | `SPEAK` | `breeze_speech` | `breeze-server` | speech out (C3c, C4) |
 
-The `GENERATE` adapter exists from C3a and the `CHOOSE` adapter from C3b. The other kinds are added by later parts of this batch.
+The `GENERATE` adapter exists from C3a, the `CHOOSE` adapter from C3b, and the `TRANSCRIBE` and `SPEAK` adapters from C3c.
 
 ## Set file and project setting
 
@@ -110,3 +110,32 @@ Start the server with `uv run --extra serve python -m kev.serve --run jaredpalme
 use Kev-0.8B: `--run jaredpalmer/kev-0.8b`. Leave `model` empty in the provider config, so the request names
 `kev-latest`. Kev is open by default on `127.0.0.1`. Set `KEV_API_KEY` on the server and `key_env` in the config to
 require a key. The health check is `GET /`: any answer below 500 means the server is up.
+
+## Transcription and speech (C3c)
+
+**Transcribe** (`openai_transcribe`, kind `TRANSCRIBE`, `use_for` = `voice_in`). The wrapper contract is:
+- `POST /v1/audio/transcriptions` with a `multipart/form-data` body. Parts, in order: `file` (the audio as a WAV file,
+  16 kHz, mono, 16-bit PCM), `model` (only when the config's `model` is set), `response_format` = `json`.
+- The reply is JSON with a `text` string. Any other reply, or an empty text, is a failed transcription.
+- Health is `GET /health` (`extra.health_path` overrides it). Any answer below 500 means the server is up.
+- The runtime call is `Npcf.transcribe(pcm16_mono_16k, on_done)`. `on_done` gets `(text, status)`. The status is
+  `&"off"` when no voice_in provider is ready, `&"http"` for an ok reply with no text, else the request's status.
+
+**Speak** (`breeze_speech`, kind `SPEAK`, `use_for` = `voice_out`). The Breeze contract is:
+- `POST /v1/audio/speech` with a `multipart/form-data` body. Parts, in order: `text`, `instruction` (only when not
+  empty), `voice_id` (only when not empty).
+- The reply streams raw mono 16-bit little-endian PCM at 24 kHz, with no header. A WAV header is removed if the server
+  sends one. The runtime call is `Npcf.speak(text, instruction, voice_id, on_chunk, on_done)`. `on_chunk` gets whole
+  samples (an odd byte waits for the next piece) and `on_done` gets the status (`&"off"` when no voice_out provider is
+  ready).
+- The timeout covers the whole stream. A long line needs a larger `timeout_ms` in the config.
+- A reply that stops before its declared length, or a chunked reply that stops before its last chunk, ends as
+  `&"http"`. The chunks already delivered stand; the result claims nothing more.
+- Start the server with `breeze-server breeze-tts-2-q8_0.gguf --host 127.0.0.1 --port 8080`. Bind it to `127.0.0.1`.
+
+**The non-commercial gate.** Breeze TTS 2 weights are under a non-commercial license. A provider with
+`license_use = NON_COMMERCIAL`, and every `breeze_speech` provider whatever its config says, is refused unless the
+project opts in with the project setting `npcf/providers/allow_non_commercial = true`. It is always refused in release
+export builds. A refused provider is never health-checked and never sent a request; it stays `refused` with the reason.
+The CLI accepts `--allow-non-commercial` for checks. A game that ships needs a different speech provider.
+

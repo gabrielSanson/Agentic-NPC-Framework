@@ -19,6 +19,9 @@ signal sim_error(message: String)
 
 const MIN_SPEED: float = 0.25
 const MAX_SPEED: float = 16.0
+## Sample rates the voice calls use: transcribe takes 16 kHz mono PCM, speak returns 24 kHz mono PCM.
+const TRANSCRIBE_SAMPLE_RATE: int = 16000
+const SPEECH_SAMPLE_RATE: int = 24000
 
 ## When false, _process does nothing; tests drive frames with advance_frame().
 var auto_process: bool = true
@@ -315,6 +318,46 @@ func use_providers(providers_set: NpcfProviderSet) -> Error:
 ## The provider gateway (null until providers are set).
 func providers() -> NpcfProviderGateway:
 	return _gateway
+
+
+## Transcribes 16 kHz mono 16-bit PCM through the first ready voice_in provider. on_done gets (text, status): status
+## is &"off" when there is no such provider, &"http" when the reply is ok but empty, else the request's status.
+func transcribe(pcm16_mono_16k: PackedByteArray, on_done: Callable) -> void:
+	var id: StringName = _gateway.first_ready_for(&"voice_in") if _gateway != null else &""
+	if id == &"":
+		on_done.call("", &"off")
+		return
+	var adapter: NpcfOpenAiTranscribeAdapter = _gateway.adapter(id) as NpcfOpenAiTranscribeAdapter
+	if adapter == null:
+		on_done.call("", &"off")
+		return
+	var spec: NpcfHttpSpec = adapter.build(_gateway.config(id), pcm16_mono_16k, NpcfMultipart.new_boundary())
+	_gateway.send(id, spec, func(r: NpcfHttpResult) -> void:
+		var text: String = adapter.parse(r)
+		var status: StringName = r.status
+		if status == &"ok" and text == "":
+			status = &"http"
+		on_done.call(text, status))
+
+
+## Speaks text through the first ready voice_out provider. on_chunk gets whole 24 kHz mono s16le samples as they
+## arrive; on_done gets the status (&"off" when there is no such provider). A truncated reply ends as &"http": the
+## chunks already delivered stand, and nothing more is claimed.
+func speak(text: String, instruction: String, voice_id: String, on_chunk: Callable, on_done: Callable) -> void:
+	var id: StringName = _gateway.first_ready_for(&"voice_out") if _gateway != null else &""
+	if id == &"":
+		on_done.call(&"off")
+		return
+	var adapter: NpcfBreezeSpeechAdapter = _gateway.adapter(id) as NpcfBreezeSpeechAdapter
+	if adapter == null:
+		on_done.call(&"off")
+		return
+	var spec: NpcfHttpSpec = adapter.build(_gateway.config(id), text, instruction, voice_id, NpcfMultipart.new_boundary())
+	var stream: NpcfBreezeSpeechAdapter.Stream = NpcfBreezeSpeechAdapter.Stream.new()
+	_gateway.send(id, spec, func(r: NpcfHttpResult) -> void: on_done.call(r.status), func(piece: PackedByteArray) -> void:
+		var out: PackedByteArray = stream.feed(piece)
+		if not out.is_empty():
+			on_chunk.call(out))
 
 
 ## Dialogue turn records of the running world (the last NpcfDialogueService.RECORD_CAP turns), or none.

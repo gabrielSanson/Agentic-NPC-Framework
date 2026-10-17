@@ -10,6 +10,13 @@ class Route:
 	## When set, the body is sent as these pieces (no Content-Length, connection closes at the end).
 	var chunks: Array[PackedByteArray] = []
 	var chunk_gap_ms: int = 0
+	## With chunks: send them with chunked transfer coding (the reply then ends with a zero-size chunk).
+	var chunked: bool = false
+	## With chunked: close without the zero-size chunk (a reply cut short).
+	var cut_short: bool = false
+	## With chunks and not chunked: the Content-Length to declare (-1 = none). Set above the bytes sent, it cuts the
+	## reply short.
+	var declared_length: int = -1
 	var delay_ms: int = 0
 	## Never answer (for timeouts).
 	var hang: bool = false
@@ -30,6 +37,8 @@ class _Conn:
 	var head_sent: bool = false
 	var next_chunk: int = 0
 	var finished: bool = false
+	## The last chunk (or the close, for a reply without chunked coding) has been sent.
+	var terminated: bool = false
 
 var port: int = 0
 var routes: Dictionary[String, Route] = {}
@@ -136,14 +145,32 @@ func _respond(c: _Conn, now: int) -> void:
 		c.finished = true
 		return
 	if not c.head_sent:
-		c.peer.put_data((_status_head(r) + "Connection: close\r\n\r\n").to_utf8_buffer())
+		var framing: String = "Connection: close\r\n"
+		if r.chunked:
+			# A complete chunked reply keeps the connection open, as a keep-alive server does; the client closes it.
+			framing = "Transfer-Encoding: chunked\r\n" + ("Connection: close\r\n" if r.cut_short else "")
+		elif r.declared_length >= 0:
+			framing = ("Content-Length: %d\r\n" % r.declared_length) + framing
+		c.peer.put_data((_status_head(r) + framing + "\r\n").to_utf8_buffer())
 		c.head_sent = true
 		c.ready_at_ms = now + r.chunk_gap_ms
 		return
 	if c.next_chunk >= r.chunks.size():
-		c.finished = true
+		if c.terminated:
+			return
+		c.terminated = true
+		if r.chunked and not r.cut_short:
+			c.peer.put_data("0\r\n\r\n".to_utf8_buffer())
+		else:
+			c.finished = true
 		return
-	c.peer.put_data(r.chunks[c.next_chunk])
+	var piece: PackedByteArray = r.chunks[c.next_chunk]
+	if r.chunked:
+		c.peer.put_data(("%x\r\n" % piece.size()).to_utf8_buffer())
+		c.peer.put_data(piece)
+		c.peer.put_data("\r\n".to_utf8_buffer())
+	else:
+		c.peer.put_data(piece)
 	c.next_chunk += 1
 	c.ready_at_ms = now + r.chunk_gap_ms
 
