@@ -5,6 +5,9 @@ extends RefCounted
 ## hysteresis, the decision bypasses hysteresis, or the best goal's interrupt holds. The chosen goal is
 ## planned and started; when that fails the goal cools down and the next candidate is tried.
 
+## Shared empty args for conditions. Never mutate it.
+static var _NO_ARGS: Dictionary[StringName, Variant] = {}
+
 
 ## Decides one NPC's goal. Returns the record, which is also kept in the NPC's decision ring buffer.
 func decide(world: NpcfWorld, npc: StringName, report: NpcfTickReport = null) -> NpcfDecisionRecord:
@@ -52,7 +55,7 @@ func _decide(world: NpcfWorld, npc: StringName, report: NpcfTickReport) -> NpcfD
 		var hysteresis: float = current_def.hysteresis if current_def != null else 0.0
 		var best_def: NpcfGoalDef = _goal_def(n, best.goal)
 		var interrupted: bool = best_def != null and best_def.interrupt != null \
-				and NpcfConditions.check(world, view, best_def.interrupt, _no_args(), false)
+				and NpcfConditions.check(world, view, best_def.interrupt, _NO_ARGS, false)
 		var beats: bool = best.score > current_score.score * (1.0 + hysteresis)
 		if beats or due.bypass or interrupted:
 			record.interrupted = interrupted and not beats and not due.bypass
@@ -146,8 +149,3 @@ func _store(world: NpcfWorld, n: NpcfNpcState, record: NpcfDecisionRecord) -> vo
 	var cap: int = maxi(1, world.sim.decision_records)
 	while n.decision_records.size() > cap:
 		n.decision_records.pop_front()
-
-
-func _no_args() -> Dictionary[StringName, Variant]:
-	var empty: Dictionary[StringName, Variant] = {}
-	return empty

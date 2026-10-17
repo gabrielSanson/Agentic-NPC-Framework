@@ -4,6 +4,9 @@ extends RefCounted
 ## utility is U = C * w * M * B: C is the compensated product of its curve outputs, w the goal
 ## weight, M the NPC's goal multiplier and B = 1 + K * D the directive bias.
 
+## Shared empty args for conditions and subjects. Never mutate it.
+static var _NO_ARGS: Dictionary[StringName, Variant] = {}
+
 
 ## Compensation of a list of values: k = 0 gives 1, otherwise the compensated product.
 static func compensate(values: Array[float]) -> float:
@@ -29,7 +32,7 @@ func input(world: NpcfWorld, view: NpcfNpcView, c: NpcfConsiderationDef, goal_id
 			x = _fact_input(world, view, c)
 		NpcfConsiderationDef.InputKind.BELIEF_CONFIDENCE:
 			if c.fact != null:
-				var subject: StringName = NpcfConditions.subject(world, view.npc_id(), c.subject_from, &"", _no_args())
+				var subject: StringName = NpcfConditions.subject(world, view.npc_id(), c.subject_from, &"", _NO_ARGS)
 				x = float(view.fact(subject, c.fact.id).confidence) / 100.0
 		NpcfConsiderationDef.InputKind.RELATIONSHIP:
 			x = _relationship_input(world, view, c)
@@ -92,7 +95,7 @@ func score_action(world: NpcfWorld, view: NpcfNpcView, a: NpcfActionDef) -> floa
 func _fact_input(world: NpcfWorld, view: NpcfNpcView, c: NpcfConsiderationDef) -> float:
 	if c.fact == null:
 		return 0.0
-	var subject: StringName = NpcfConditions.subject(world, view.npc_id(), c.subject_from, &"", _no_args())
+	var subject: StringName = NpcfConditions.subject(world, view.npc_id(), c.subject_from, &"", _NO_ARGS)
 	var v: Variant = view.fact_value(subject, c.fact.id)
 	match typeof(v):
 		TYPE_BOOL:
@@ -152,8 +155,3 @@ func _travel_input(view: NpcfNpcView, c: NpcfConsiderationDef) -> float:
 	if c.in_max <= 0.0:
 		return 0.0
 	return float(ticks) / c.in_max
-
-
-func _no_args() -> Dictionary[StringName, Variant]:
-	var empty: Dictionary[StringName, Variant] = {}
-	return empty
