@@ -90,6 +90,20 @@ func test_typed_line_to_mira_gets_a_subtitle_and_no_voice() -> void:
 		assert_str(statuses[0]).is_equal("off")
 
 
+func test_hud_bottom_block_stays_inside_the_window() -> void:
+	# Headless runs use a 64 px window; give it the project's window size so the layout has room.
+	var window: Window = get_tree().root
+	var old_size: Vector2i = window.size
+	window.size = Vector2i(1152, 648)
+	var demo: CwDemoMain = _start_demo()
+	await _frames(2)
+	var hud: CwHud = _hud_of(demo)
+	var screen: Rect2 = hud.get_viewport().get_visible_rect()
+	var input_rect: Rect2 = hud.input_line().get_global_rect()
+	window.size = old_size
+	assert_bool(screen.encloses(input_rect)).override_failure_message("input line %s is outside %s" % [input_rect, screen]).is_true()
+
+
 func test_empty_submit_sends_nothing() -> void:
 	var demo: CwDemoMain = _start_demo()
 	await _frames(2)
