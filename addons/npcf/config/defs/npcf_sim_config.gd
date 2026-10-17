@@ -25,5 +25,7 @@ extends Resource
 @export var invariant_interval_ticks: int = 60
 ## Decision records kept per NPC.
 @export var decision_records: int = 20
+## Belief confidence lost per in-game day by TOLD_BY and BROADCAST beliefs (floor 0).
+@export var belief_decay_per_day: int = 10
 ## The player's entity ID.
 @export var player_entity: StringName = &""

@@ -12,7 +12,8 @@ var _kinds_by_id: Dictionary[StringName, PackedStringArray] = {}
 func register(kind: StringName, id: StringName, where: String) -> NpcfConfigError:
 	var key: String = _key(kind, id)
 	if _where.has(key):
-		return NpcfConfigError.make(where, "id", "duplicate %s ID \"%s\" (already defined in %s)" % [kind, id, _where[key]],
+		var prior: String = _where[key] if _where[key] != "" else "<unsaved resource>"
+		return NpcfConfigError.make(where, "id", "duplicate %s ID \"%s\" (already defined in %s)" % [kind, id, prior],
 				"give each %s a unique ID" % kind)
 	_where[key] = where
 	var kinds: PackedStringArray = _kinds_by_id.get(id, PackedStringArray())

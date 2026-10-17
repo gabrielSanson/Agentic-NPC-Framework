@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="NpcfPackManifest" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/npcf/config/defs/npcf_pack_manifest.gd" id="1_manifest"]
+
+[resource]
+script = ExtResource("1_manifest")
+pack_namespace = &"Bad"
