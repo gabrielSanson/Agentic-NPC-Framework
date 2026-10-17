@@ -46,6 +46,12 @@ Use the PowerShell scripts in the same folder, with the same steps:
 
 The PowerShell scripts were checked on Windows 11 with an RTX 5060 (8 GB) in the `text_only` profile.
 
+- A user-scope `winget` install of Godot does not put `godot` on PATH. Point an alias at the console build, which
+  prints to the terminal: `Set-Alias godot "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\<GodotEngine folder>\Godot_v4.7.2-stable_win64_console.exe"`.
+- After adding llama.cpp to your user PATH, open a new PowerShell window so `llama-server` is found.
+- Start Godot from the same window where you set `KEV_API_KEY`. The profiles read the key from the environment, and
+  Kev shows as down without it.
+
 ## Text only
 
 Use no speech servers at all: `servers/start_all.sh --profile text_only`, then run with `--profile=text_only`.

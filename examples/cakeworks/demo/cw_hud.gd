@@ -32,9 +32,12 @@ func _ready() -> void:
 	_providers_box = VBoxContainer.new()
 	add_child(_providers_box)
 	_providers_box.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 12)
+	# Both boxes are anchored while still empty, so they must grow away from their corner as rows are added.
+	_providers_box.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	var bottom: VBoxContainer = VBoxContainer.new()
 	add_child(bottom)
 	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 12)
+	bottom.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	_subtitle = Label.new()
 	bottom.add_child(_subtitle)
 	_you = Label.new()
@@ -52,6 +55,11 @@ func _ready() -> void:
 	_input.custom_minimum_size = Vector2(520, 0)
 	_input.text_submitted.connect(_on_text_submitted)
 	bottom.add_child(_input)
+
+
+## The typed-input line (for tests).
+func input_line() -> LineEdit:
+	return _input
 
 
 ## Wires the HUD to the started runtime. Call after use_providers, so the provider rows are known.
