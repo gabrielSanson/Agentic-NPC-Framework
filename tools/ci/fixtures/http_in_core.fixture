@@ -1,0 +1,8 @@
+# place: addons/npcf/core/zz_http_fixture.gd
+# check: check_boundaries
+extends RefCounted
+
+
+func f() -> void:
+	var c: HTTPClient = HTTPClient.new()
+	print(c)

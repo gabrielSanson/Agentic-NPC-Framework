@@ -13,6 +13,8 @@ signal npc_line(npc: StringName, text: String, line_id: int, source: StringName,
 ## A dialogue turn that could not start: nobody to address (reason none_in_range, ambiguous, unknown_npc ...),
 ## busy, not_running, no_dialogue or no_player.
 signal no_addressee(reason: StringName)
+## A model provider changed state (relayed from the provider gateway; the reason never holds a key).
+signal provider_status_changed(id: StringName, state: StringName, reason: String)
 signal sim_error(message: String)
 
 const MIN_SPEED: float = 0.25
@@ -36,6 +38,7 @@ var _presentation: NpcfPresentationAdapter = null
 var _classifier: NpcfIntentClassifier = null
 var _chooser: NpcfPresentationChooser = null
 var _generator: NpcfLineGenerator = null
+var _gateway: NpcfProviderGateway = null
 
 
 ## Loads and validates the pack, checks the scenario and builds a running world. Returns OK, or the reason.
@@ -75,6 +78,7 @@ func start(manifest: NpcfPackManifest, scenario: NpcfScenarioDef, world_seed: in
 	_world.dialogue.line.connect(_relay_line)
 	_world.dialogue.no_addressee.connect(_relay_no_addressee)
 	_apply_dialogue_plugins()
+	_load_providers_from_settings()
 	_acc = 0.0
 	capped_frames = 0
 	frames = 0
@@ -268,6 +272,38 @@ func set_line_generator(g: NpcfLineGenerator) -> void:
 	_apply_dialogue_plugins()
 
 
+## Replaces every model provider with the ones in `providers_set`. The first provider with &"lines" in use_for
+## becomes the line generator. Wiring does not wait for health: the bridges fall back while a provider is down.
+func use_providers(providers_set: NpcfProviderSet) -> Error:
+	if providers_set == null:
+		return ERR_INVALID_PARAMETER
+	var was_provider_generator: bool = _generator_is_provider()
+	if _gateway != null:
+		_gateway.close()
+		_gateway.free()
+		_gateway = null
+	_gateway = NpcfProviderGateway.new()
+	_gateway.name = "Providers"
+	add_child(_gateway)
+	_gateway.status_changed.connect(_relay_provider_status)
+	for cfg: NpcfProviderConfig in providers_set.providers:
+		_gateway.add_provider(cfg)
+	var wired: bool = false
+	for id: StringName in _gateway.ids():
+		if _gateway.config(id).use_for.has(&"lines"):
+			set_line_generator(NpcfLlmLineGenerator.new(NpcfProviderLlmTransport.new(_gateway, id)))
+			wired = true
+			break
+	if not wired and was_provider_generator:
+		set_line_generator(null)
+	return OK
+
+
+## The provider gateway (null until providers are set).
+func providers() -> NpcfProviderGateway:
+	return _gateway
+
+
 ## Dialogue turn records of the running world (the last NpcfDialogueService.RECORD_CAP turns), or none.
 func dialogue_records() -> Array[NpcfDialogueTurnRecord]:
 	var out: Array[NpcfDialogueTurnRecord] = []
@@ -305,6 +341,30 @@ func _relay_line(npc: StringName, text: String, line_id: int, source: StringName
 
 func _relay_no_addressee(reason: StringName) -> void:
 	no_addressee.emit(reason)
+
+
+func _relay_provider_status(id: StringName, state: StringName, reason: String) -> void:
+	provider_status_changed.emit(id, state, reason)
+
+
+## Loads the provider set named by the project setting npcf/providers/set, when no providers are set yet.
+func _load_providers_from_settings() -> void:
+	if _gateway != null:
+		return
+	var path: String = str(ProjectSettings.get_setting("npcf/providers/set", ""))
+	if path == "":
+		return
+	var loaded: Resource = ResourceLoader.load(path)
+	var providers_set: NpcfProviderSet = loaded as NpcfProviderSet
+	if providers_set == null:
+		push_error("npcf: could not load the provider set %s" % path)
+		return
+	use_providers(providers_set)
+
+
+func _generator_is_provider() -> bool:
+	var lg: NpcfLlmLineGenerator = _generator as NpcfLlmLineGenerator
+	return lg != null and lg.transport is NpcfProviderLlmTransport
 
 
 func _step() -> void:

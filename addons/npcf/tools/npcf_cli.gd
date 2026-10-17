@@ -7,6 +7,8 @@ extends SceneTree
 ##                                                run a headless world and check invariants
 ##   bench   --manifest P --scenario S [--npcs N] [--ticks T] [--seed N]
 ##                                                time world steps for a cloned population
+##   providers check --set R [--allow-non-commercial]
+##                                                ask each model provider in a set whether it is up
 ## Exit codes: 0 success, 1 errors found, 2 usage.
 
 const BENCH_FRAMES: int = 3600
@@ -15,7 +17,8 @@ const USAGE: String = """usage: npcf_cli.gd -- <command> [options]
   check   --manifest P [--scenario S]
   resolve --manifest P --scenario S --npc ID
   run     --manifest P --scenario S --seed N --ticks T [--log PATH]
-  bench   --manifest P --scenario S [--npcs 50] [--ticks 1440] [--seed 7]"""
+  bench   --manifest P --scenario S [--npcs 50] [--ticks 1440] [--seed 7]
+  providers check --set R [--allow-non-commercial]"""
 
 
 func _init() -> void:
@@ -33,6 +36,8 @@ func _init() -> void:
 				code = _run(args)
 			"bench":
 				code = _bench(args)
+			"providers":
+				code = _providers(args)
 			_:
 				print(USAGE)
 	quit(code)
@@ -163,6 +168,41 @@ func _bench(args: PackedStringArray) -> int:
 
 
 ## A value option read as an int, or the default when absent. A non-integer gives -1 (rejected by the caller).
+## providers check: loads a provider set, checks every provider once, prints one line each. Exit 0 when all are ready.
+func _providers(args: PackedStringArray) -> int:
+	if args.size() < 2 or args[1] != "check":
+		print(USAGE)
+		return 2
+	var set_path: String = _option(args, "--set")
+	if set_path == "":
+		print(USAGE)
+		return 2
+	var loaded: Resource = ResourceLoader.load(set_path, "", ResourceLoader.CACHE_MODE_IGNORE)
+	var providers_set: NpcfProviderSet = loaded as NpcfProviderSet
+	if providers_set == null:
+		print("could not load provider set %s" % set_path)
+		return 1
+	var gw: NpcfProviderGateway = NpcfProviderGateway.new()
+	for cfg: NpcfProviderConfig in providers_set.providers:
+		gw.add_provider(cfg)
+	gw.check_all_blocking(15000)
+	var all_ready: bool = true
+	for id: StringName in gw.ids():
+		var cfg: NpcfProviderConfig = gw.config(id)
+		var state: StringName = gw.state(id)
+		var kind_name: String = NpcfProviderConfig.Kind.keys()[cfg.kind]
+		var line: String = "%s  %s  %s  %s  %s" % [id, kind_name, cfg.adapter, cfg.base_url, state]
+		var why: String = gw.reason(id)
+		if why != "":
+			line += "  (" + why + ")"
+		print(line)
+		if state != &"ready":
+			all_ready = false
+	gw.close()
+	gw.free()
+	return 0 if all_ready else 1
+
+
 func _int_option(args: PackedStringArray, name: String, default: int) -> int:
 	var text: String = _option(args, name)
 	if text == "":
