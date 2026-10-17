@@ -14,6 +14,9 @@ class FakeMic extends NpcfMicCapture:
 	func deliver_transcript(text: String) -> void:
 		said.append(text)
 		log.append("deliver:" + text)
+	## Only frames fed by the test count: the dummy audio driver can leave silence on the real capture bus.
+	func read_captured_frames() -> PackedVector2Array:
+		return PackedVector2Array()
 
 
 func after_test() -> void:
