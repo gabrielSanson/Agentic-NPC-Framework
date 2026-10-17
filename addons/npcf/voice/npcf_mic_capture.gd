@@ -164,10 +164,14 @@ func _on_transcribed(text: String, status: StringName) -> void:
 
 
 func _drain() -> void:
+	_frames.append_array(read_captured_frames())
+
+
+## Overridable seam: the frames the capture bus holds since the last read (empty without a capture effect).
+func read_captured_frames() -> PackedVector2Array:
 	if _capture == null:
-		return
-	var got: PackedVector2Array = _capture.get_buffer(_capture.get_frames_available())
-	_frames.append_array(got)
+		return PackedVector2Array()
+	return _capture.get_buffer(_capture.get_frames_available())
 
 
 func _check_max() -> void:
