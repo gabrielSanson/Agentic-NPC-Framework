@@ -4,5 +4,6 @@
 
 [resource]
 script = ExtResource("1_mtpb3")
+max_decisions_per_tick = 4
 real_seconds_per_tick = 0.5
 player_entity = &"cw.player"

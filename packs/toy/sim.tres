@@ -4,4 +4,5 @@
 
 [resource]
 script = ExtResource("1_ajk87")
+max_decisions_per_tick = 4
 player_entity = &"toy.player"
