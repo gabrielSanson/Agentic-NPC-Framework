@@ -5,8 +5,10 @@ extends SceneTree
 ##   resolve --manifest P --scenario S --npc ID   print one resolved cast entry as JSON
 ##   run     --manifest P --scenario S --seed N --ticks T [--log PATH]
 ##                                                run a headless world and check invariants
-##   bench   --manifest P --scenario S [--npcs N] [--ticks T] [--seed N]
-##                                                time world steps for a cloned population
+##   bench   --manifest P --scenario S [--npcs N] [--ticks T] [--seed N] [--cap N] [--checks interval|every-tick]
+##                                                time world steps for a cloned population; invariants run at the
+##                                                in-game interval unless --checks every-tick, and --cap overrides
+##                                                the pack's max_decisions_per_tick
 ##   providers check --set R [--allow-non-commercial]
 ##                                                ask each model provider in a set whether it is up
 ##   trace   --manifest P --scenario S --seed N --tick T --npc ID
@@ -23,7 +25,8 @@ const USAGE: String = """usage: npcf_cli.gd -- <command> [options]
   check   --manifest P [--scenario S]
   resolve --manifest P --scenario S --npc ID
   run     --manifest P --scenario S --seed N --ticks T [--log PATH]
-  bench   --manifest P --scenario S [--npcs 50] [--ticks 1440] [--seed 7]
+  bench   --manifest P --scenario S [--npcs 50] [--ticks 1440] [--seed 7] [--cap N]
+          [--checks interval|every-tick]
   providers check --set R [--allow-non-commercial]
   trace   --manifest P --scenario S --seed N --tick T --npc ID
   smoke   --set R --manifest P --scenario S --npc ID [--text T] [--wav PATH] [--seed N]
@@ -173,7 +176,12 @@ func _bench(args: PackedStringArray) -> int:
 	var npcs: int = _int_option(args, "--npcs", 50)
 	var ticks: int = _int_option(args, "--ticks", 1440)
 	var seed_value: int = _int_option(args, "--seed", 7)
-	if manifest_path == "" or scenario_path == "" or npcs < 1 or ticks < 1:
+	var cap: int = _int_option(args, "--cap", 0)
+	var checks: String = _option(args, "--checks")
+	if checks == "":
+		checks = "interval"
+	if manifest_path == "" or scenario_path == "" or npcs < 1 or ticks < 1 or cap < 0 \
+			or not checks in ["interval", "every-tick"]:
 		print(USAGE)
 		return 2
 	var manifest: NpcfPackManifest = ResourceLoader.load(manifest_path, "", ResourceLoader.CACHE_MODE_IGNORE) as NpcfPackManifest
@@ -192,7 +200,11 @@ func _bench(args: PackedStringArray) -> int:
 	var errors: Array[NpcfConfigError] = loader.check_scenario(loaded.pack, population.scenario)
 	if not errors.is_empty():
 		return _print_errors(errors)
+	if cap > 0:
+		loaded.pack.sim.max_decisions_per_tick = cap
 	var world: NpcfWorld = NpcfWorldBuilder.build(loaded.pack, population.scenario, seed_value)
+	# The game checks invariants every invariant_interval_ticks; a headless run checks every tick.
+	world.headless = checks == "every-tick"
 	var times: Array[float] = []
 	for _i: int in ticks:
 		var started: int = Time.get_ticks_usec()
@@ -208,6 +220,7 @@ func _bench(args: PackedStringArray) -> int:
 	var capped: int = NpcfBench.capped_frames(BENCH_FRAMES, 1.0 / 60.0, BENCH_SPEED,
 			loaded.pack.sim.real_seconds_per_tick, loaded.pack.sim.max_ticks_per_frame)
 	print("bench: %d npcs, %d ticks, seed %d" % [npcs, ticks, seed_value])
+	print("max_decisions_per_tick=%d checks=%s" % [loaded.pack.sim.max_decisions_per_tick, checks])
 	print("median_ms=%.4f" % NpcfBench.percentile(times, 0.5))
 	print("p99_ms=%.4f" % NpcfBench.percentile(times, 0.99))
 	print("max_ms=%.4f" % times.back())

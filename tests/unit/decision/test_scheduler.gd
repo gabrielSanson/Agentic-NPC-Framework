@@ -1,7 +1,7 @@
 extends GdUnitTestSuite
 ## The decision scheduler: periodic phases spread over the period and are the same for the same seed,
 ## triggered entries are capped and taken in (due tick, ID) order, busy NPCs are not marked periodic,
-## and a bypass request supplies the reason of the taken entry.
+## a capped tick takes bypass requests first, and a bypass request supplies the reason of the taken entry.
 
 var _worlds: Array[NpcfWorld] = []
 
@@ -100,6 +100,31 @@ func test_earlier_due_ticks_are_taken_before_later_ones() -> void:
 	w.scheduler.mark_due(w, &"toy.ana", &"test", false)
 	assert_array(_take(w, 1)).is_equal([&"toy.cy"])
 	assert_array(_take(w, 1)).is_equal([&"toy.ana"])
+
+
+func test_a_capped_tick_takes_bypass_requests_first() -> void:
+	var w: NpcfWorld = _five(7)
+	for id: StringName in w.npc_ids:
+		w.npc(id).next_periodic_tick = 1000
+	w.scheduler.mark_due(w, &"toy.ana", &"test", false)
+	w.scheduler.mark_due(w, &"toy.bo", &"test", false)
+	_take(w, 0)
+	w.scheduler.mark_due(w, &"toy.eli", &"reaction", true, &"x.rule")
+	w.scheduler.mark_due(w, &"toy.cy", &"test", false)
+	# Eli's reaction jumps the earlier waiting entries; the rest keep (due tick, ID) order.
+	assert_array(_take(w, 2)).is_equal([&"toy.eli", &"toy.ana"])
+	assert_array(_take(w, 2)).is_equal([&"toy.bo", &"toy.cy"])
+
+
+func test_an_uncapped_tick_keeps_due_tick_and_id_order() -> void:
+	var w: NpcfWorld = _five(7)
+	for id: StringName in w.npc_ids:
+		w.npc(id).next_periodic_tick = 1000
+	w.scheduler.mark_due(w, &"toy.ana", &"test", false)
+	_take(w, 0)
+	w.scheduler.mark_due(w, &"toy.eli", &"reaction", true, &"x.rule")
+	w.scheduler.mark_due(w, &"toy.bo", &"test", false)
+	assert_array(_take(w, 3)).is_equal([&"toy.ana", &"toy.bo", &"toy.eli"])
 
 
 func test_busy_npcs_are_not_marked_periodic() -> void:

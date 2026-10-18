@@ -62,3 +62,21 @@ func test_bench_exits_zero_and_prints_median() -> void:
 	assert_int(result[0]).is_equal(0)
 	assert_str(result[1]).contains("median_ms=")
 	assert_str(result[1]).contains("capped_frames_at_speed_16=")
+	assert_str(result[1]).contains("max_decisions_per_tick=4 checks=interval")
+
+
+func test_bench_takes_a_cap_and_every_tick_checks() -> void:
+	var result: Array = _bench(PackedStringArray([
+		"--manifest", "res://packs/toy/pack.tres", "--scenario", "res://packs/toy/scenarios/basic.tres",
+		"--npcs", "5", "--ticks", "30", "--cap", "2", "--checks", "every-tick",
+	]))
+	assert_int(result[0]).is_equal(0)
+	assert_str(result[1]).contains("max_decisions_per_tick=2 checks=every-tick")
+
+
+func test_bench_rejects_an_unknown_checks_mode() -> void:
+	var result: Array = _bench(PackedStringArray([
+		"--manifest", "res://packs/toy/pack.tres", "--scenario", "res://packs/toy/scenarios/basic.tres",
+		"--checks", "sometimes",
+	]))
+	assert_int(result[0]).is_equal(2)

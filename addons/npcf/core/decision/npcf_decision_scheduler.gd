@@ -2,7 +2,8 @@ class_name NpcfDecisionScheduler
 extends RefCounted
 ## Decides which NPCs decide on a tick: periodic decisions spread by phase, and triggered ones
 ## marked due by events (design "3. Utility scoring"). Periodic decisions are skipped while the NPC is
-## busy. Due entries are taken in (due tick, NPC ID) order, at most `cap` per tick.
+## busy. Due entries are taken in (due tick, NPC ID) order, at most `cap` per tick. When the cap leaves entries
+## waiting, bypass requests (reactions) go first so a capped tick never delays them behind periodic decisions.
 
 ## NPC ID -> the entry waiting to be taken.
 var _due: Dictionary[StringName, NpcfDueEntry] = {}
@@ -48,7 +49,7 @@ func mark_due(world: NpcfWorld, npc: StringName, reason: StringName, bypass: boo
 	_add(npc, world.clock.tick, reason, bypass, rule)
 
 
-## Takes up to `cap` due NPCs, earliest due tick first then by ID. The rest stay due.
+## Takes up to `cap` due NPCs: bypass requests first, then earliest due tick, then ID. The rest stay due.
 func take_due(world: NpcfWorld, cap: int) -> Array[StringName]:
 	var tick: int = world.clock.tick
 	for id: StringName in world.npc_ids:
@@ -62,11 +63,19 @@ func take_due(world: NpcfWorld, cap: int) -> Array[StringName]:
 			while n.next_periodic_tick <= tick:
 				n.next_periodic_tick += period
 	var ids: Array[StringName] = _due_order(world)
+	var limit: int = maxi(0, cap)
 	var out: Array[StringName] = []
-	for id: StringName in ids:
-		if out.size() >= maxi(0, cap):
-			break
-		out.append(id)
+	if ids.size() <= limit:
+		out = ids
+	else:
+		for id: StringName in ids:
+			if out.size() < limit and _due[id].bypass:
+				out.append(id)
+		for id: StringName in ids:
+			if out.size() >= limit:
+				break
+			if not _due[id].bypass:
+				out.append(id)
 	for id: StringName in out:
 		_taken[id] = _due[id]
 		_due.erase(id)

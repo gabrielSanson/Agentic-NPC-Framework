@@ -17,14 +17,18 @@ Output of one run (50 NPCs, 1,440 ticks, toy pack, `basic` scenario):
 
 ```
 bench: 50 npcs, 1440 ticks, seed 7
-median_ms=1.5650
-p99_ms=43.0670
-max_ms=75.3060
+max_decisions_per_tick=4 checks=interval
+median_ms=1.0560
+p99_ms=5.7880
+max_ms=9.4880
 capped_frames_at_speed_16=0 of 3600 frames at 60 fps
 ```
 
 Each sample is one `world.step()` measured with `Time.get_ticks_usec()`. The first ticks include the
 decision and delivery work of a fresh population; p99 and max are dominated by the busiest decision ticks.
+The bench uses the pack's `max_decisions_per_tick` (override with `--cap N`) and checks invariants every
+`invariant_interval_ticks`, as the game does (`--checks every-tick` checks every tick, as `run` and the tests do).
+Tables before round 3 were measured with every-tick checks and no binding cap.
 `capped_frames_at_speed_16` simulates 3,600 frames at 60 fps and 16x speed against `max_ticks_per_frame`.
 
 ## Before and after the delivery and need changes
@@ -85,6 +89,39 @@ Not kept: fix b (per-recipient allocations). Memory records cannot be shared bet
 `NpcfMemoryLog.append` assigns each record its own `id`, and a recipient-only iteration measured no gain.
 
 The p99 target (4 ms) is still not met in a debug build. See `slow-ticks-findings.md`.
+
+## Round 3: decisions spread over ticks (spread-decisions)
+
+Cloud sandbox, headless, debug build (Godot 4.7.2), 50 NPCs, 1,440 ticks, seed 7, three runs each, interleaved in one
+session. "Before" is `main` after round 2 run as the old bench did (`--cap 64 --checks every-tick`); "After" is the
+new default (toy and CakeWorks packs set `max_decisions_per_tick = 4`, checks at the game's interval).
+
+| Pack | Build | Median (ms) | p99 (ms) | Max (ms) |
+| --- | --- | --- | --- | --- |
+| Toy, `basic` | Before | 1.99 to 2.22 | 16.1 to 17.4 | 19.7 to 37.3 |
+| Toy, `basic` | After | 1.06 to 1.37 | 5.0 to 6.8 | 9.5 to 13.6 |
+| CakeWorks, `demo` | Before | 5.28 to 6.01 | 22.4 to 26.0 | 78.2 to 117.0 |
+| CakeWorks, `demo` | After | 2.08 to 2.15 | 9.5 to 10.5 | 14.7 to 24.8 |
+
+One run each with only one of the two changes:
+
+| Pack | Change | Median (ms) | p99 (ms) | Max (ms) |
+| --- | --- | --- | --- | --- |
+| Toy | checks at the interval, cap 64 | 0.96 | 14.7 | 28.8 |
+| Toy | cap 4, checks every tick | 2.39 | 9.2 | 12.2 |
+| CakeWorks | checks at the interval, cap 64 | 1.21 | 16.7 | 74.4 |
+| CakeWorks | cap 4, checks every tick | 6.62 | 16.2 | 19.5 |
+
+Why it works: the bench clones fall into lockstep groups that finish their actions on the same tick and then all
+decide together (up to 33 decisions in one tick). The cap takes at most 4 per tick and leaves the rest due, earliest
+first, so the decisions and the actions they start spread over the next ticks. When the cap leaves entries waiting,
+bypass requests (reactions) are taken first so they are never delayed behind periodic decisions. With 50 NPCs the
+longest wait is about 12 ticks, at the start of the run when every NPC is due at once. The toy cast (3 NPCs) never reaches
+the cap, so the golden log is unchanged. The CakeWorks demo cast (7 NPCs) reaches it only when more than 4 workers are
+due on the same tick, and then waits at most one extra tick.
+
+The remaining p99 ticks are delivery bursts (about 10 action results delivered to 50 NPCs) and the invariant check
+every 60 ticks. The p99 target (4 ms) is still not met in a debug build on this sandbox.
 
 ## Bench scene (runtime, 2D)
 
