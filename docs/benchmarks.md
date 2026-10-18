@@ -120,6 +120,17 @@ longest wait is about 12 ticks, at the start of the run when every NPC is due at
 the cap, so the golden log is unchanged. The CakeWorks demo cast (7 NPCs) reaches it only when more than 4 workers are
 due on the same tick, and then waits at most one extra tick.
 
+Same bench on a desktop PC (Ryzen 5 4600G, Windows 11, debug build, headless), branch head 3bc3cbe:
+
+| Pack | Build | Median (ms) | p99 (ms) | Max (ms) |
+| --- | --- | --- | --- | --- |
+| Toy, `basic` | `--cap 64 --checks every-tick`, one run | 2.43 | 14.8 | 19.5 |
+| Toy, `basic` | Default, three runs | 0.99 to 1.06 | 4.4 to 4.8 | 6.3 to 7.5 |
+| CakeWorks, `demo` | `--cap 64 --checks every-tick`, one run | 5.00 | 19.3 | 84.5 |
+| CakeWorks, `demo` | Default, three runs | 2.03 to 2.27 | 8.7 to 13.4 | 14.1 to 68.1 |
+
+One CakeWorks run had a single 68 ms tick (the other two stayed under 15 ms), so one rare slow event is left.
+
 The remaining p99 ticks are delivery bursts (about 10 action results delivered to 50 NPCs) and the invariant check
 every 60 ticks. The p99 target (4 ms) is still not met in a debug build on this sandbox.
 
